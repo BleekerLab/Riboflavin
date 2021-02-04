@@ -26,9 +26,9 @@ This work highlights the importance of phloem composition in the plant-phloem fe
 
 List of figures and tables. 
 
-a)	Screen of S. chmielweski Arjen / your own
-b)	Phenotype in detail (foto’s or drawing)
-c)	Screen of IL library Arjen
-d)	Metabolomics, differential compounds: levels of riboflavin candidate
-e)	Phloem analysis: prescence of riboflavin in the Phloem
-g)	Feeding assay and wf phenotype confirmation.
+- Screen of S. chmielweski Arjen / your own
+- Phenotype in detail (foto’s or drawing)
+- Screen of IL library Arjen
+- Metabolomics, differential compounds: levels of riboflavin candidate
+- Phloem analysis: prescence of riboflavin in the Phloem
+- Feeding assay and wf phenotype confirmation.
