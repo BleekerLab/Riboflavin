@@ -26,7 +26,7 @@ This work highlights the importance of phloem composition in the plant-phloem fe
 
 List of figures and tables. 
 
-- Screen of S. chmielweski Arjen / your own
+- Screen of S. chmielweski Arjen
 - Phenotype in detail (foto’s or drawing)
 - Screen of IL library Arjen
 - Metabolomics, differential compounds: levels of riboflavin candidate
