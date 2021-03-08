@@ -1,16 +1,17 @@
-setwd("~/Documents/PhD_Lissy/paper chmielewski en ribloflavine/data")
-Screen<-read.csv("hertelling.csv", header=T, sep = ";", dec = ",")
-Percentage<-read.csv("hertelling_Arjens_screen.csv", header=T, sep = ";", dec = ",")
 
+Screen <- read.csv("Fig.1_Bioassay_screen_Arjen/hertelling.csv", 
+                   header = T, 
+                   sep = ";")
 
-install.packages(c("dplyr", "stringr", "multcomp", "tidyverse", "rstatix", "ggpubr"))
-library(dplyr)
-library(stringr)
+#Percentage<-read.csv("hertelling_Arjens_screen.csv", header=T, sep = ";", dec = ",")
+
+checkpoint::checkpoint("2020-12-01")
+library(ggpubr)
 library(multcomp)
 library(car)
 library(tidyverse)
-library(rstatix)
-library(ggpubr)
+#library(rstatix)
+
 
 ## Make sure MM is the first genotype
 Screen[1:4,"genotype"] <- "AMM"
