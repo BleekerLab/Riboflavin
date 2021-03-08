@@ -1,0 +1,271 @@
+---
+title: "PCA analysis"
+author: Marc Galland
+date: "`r Sys.Date()`"
+output: 
+  pdf_document:
+    toc: true
+    number_sections: true
+    toc_depth: 2
+---
+
+```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
+# global options
+knitr::opts_chunk$set(echo = TRUE, 
+                      warning = FALSE, 
+                      message = FALSE, 
+                      fig.width = 8, 
+                      fig.height = 5, 
+                      fig.align = "center")
+source("mypca_function.R")
+library("tidyverse")
+library("knitr")
+```
+
+# Data import
+
+Two datasets:     
+1. 793 metabolites' peak area detected by LC-MS from 23 different plants from 4 different genotypes.    
+2. Sample to genotype correspondence.   
+
+
+\newpage
+
+## Peaks
+```{r peaks}
+peaks <- read.csv("../genotype_and_peak_data.csv", 
+                  stringsAsFactors = F)
+# The first five rows and five columns of the `peaks` dataframe. 
+knitr::kable(peaks[1:5,1:5])
+```
+
+
+## Sample to genotype
+```{r sample info}
+sample_info <- read.csv("../sample_genotype_phenotype.csv", 
+                        stringsAsFactors = F)
+knitr::kable(sample_info)
+```
+
+\newpage
+
+# PCA analysis (all samples)
+
+The PCA analysis is computed with the `mypca` function that returns:
+- sample scores
+- variable loadings
+- percentage of explained variance by each principal component (PC)
+
+```{r pca results}
+pca_results <- mypca(peaks, center = TRUE, scale = TRUE)
+```
+
+## Scree plot: variance explained
+```{r scree plot}
+df_explained_variance <- data.frame(
+  exp_var = pca_results$explained_var$exp_var
+  ) %>% 
+  rownames_to_column("PC") %>% 
+  mutate(PC = factor(PC,levels = unique(PC)))
+
+scree_plot <- 
+  ggplot(df_explained_variance, aes(x = PC, y = exp_var)) + 
+  ylab('Explained variance (%)') + 
+  ggtitle('Explained variance per principal component') + 
+  geom_bar(stat = "identity")
+scree_plot
+```
+
+The variance explained by PC1 is around 25%.    
+PC2 and PC3 explain almost exactly the same variance (around 13%).
+
+```{r cumulative variance}
+df_explained_variance %>% 
+  mutate(cumulated_variance = cumsum(exp_var)) %>% 
+  ggplot(mapping = aes(x = PC, y = cumulated_variance)) +
+  geom_point() +
+  geom_line(group = 1) +
+  labs(y = "Percentage of explained variance") +
+  geom_hline(yintercept = 50, color = "red")
+```
+
+The 3 first PC explain roughly 50% of the total variance.  
+
+\newpage
+
+## Samples score plot
+Can we distinguish the resistant genotypes from the sensitive ones on the first 3 PCs?
+
+### PC1 versus PC2
+```{r PC1 vs PC2, echo=FALSE}
+scores <- pca_results$scores
+scores["genotype"] <- sample_info$genotype
+scores["phenotype"] <- sample_info$phenotype
+scores["sample"] <- sample_info$sample
+
+pc1_vs_pc2 <- ggplot(scores) + 
+  geom_point(aes(x = PC1, y = PC2, shape = phenotype, col = genotype), size = 3) + 
+  xlab(paste0('PC1 (',df_explained_variance[1,2],'% explained variance)')) + 
+  ylab(paste0('PC2 (',df_explained_variance[2,2],'% explained variance)')) + 
+  ggtitle('PCA score plot: PC1 versus PC2')
+pc1_vs_pc2
+```
+
+Obviously, S. chm LA1840 can easily be separated on PC1 from the rest of the genotypes.  
+The other genotypes are all clustered on PC1 suggesting that PC1 is not related to sensitivity or resistance perhaps. 
+
+__Identifying the outlier on PC2__
+```{r outlier PC2}
+pc1_vs_pc2 +
+  ggrepel::geom_text_repel(aes(x = PC1, y = PC2, label = sample)) +
+  ggtitle("IL1927 sample outlier ")
+```
+
+Is it possible to separate the resistant from the sensitive genotypes?  
+Let's explore the different PCs.
+
+### PC2 versus PC3
+```{r PC2 vs PC3, echo=FALSE}
+pc2_vs_pc3 <- ggplot(scores) + 
+  geom_point(aes(x = PC2, y = PC3, shape = phenotype, col = genotype), size = 3) + 
+  xlab(paste0('PC2 (',df_explained_variance[2,2],'% explained variance)')) + 
+  ylab(paste0('PC3 (',df_explained_variance[3,2],'% explained variance)')) + 
+  ggtitle('PCA score plot: PC2 versus PC3')
+pc2_vs_pc3
+```
+
+### PC3 versus PC4
+```{r PC3 vs PC4, echo=FALSE}
+pc3_vs_pc4 <- ggplot(scores) + 
+  geom_point(aes(x = PC3, y = PC4, shape = phenotype, col = genotype), size = 3) + 
+  xlab(paste0('PC3 (',df_explained_variance[2,2],'% explained variance)')) + 
+  ylab(paste0('PC4 (',df_explained_variance[3,2],'% explained variance)')) + 
+  ggtitle('PCA score plot: PC3 versus PC4')
+pc3_vs_pc4
+```
+
+Not super clear but perhaps PC3 slightly separates sensitive from resistant. 
+
+### PC3 versus PC5
+```{r PC3 vs PC5, echo=FALSE}
+pc3_vs_pc5 <- ggplot(scores) + 
+  geom_point(aes(x = PC3, y = PC5, shape = phenotype, col = genotype), size = 3) + 
+  xlab(paste0('PC3 (',df_explained_variance[2,2],'% explained variance)')) + 
+  ylab(paste0('PC5 (',df_explained_variance[5,2],'% explained variance)')) + 
+  ggtitle('PCA score plot: PC3 versus PC5')
+pc3_vs_pc5
+```
+
+### PC4 versus PC5
+```{r PC4 vs PC5, echo=FALSE}
+pc4_vs_pc5 <- ggplot(scores) + 
+  geom_point(aes(x = PC4, y = PC5, shape = phenotype, col = genotype), size = 3) + 
+  xlab(paste0('PC4 (',df_explained_variance[4,2],'% explained variance)')) + 
+  ylab(paste0('PC5 (',df_explained_variance[5,2],'% explained variance)')) + 
+  ggtitle('PCA score plot: PC4 versus PC5')
+pc4_vs_pc5
+```
+
+
+Still not very clear and PC5 explains only 6% of the total variance so will stop here. 
+
+\newpage
+
+# PCA analysis (IL27_6 removed)
+
+## Outlier removal
+
+From the previous analysis, two individuals appeared different from the rest of their 
+corresponding genotype:
+- IL27_6  
+- s_ch_1  
+
+Since IL27_6 appears very different from the other IL1927 samples, it will be removed before
+the PCA analysis is done. Same for s_ch_1.
+
+```{r outlier removal, echo=FALSE}
+# finding the row index of IL27_6
+row_index_of_outliers = c(
+  match(x = "IL27_6", table = sample_info$sample),
+  match(x = "s_ch_1", table = sample_info$sample)
+  )
+
+# remove this line from the peaks data
+peaks_wo_outliers = peaks[-row_index_of_outliers,]
+
+# remove it from the sample to genotype df
+sample_info_wo_outliers <- sample_info[-row_index_of_outliers,]
+knitr::kable(sample_info_wo_outliers)
+```
+
+The original `peaks` dataframe has 23 rows and the filtered `peaks_wo_outlier` dataframe has now 21 rows. 
+Same for the samples
+
+## Scree plot (wo outlier)
+```{r pca wo outlier}
+pca_results2 <- mypca(peaks_wo_outliers, center = TRUE, scale = TRUE)
+
+df_explained_variance2 <- data.frame(
+  exp_var = pca_results2$explained_var$exp_var
+  ) %>% 
+  rownames_to_column("PC") %>% 
+  mutate(PC = factor(PC,levels = unique(PC)))
+
+scree_plot2 <- 
+  ggplot(df_explained_variance2, aes(x = PC, y = exp_var)) + 
+  ylab('Explained variance (%)') + 
+  ggtitle('Explained variance per principal component') + 
+  geom_bar(stat = "identity")
+scree_plot2
+```
+
+## Samples score plot (wo outlier)
+
+
+### PC1 versus PC2
+```{r PC1 vs PC2 wo outlier, echo=FALSE}
+scores2 <- pca_results2$scores
+scores2["genotype"] <- sample_info_wo_outliers$genotype
+scores2["phenotype"] <- sample_info_wo_outliers$phenotype
+scores2["sample"] <- sample_info_wo_outliers$sample
+
+pc1_vs_pc2 <- ggplot(scores2) + 
+  geom_point(aes(x = PC1, y = PC2, shape = phenotype, col = genotype), size = 3) + 
+  xlab(paste0('PC1 (',df_explained_variance2[1,2],'% explained variance)')) + 
+  ylab(paste0('PC2 (',df_explained_variance2[2,2],'% explained variance)')) + 
+  ggtitle('PCA score plot: PC1 versus PC2')
+pc1_vs_pc2
+```
+
+This plot seems to show a much clearer picture with S. chm LA1840 clearly separable from 
+the other genotypes on PC1 (as before).
+
+But now, it seems that IL1927 (resistant) is also more intermediate between LA1840 (resistant) and the other sensitive genotypes (KG1955 "elite line", IL1927).   
+
+\newpage
+
+## Loadings (wo outliers)
+
+Since PC1 is now more related to our phenotype of interest (resistance/sensitivity), we can extract the metabolites with the highest loadings on PC1. 
+
+```{r loadings, echo=TRUE}
+loadings <- pca_results2$loadings
+
+loadings_long <- loadings %>% 
+  rownames_to_column("metabolite") %>% 
+  select(metabolite, PC1) %>% 
+  mutate(abs_PC1 = abs(PC1)) %>% 
+  arrange(desc(abs_PC1))
+kable(head(loadings_long, n = 10))
+```
+
+We can also visualise it as a barplot. 
+
+```{r}
+loadings_long %>% 
+  arrange(desc(abs_PC1)) %>% 
+  top_n(10) %>% 
+  ggplot(., aes(x = metabolite, y = PC1)) +
+  geom_bar(stat = "identity") 
+```
+
