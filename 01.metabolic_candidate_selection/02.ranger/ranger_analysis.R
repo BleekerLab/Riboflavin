@@ -1,15 +1,11 @@
-library("checkpoint")
-checkpoint("2020-12-01")
-library("ranger")
-library("caret")
-library("tidyverse")
-library("matrixStats")
+# Load all required libraries
+# Makes use of checkpoint
 
 source("01.metabolic_candidate_selection/02.ranger/create_train_test_sets.R")
 
-#####################
+########
 # PARAMS
-####################
+########
 my_initial_seed = 123
 k_folds = 10
 my_train_test_ratio = 0.7
@@ -17,7 +13,9 @@ my_train_test_ratio = 0.7
 
 ####################################################################
 # Import dataframe with both genotype info and metabolite abundances
-# Outliers removed: IL26
+# Outliers removed: 
+#   - IL26
+#   - s_ch_1
 ####################################################################
 
 peaks <- read.csv("01.metabolic_candidate_selection/genotype_and_peak_data.csv")
