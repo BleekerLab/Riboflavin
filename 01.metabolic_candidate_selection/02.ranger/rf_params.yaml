@@ -2,6 +2,9 @@
 my_initial_seed: 123
 k_folds: 10
 my_train_test_ratio: 0.7
-n_permutations: 10
+n_permutations: 1000
+
+# random forest specific parameters
+n_trees: 10000
 
 ---
