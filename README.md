@@ -44,4 +44,14 @@ This work highlights the importance of phloem composition in the plant-phloem fe
 - Metabolomics, differential compounds: levels of riboflavin candidate
 - Phloem analysis: prescence of riboflavin in the Phloem
 - Feeding assay and wf phenotype confirmation.
->>>>>>> cb0fd2d799836d8b4c0e204c3e6a64c407397e8b
+
+# MRAN checkpoint data
+__December 1, 2020__ is set as the checkpoint for all R packages available from the CRAN.
+
+If required, change it everywhere in the scripts (`grep -r "checkpoint"`) and 
+it will search through all directories and files for the `checkpoint` function. 
+
+```{r}
+library("checkpoint")
+checkpoint("2020-12-01")
+```

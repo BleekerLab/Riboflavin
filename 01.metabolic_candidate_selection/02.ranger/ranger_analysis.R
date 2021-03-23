@@ -62,10 +62,10 @@ ggplot(data = data.frame(accuracy = j_models_accuracy), aes(x = accuracy)) +
   geom_density() +
   # average of the original RF accuracies
   geom_vline(xintercept = mean_acc, color = "blue") +
-  geom_vline(xintercept = (mean_acc - sd_acc), color = "red") +
+  geom_vline(xintercept = (mean_acc - sd_acc), color = "red", linetype = "dashed") +
   geom_vline(xintercept = upper_sd_acc, color = "red", linetype = "dashed")
   
-  
+ggsave(filename = "01.metabolic_candidate_selection/02.ranger/model_accuracy_vs_randoms.png")  
 
 
 
