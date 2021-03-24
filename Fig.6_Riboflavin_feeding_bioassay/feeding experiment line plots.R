@@ -50,12 +50,13 @@ feeding_data %>%
 
 # Instar line plots: one per treatment
 feeding_data %>% 
-  dplyr::filter(stage == "instars") %>% 
-  group_by(treatment, day) %>% 
+  dplyr::filter(stage == "instars" | stage == "4th_instar") %>% 
+  group_by(treatment, day, stage) %>% 
   summarise(average_total_ind = mean(total_ind),
             std_total_ind = sd(total_ind)) %>% 
-  ggplot(., aes(x = day, y = average_total_ind, group = treatment)) +
-  geom_line(aes(color = treatment)) 
+  ggplot(., aes(x = day, y = average_total_ind, group = stage)) +
+  facet_wrap(~treatment) +
+  geom_line(aes(color = stage)) 
 
 # All individuals (eggs, instars) but not 4th instar because they are already counted
 feeding_data %>% 
