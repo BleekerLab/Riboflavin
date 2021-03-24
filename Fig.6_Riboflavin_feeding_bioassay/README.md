@@ -48,20 +48,16 @@ Riboflavine stock
 Control solution
 5 mM KOH
 
-1) 1955 seeds were germinated either on soil or between 2 wet paper tissues.
-2) After 5 to 7 days the stem of the seedlings were wrapped into cotton and transferred to the hydroponics system (0,5 ml of each solution per 1 L water) 
-
-3) Hydroponics solutions was changed 3x a week
-
-4)when plants are taller than 15 cm, I used 1ml of each hydroponics solution to 1 L water
-(what I did is 2.5-5 ml of each solution in a 50 ml tube and add this to 5 liters of water. There is a 5 L container in the greenhouse)
-
-5) After 4 weeks of being on hydroponics riboflavine was added 5 mg per 1l (50 microL) and 50 WF females ( wednesday 12/10/2016).
-6) Two days after I removed the WFs and refreshed the hydroponics solution with 10 mg/L riboflavin (Friday 14/10/2016).
-7) Three days later after changing to 10 mg/L I refreshed the hydroponics and added 15 mg/l riboflavin (Monday 17/10/2016)
-8) Two days later after changing to 15 mg/L I refreshed the hydroponics and added 20 mg/L riboflavin (Wednesday 19/10/2016) and counted the nymphs.
-
-9) on 21/10/2016 I had crawlers, on 24/10/2016 2nd instar, on 26/10/2016 3rd instar, on 28/10/2016 3rd instar, on 31/10/2016to 04-11-2016 pulpa and adults. 
+1. 1955 seeds were germinated either on soil or between 2 wet paper tissues.  
+2. After 5 to 7 days the stem of the seedlings were wrapped into cotton and transferred to the hydroponics system (0,5 ml of each solution per 1 L water).   
+3.Hydroponics solutions was changed 3x a week.  
+4. when plants are taller than 15 cm, I used 1ml of each hydroponics solution to 1 L water
+(what I did is 2.5-5 ml of each solution in a 50 ml tube and add this to 5 liters of water. There is a 5 L container in the greenhouse).  
+5. After 4 weeks of being on hydroponics riboflavine was added 5 mg per 1l (50 microL) and 50 WF females ( wednesday 12/10/2016).
+6. Two days after I removed the WFs and refreshed the hydroponics solution with 10 mg/L riboflavin (Friday 14/10/2016).
+7. Three days later after changing to 10 mg/L I refreshed the hydroponics and added 15 mg/l riboflavin (Monday 17/10/2016)
+8. Two days later after changing to 15 mg/L I refreshed the hydroponics and added 20 mg/L riboflavin (Wednesday 19/10/2016) and counted the nymphs.
+9. on 21/10/2016 I had crawlers, on 24/10/2016 2nd instar, on 26/10/2016 3rd instar, on 28/10/2016 3rd instar, on 31/10/2016to 04-11-2016 pulpa and adults. 
 
 
 
