@@ -23,11 +23,11 @@ skim(feeding_data)
 feeding_data %>% 
   dplyr::filter(day == 1| day == 3) %>% 
   mutate(day = factor(day)) %>%
-  ggplot(., aes(x = treatment, y = total_ind, fill = treatment, label = Plant_ID)) +
+  ggplot(., aes(x = treatment, y = total_ind, fill = treatment)) +
   geom_boxplot() +
   geom_point() +
-  geom_text() +
   facet_wrap(~ day) +
+  labs(y="number of eggs per plant")+
   ggtitle("Effect of riboflavin on WF fertility")
 
 # Group day 1 and 3 and show the number of eggs per condition
