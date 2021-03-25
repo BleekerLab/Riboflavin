@@ -68,5 +68,14 @@ ggplot(data = data.frame(accuracy = j_models_accuracy), aes(x = accuracy)) +
 ggsave(filename = "01.metabolic_candidate_selection/02.ranger/model_accuracy_vs_randoms.png")  
 
 
+###############################################################
+# Save object (to avoid having to run the whole analysis again)
+###############################################################
 
+# save(k_models_accuracy_df, 
+#      j_models_accuracy, 
+#      var_imp_df, 
+#      j_variable_importances, 
+#      file = "01.metabolic_candidate_selection/02.ranger/results_ranger_analysis.RData")
+# 
 

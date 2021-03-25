@@ -26,7 +26,7 @@ for (i in seq_along(1:k_folds)){
                       1/12), # sensitive
     seed = my_seeds[i])
   
-  cat(paste0(i,"th k-fold original run;"), "Out-of-bag error:",ranger_fit$prediction.error)
+  cat(paste0(i,"th k-fold original run;"), "Out-of-bag error:",ranger_fit$prediction.error,"\n")
   
   # predict phenotype from test set
   test_set <- train_test_sets[[i]]$test_set
@@ -43,15 +43,14 @@ for (i in seq_along(1:k_folds)){
   model_accuracy <- number_of_success / nrow(test_set) * 100
   
   # return variable importances
-  kfold_name <- paste0("kfold",as.character(i))
-  var_importances <- data.frame(kfold_name = ranger_fit$variable.importance) 
-  
-  
+  kfold_name <- paste0("kfold", sprintf('%0.2d', i))
+  var_importances <- as.data.frame(ranger_fit$variable.importance) 
+  colnames(var_importances) <- kfold_name
   
   # return results
   k_models_accuracy[[i]] <- model_accuracy
   k_variable_importances[[i]] <- var_importances
-  names(k_variable_importances)[[i]] <- kfold_name
+  #names(k_variable_importances)[[i]] <- kfold_name
   
 }
 
@@ -59,12 +58,12 @@ for (i in seq_along(1:k_folds)){
 k_models_accuracy_df <- data.frame(kfold = 1:k_folds, 
                                    accuracy = unlist(k_models_accuracy))
 
-var_imp_df <- bind_cols(k_variable_importances) %>% as.data.frame() 
-var_imp_sd <- as.vector(apply(var_imp_df, 1, sd))
-var_imp_mean <- as.vector(apply(var_imp_df, 1, mean))
-var_imp_df$sd_var_imp <- var_imp_sd
-var_imp_df$mean_var_imp <- var_imp_mean
-var_imp_df <- rownames_to_column(var_imp_df, "metabolite")
+original_var_importance <- bind_cols(k_variable_importances) %>% as.data.frame() 
+var_imp_sd <- as.vector(apply(original_var_importance, 1, sd))
+var_imp_mean <- as.vector(apply(original_var_importance, 1, mean))
+original_var_importance$sd_var_imp <- var_imp_sd
+original_var_importance$mean_var_imp <- var_imp_mean
+original_var_importance <- rownames_to_column(original_var_importance, "metabolite")
 
 #######
 # Plots
@@ -75,7 +74,7 @@ ggplot(k_models_accuracy_df,
   scale_fill_brewer(type = "qual", palette = 3) +
   scale_x_continuous(breaks = seq(from = 1, to = k_folds, by = 1))
 
-var_imp_df %>% 
+original_var_importance %>% 
   arrange(desc(mean_var_imp)) %>% 
   top_n(10, wt = mean_var_imp) %>% 
   ggplot(., aes(x = metabolite, y = mean_var_imp)) +

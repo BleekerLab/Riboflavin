@@ -51,7 +51,7 @@ for (j in seq_along(1:n_permutations)){
                                          1/12), # sensitive
                        seed = my_seeds_for_permutations[j]
                        )
-  cat(paste0(j,"th permutation;"), "Out-of-bag error:",ranger_fit$prediction.error)
+  cat(paste0(j,"th permutation;"), "Out-of-bag error:",ranger_fit$prediction.error,"\n")
   
   # predict phenotype
   predicted_phenotype <- predict(ranger_fit, test_set)
@@ -70,10 +70,14 @@ for (j in seq_along(1:n_permutations)){
   
 
   # variable importance
-  perm_name <- paste0("perm",sprintf('%0.3d', str(j))) # returns perm001 for 1st permutation for instance
-  var_importances <- data.frame(perm_name = ranger_fit$variable.importance) 
+  perm_name <- paste0("perm",sprintf('%0.4d', j)) # returns perm001 for 1st permutation for instance
+  var_importances <- as.data.frame(ranger_fit$variable.importance) 
+  colnames(var_importances) <- perm_name
   j_variable_importances[[j]] <- var_importances
 }
 
+permuted_var_imp <- bind_cols(j_variable_importances)
 
-
+# clean up the R environment
+rm(var_importances, 
+   j_variable_importances)
