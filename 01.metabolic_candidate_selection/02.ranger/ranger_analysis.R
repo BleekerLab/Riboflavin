@@ -61,10 +61,20 @@ source("01.metabolic_candidate_selection/02.ranger/03_permutations.R")
 # Create plot of model accuracy versus random accuracies
 ########################################################
 
-mean_acc <- mean(original_model_accuracy$accuracy)
-sd_acc <- sd(original_model_accuracy$accuracy)
-upper_sd_acc <- ifelse(test = mean_acc + sd_acc > 1, yes = 100, mean_acc + sd_acc)
-
+# a dataframe to accomodate summary values 
+# Useful to pass to ggplot2
+vlines_df = with(original_model_accuracy, 
+                 data.frame(
+                   mean_acc = mean(accuracy),
+                   sd_acc = sd(accuracy),
+                   lower_sd_acc = ifelse(test = mean_acc - sd_acc == 0, yes = 0, mean_acc - sd_acc),
+                   upper_sd_acc = ifelse(test = mean_acc + sd_acc > 1, yes = 100, mean_acc + sd_acc)
+                   )) %>%
+  rownames_to_column("id") %>% 
+  pivot_longer(cols = -id) %>% 
+  select(-id) %>% 
+  dplyr::filter(name != "sd_acc") %>% 
+  mutate(linetype = c(1,"dotted","dotted"))
 
 # Compute p-value to add to the model plot
 model_pvalue <- calculate_pvalue(original_value = mean_acc, 
@@ -79,11 +89,13 @@ plot_model <-
   ggplot(data = data.frame(accuracy = permuted_model_accuracies), aes(x = accuracy)) +
     geom_density(kernel = "gaussian") +
     # average of the original RF accuracies
-    geom_vline(xintercept = mean_acc, color = "blue") +
-    geom_vline(xintercept = (mean_acc - sd_acc), color = "red", linetype = "dashed") +
-    geom_vline(xintercept = upper_sd_acc, color = "red", linetype = "dashed") +
-  ggtitle(plot_title)
-
+    geom_vline(data = vlines_df, aes(xintercept = value, colour = name, linetype = linetype), show.legend = TRUE) +
+  ggtitle(plot_title) +
+  scale_colour_discrete(labels = c("Lower model accuracy (Mean - SD)", 
+                                   "Mean model accuracy",
+                                   "Upper model accuracy (Mean + SD)")) +
+  theme(legend.title = element_blank(),
+      legend.position = "bottom")
 plot_model
 
 ggsave(filename = "01.metabolic_candidate_selection/02.ranger/model_accuracy_vs_randoms.png", 
