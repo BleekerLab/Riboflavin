@@ -21,7 +21,7 @@ for (i in seq_along(1:k_folds)){
     data = train_set, 
     num.trees = 10000,
     importance = "permutation",
-    min.node.size = 2,
+    min.node.size = min_node_size,
     class.weights = c(1/9, # resistant
                       1/12), # sensitive
     seed = my_seeds[i])
@@ -50,39 +50,33 @@ for (i in seq_along(1:k_folds)){
   # return results
   k_models_accuracy[[i]] <- model_accuracy
   k_variable_importances[[i]] <- var_importances
-  #names(k_variable_importances)[[i]] <- kfold_name
-  
+
 }
 
-# combine results
-k_models_accuracy_df <- data.frame(kfold = 1:k_folds, 
-                                   accuracy = unlist(k_models_accuracy))
+#################################
+# Combine results into dataframes
+#################################
+# 1) original model accuracies
+original_model_accuracy <- data.frame(
+  kfold = 1:k_folds,
+  accuracy = unlist(k_models_accuracy)
+  )
 
-original_var_importance <- bind_cols(k_variable_importances) %>% as.data.frame() 
-var_imp_sd <- as.vector(apply(original_var_importance, 1, sd))
-var_imp_mean <- as.vector(apply(original_var_importance, 1, mean))
-original_var_importance$sd_var_imp <- var_imp_sd
-original_var_importance$mean_var_imp <- var_imp_mean
-original_var_importance <- rownames_to_column(original_var_importance, "metabolite")
+# 2) original variable importances
+original_var_importances <- bind_cols(k_variable_importances) %>% as.data.frame() 
+var_imp_sd <- as.vector(apply(original_var_importances, 1, sd))
+var_imp_mean <- as.vector(apply(original_var_importances, 1, mean))
+original_var_importances$sd_var_imp <- var_imp_sd
+original_var_importances$mean_var_imp <- var_imp_mean
 
-#######
-# Plots
-#######
-ggplot(k_models_accuracy_df, 
-       aes(x = kfold, y = accuracy, fill = as.factor(kfold))) +
-  geom_bar(stat = "identity") +
-  scale_fill_brewer(type = "qual", palette = 3) +
-  scale_x_continuous(breaks = seq(from = 1, to = k_folds, by = 1))
 
-original_var_importance %>% 
-  arrange(desc(mean_var_imp)) %>% 
-  top_n(10, wt = mean_var_imp) %>% 
-  ggplot(., aes(x = metabolite, y = mean_var_imp)) +
-  geom_bar(stat = "identity") +
-  geom_errorbar(width = 0.2, 
-                aes(ymin = mean_var_imp - sd_var_imp, 
-                    ymax = mean_var_imp + sd_var_imp)) +
-  coord_flip() +
-  labs(x = "Metabolite", y = "Feature importance (average -/+ SD)")
+######################
+# clean up environment
+######################
 
-ggsave(filename = "01.metabolic_candidate_selection/02.ranger/metabolic_candidates.png")
+# remove temporary objects used for looping etc.
+rm(k_variable_importances, 
+   var_imp_sd, 
+   var_imp_mean, 
+   k_models_accuracy, 
+   predicted_phenotype)
