@@ -16,16 +16,18 @@ calculate_pvalue <- function(original_value,
   p_value_detection_limit <- round(x = 1/length(distribution_of_random_values),
                                    digits = ndigits)
   
+  # remove NaN values in permuted values
+  # https://github.com/imbs-hl/ranger/issues/201
+  distribution_of_random_values <- na.omit(distribution_of_random_values)
+  
   # How many times is the original value was lower than the random values
   # This is the NULL hypothesis: my value is equal or lower than a given random value
   # If unlikely, it means that my accuracy is often higher than the random accuracy -> low p-value 
-  computed_pvalue <- sum(original_value < distribution_of_random_values)/length(distribution_of_random_values)
+  computed_pvalue <- sum(distribution_of_random_values > original_value)/length(distribution_of_random_values)
 
   # Replace by p-value threshold (as given by the number of permutations) if equal to 0
   # Otherwise round up
-  computed_pvalue <- ifelse(test = computed_pvalue == 0, 
-                            yes = paste0("p-value < ", p_value_detection_limit), 
-                            no = round(computed_pvalue, digits = ndigits))
+  computed_pvalue <- round(computed_pvalue, digits = ndigits)
   
   return(computed_pvalue)
 }

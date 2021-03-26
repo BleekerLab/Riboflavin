@@ -84,8 +84,7 @@ for (j in seq_along(1:n_permutations)){
 #################
 
 # permuted_model_accuracies is kept as a vector
-permuted_var_importances <- bind_cols(j_variable_importances) %>% 
-  rownames_to_column("metabolite")
+permuted_var_importances <- bind_cols(j_variable_importances) 
 
 ############################
 # clean up the R environment

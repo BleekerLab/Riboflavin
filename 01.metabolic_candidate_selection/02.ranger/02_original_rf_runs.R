@@ -62,12 +62,12 @@ original_model_accuracy <- data.frame(
   accuracy = unlist(k_models_accuracy)
   )
 
-# 2) original variable importances
+# 2) original variable importances 
 original_var_importances <- bind_cols(k_variable_importances) %>% as.data.frame() 
-var_imp_sd <- as.vector(apply(original_var_importances, 1, sd))
-var_imp_mean <- as.vector(apply(original_var_importances, 1, mean))
-original_var_importances$sd_var_imp <- var_imp_sd
-original_var_importances$mean_var_imp <- var_imp_mean
+# var_imp_sd <- as.vector(apply(original_var_importances, 1, sd))
+# var_imp_mean <- as.vector(apply(original_var_importances, 1, mean))
+# original_var_importances$sd_var_imp <- var_imp_sd
+# original_var_importances$mean_var_imp <- var_imp_mean
 
 
 ######################
