@@ -28,9 +28,9 @@ All candidates significant (e.g. p < 0.01 if 100 permutations).
 
 [All final candidates are in this .csv table](./final_candidates.csv)  
 
-[Candidates associated with resistance are in this .csv table](./candidates_more_abundant_in_resistant.csv)
-
 ## Table of resistant candidates
+
+[Candidates associated with resistance are in this .csv table](./candidates_more_abundant_in_resistant.csv) and shown below.    
 
 | metabolite     	| resistant            	| sensitive            	|
 |----------------	|----------------------	|----------------------	|
