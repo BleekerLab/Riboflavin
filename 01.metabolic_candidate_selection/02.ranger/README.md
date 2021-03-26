@@ -10,13 +10,17 @@ Comparison to a distribution of random RF model accuracies.
 
 <img src="./plots/model_accuracy_vs_randoms.png" width="600px" alt="RF model accuracy">
 
-## Significant candidates
+## Significant candidates (own scaling)
 
 Classified by highest variable importance to lowest. 
 All candidates significant (e.g. p < 0.01 if 100 permutations).
 
 <img src="./plots/final_candidates.png" width="100%" alt="Metabolic candidates">
 
+
+## Significant candidates (own scaling)
+
+<img src="./plots/final_candidates_common_y_scale.png" width="100%" alt="Metabolic candidates">
 
 ## Table of candidates
 
