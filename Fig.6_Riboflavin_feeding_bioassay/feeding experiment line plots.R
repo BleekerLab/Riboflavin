@@ -58,6 +58,16 @@ feeding_data %>%
   facet_wrap(~treatment) +
   geom_line(aes(color = stage)) 
 
+# boxplots per day, because line graph does not show confidence interval/standard error
+feeding_data %>% 
+  dplyr::filter(stage != "4th_instar") %>% 
+  group_by(treatment, day, stage) %>% 
+  ggplot(., aes(x = day, y = total_ind, group = day)) +
+  facet_wrap(~treatment) +
+  geom_boxplot(aes(color = stage)) +
+  labs(x = "Days", y = "Total number of individuals")+
+  theme_classic()
+
 # All individuals (eggs, instars) but not 4th instar because they are already counted
 feeding_data %>% 
   dplyr::filter(stage != "4th_instar") %>% 
