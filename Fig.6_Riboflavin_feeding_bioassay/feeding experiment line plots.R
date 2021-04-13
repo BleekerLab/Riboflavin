@@ -1,5 +1,5 @@
 library("checkpoint")
-checkpoint("2020-12-01")
+checkpoint("2021-01-01")
 suppressPackageStartupMessages(library("ggplot2"))
 suppressPackageStartupMessages(library("dplyr"))
 suppressPackageStartupMessages(library("skimr"))

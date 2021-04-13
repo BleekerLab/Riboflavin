@@ -16,5 +16,4 @@ peaks = peaks[-row_index_of_outliers,]
 sample_info <- sample_info[-row_index_of_outliers,]
 
 
-df <- bind_cols(sample_info, peaks) %>% 
-  select(- sample, - genotype) # not required for ML classification
+df <- bind_cols(sample_info, peaks)

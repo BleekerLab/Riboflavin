@@ -25,7 +25,7 @@ names(permuted_dfs) <- paste0("perm",sprintf('%0.3d', 1:n_permutations))
 
 
 # pre-allocate empty lists for results
-j_models_accuracy <- vector("numeric", length = n_permutations)
+permuted_model_accuracies <- vector("numeric", length = n_permutations)
 j_variable_importances <- vector("list", length = n_permutations)
 
 # Run n_permutations RF analyses and collect results
@@ -46,12 +46,12 @@ for (j in seq_along(1:n_permutations)){
                        data = train_set,
                        num.trees = n_trees,
                        importance = "permutation",
-                       min.node.size = 2,
+                       min.node.size = min_node_size,
                        class.weights = c(1/9, # resistant
                                          1/12), # sensitive
                        seed = my_seeds_for_permutations[j]
                        )
-  cat(paste0(j,"th permutation;"), "Out-of-bag error:",ranger_fit$prediction.error)
+  cat(paste0(j,"th permutation;"), "Out-of-bag error:",ranger_fit$prediction.error,"\n")
   
   # predict phenotype
   predicted_phenotype <- predict(ranger_fit, test_set)
@@ -66,14 +66,32 @@ for (j in seq_along(1:n_permutations)){
   # model accuracy = number of samples / number of good classifications
   # store result
   model_accuracy <- number_of_success / nrow(test_set) * 100
-  j_models_accuracy[j] <- model_accuracy
+  permuted_model_accuracies[j] <- model_accuracy
   
 
   # variable importance
-  perm_name <- paste0("perm",sprintf('%0.3d', str(j))) # returns perm001 for 1st permutation for instance
-  var_importances <- data.frame(perm_name = ranger_fit$variable.importance) 
+  perm_name <- paste0("perm",sprintf('%0.4d', j)) # returns perm001 for 1st permutation for instance
+  var_importances <- as.data.frame(ranger_fit$variable.importance) 
+  colnames(var_importances) <- perm_name
+  
+  # collect result
   j_variable_importances[[j]] <- var_importances
 }
 
 
+#################
+# Combine results
+#################
 
+# permuted_model_accuracies is kept as a vector
+permuted_var_importances <- bind_cols(j_variable_importances) 
+
+############################
+# clean up the R environment
+############################
+# rm(
+#   perm_df,
+#   permuted_df, 
+#   permuted_dfs,
+#   var_importances, 
+#    j_variable_importances)
