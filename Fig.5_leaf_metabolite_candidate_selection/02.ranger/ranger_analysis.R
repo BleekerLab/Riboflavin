@@ -174,6 +174,31 @@ ggsave(filename = "01.metabolic_candidate_selection/02.ranger/plots/final_candid
        width = 16, 
        height = 10)
 
+# Which metabolites are more abundant in R class?
+metabolites_more_abundant_in_resistant_genotypes = 
+  df4plot %>% 
+  group_by(phenotype, metabolite) %>% 
+  summarise(mean_abundance = mean(abundance)) %>% 
+  pivot_wider(id_cols = metabolite, names_from = phenotype, values_from = mean_abundance) %>% 
+  filter(resistant > sensitive) 
+
+write.csv(metabolites_more_abundant_in_resistant_genotypes, 
+          file = "01.metabolic_candidate_selection/02.ranger/candidates_more_abundant_in_resistant.csv", 
+          quote = F, 
+          row.names = F)
+
+# plot with COMMON y scaling
+ggplot(df4plot, aes(x = genotype, y = abundance, fill = phenotype)) +
+  geom_boxplot() +
+  geom_point() +
+  facet_wrap(~ metabolite, scales = "fixed") +
+  theme(axis.text.x = element_text(angle = 90)) 
+
+# PNG format
+ggsave(filename = "01.metabolic_candidate_selection/02.ranger/plots/final_candidates_common_y_scale.png", 
+       width = 16, 
+       height = 10)
+
 ###############################################################
 # Save object (to avoid having to run the whole analysis again)
 ###############################################################

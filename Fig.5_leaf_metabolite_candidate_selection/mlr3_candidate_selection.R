@@ -1,5 +1,5 @@
 library("checkpoint")
-checkpoint("2020-12-01") # all packages in the same R project will be taken from this date
+checkpoint("2021-01-01") # all packages in the same R project will be taken from this date
 library("mlr3")
 library("mlr3viz")
 library("mlr3verse")
