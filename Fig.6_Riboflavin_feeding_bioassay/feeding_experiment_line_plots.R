@@ -9,6 +9,7 @@ feeding_data <- read.csv("Fig.6_Riboflavin_feeding_bioassay/data.csv",
                          header = T, 
                          sep = ",", 
                          dec = ".", 
+                         stringsAsFactors = FALSE, 
                          check.names = FALSE) %>% 
   mutate(total_ind = left + right) %>% 
   # because do not know whether the numbers are eggs or instars
@@ -50,7 +51,7 @@ feeding_data %>%
 
 # Instar line plots: one per treatment
 feeding_data %>% 
-  dplyr::filter(stage == "instars" | stage == "4th_instar") %>% 
+  dplyr::filter(stage == "instars" | stage == "fourth_instar") %>% 
   group_by(treatment, day, stage) %>% 
   summarise(average_total_ind = mean(total_ind),
             std_total_ind = sd(total_ind)) %>% 
@@ -60,7 +61,7 @@ feeding_data %>%
 
 # boxplots per day, because line graph does not show confidence interval/standard error
 feeding_data %>% 
-  dplyr::filter(stage != "4th_instar") %>% 
+  dplyr::filter(stage != "fourth_instar") %>% 
   group_by(treatment, day, stage) %>% 
   ggplot(., aes(x = day, y = total_ind, group = day)) +
   facet_wrap(~treatment) +
@@ -70,7 +71,7 @@ feeding_data %>%
 
 # All individuals (eggs, instars) but not 4th instar because they are already counted
 feeding_data %>% 
-  dplyr::filter(stage != "4th_instar") %>% 
+  dplyr::filter(stage != "fourth_instar") %>% 
   group_by(treatment, day) %>% 
   summarise(average_total_ind = mean(total_ind),
             std_total_ind = sd(total_ind)) %>% 
@@ -83,7 +84,7 @@ feeding_data %>%
 # An effect of riboflavin on the number of instars before the 4th stage?
 # Here riboflavin increases the number of 1-2-3rd instars
 feeding_data %>% 
-  dplyr::filter(stage != "4th_instar") %>%
+  dplyr::filter(stage != "fourth_instar") %>%
   dplyr::filter(stage != "eggs") %>%
   ggplot(., aes(x = treatment, y = total_ind, fill = treatment)) +
   geom_boxplot() +
@@ -91,7 +92,7 @@ feeding_data %>%
 
 # An effect of riboflavin on the 4th instar number?
 feeding_data %>% 
-  dplyr::filter(stage == "4th_instar") %>% 
+  dplyr::filter(stage == "fourth_instar") %>% 
   ggplot(., aes(x = treatment, y = total_ind, fill = treatment)) +
   geom_boxplot() +
   geom_jitter(size = 1, alpha = 0.5, width = 0.1) +
@@ -99,13 +100,18 @@ feeding_data %>%
 
 
 # An effect of riboflavin on the L4/total instar ratio?
-feeding_data %>% 
-  select(Plant_ID, treatment, date, stage, total_ind) %>%
-  pivot_wider(id_cols = c(Plant_ID, treatment, date),
-              names_from = stage, values_from = total_ind) %>%
-  mutate(ratio = "instars" / "4th_instar")
-  
-  
+feeding_wide <- feeding_data %>% 
+  as_tibble() %>% 
+  dplyr::select(Plant_ID, treatment, date, stage, total_ind) %>%
+  tidyr::pivot_wider(
+    id_cols = c(Plant_ID, treatment, date),
+    names_from = stage, 
+    values_from = total_ind) %>% 
+  dplyr::filter(date %in% c("02/11/2016","04/11/2016")) 
+
+ratio <- feeding_wide$fourth_instar / feeding_wide$instars * 100  
+feeding_wide <- feeding_wide %>% 
+  mutate(ratio = ratio)
   
   ##dplyr::filter(day == 19) %>% 
   #ggplot(., aes(x = treatment, y = total_ind, fill = treatment)) +
