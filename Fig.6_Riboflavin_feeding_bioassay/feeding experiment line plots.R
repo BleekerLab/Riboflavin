@@ -98,6 +98,22 @@ feeding_data %>%
   facet_wrap(~ date)
 
 
+# An effect of riboflavin on the L4/total instar ratio?
+feeding_data %>% 
+  select(Plant_ID, treatment, date, stage, total_ind) %>%
+  pivot_wider(id_cols = c(Plant_ID, treatment, date),
+              names_from = stage, values_from = total_ind) %>%
+  mutate(ratio = "instars" / "4th_instar")
+  
+  
+  
+  ##dplyr::filter(day == 19) %>% 
+  #ggplot(., aes(x = treatment, y = total_ind, fill = treatment)) +
+  #geom_boxplot() +
+  #geom_jitter(size = 1, alpha = 0.5, width = 0.1) +
+  #facet_wrap(~ date)
+
+
 # plot_line <- ggplot(feeding_data, aes(day, ratio, colour = treatment)) +
 #  stat_summary(fun = mean, geom = "point") + 
 #   stat_summary(fun = mean, geom = "line", aes(group = treatment)) + 
