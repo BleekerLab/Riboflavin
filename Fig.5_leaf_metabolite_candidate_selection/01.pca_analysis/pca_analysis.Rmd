@@ -18,8 +18,8 @@ knitr::opts_chunk$set(echo = TRUE,
                       fig.height = 5, 
                       fig.align = "center")
 source("mypca_function.R")
-library("tidyverse")
-library("knitr")
+suppressPackageStartupMessages(library("tidyverse"))
+suppressPackageStartupMessages(library("knitr"))
 ```
 
 # Data import
@@ -217,6 +217,7 @@ scree_plot2 <-
   ggtitle('Explained variance per principal component') + 
   geom_bar(stat = "identity")
 scree_plot2
+ggsave("scree_plot.png")
 ```
 
 ## Samples score plot (wo outlier)
@@ -230,11 +231,12 @@ scores2["phenotype"] <- sample_info_wo_outliers$phenotype
 scores2["sample"] <- sample_info_wo_outliers$sample
 
 pc1_vs_pc2 <- ggplot(scores2) + 
-  geom_point(aes(x = PC1, y = PC2, shape = phenotype, col = genotype), size = 3) + 
+  geom_point(aes(x = PC1, y = PC2, shape = phenotype, col = genotype), size = 4) + 
   xlab(paste0('PC1 (',df_explained_variance2[1,2],'% explained variance)')) + 
   ylab(paste0('PC2 (',df_explained_variance2[2,2],'% explained variance)')) + 
   ggtitle('PCA score plot: PC1 versus PC2')
 pc1_vs_pc2
+ggsave("sample_score_plot.png")
 ```
 
 This plot seems to show a much clearer picture with S. chm LA1840 clearly separable from 
