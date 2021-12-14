@@ -13,7 +13,7 @@ library(egg)
 
 
 # Loading the data
-df <- read.csv("Fig.6_Riboflavin_feeding_bioassay/data.csv", 
+df <- read.csv("data.csv", 
                header = T, 
                sep = ",", 
                dec = ".", 
@@ -105,7 +105,9 @@ library(tidydrc)
 
 
 tidydrc_model(df, day, total_ind, model = W2.3(), treatment) %>%
-  tidydrc_plot(ed50 = F, color = ~treatment, confint = T)
+  tidydrc_plot(ed50 = F, color = ~treatment, confint = T) + 
+  labs(x = "days", y = "count") +
+  ylim(0,160)
 
 # summary of coefficients
 df2 %>% unnest(coefs) %>% spread(names, x)
