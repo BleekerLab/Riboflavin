@@ -14,15 +14,16 @@ library(rstatix) # pipe friendly statistical tests
 #############
 # Data import
 #############
-screening_data <- read.csv("Fig.1_Bioassay_screen_Arjen/hertelling.csv", 
+screening_data <- read.csv("hertelling.csv", 
                    header = T, 
                    stringsAsFactors = FALSE) # ensures that you do the conversion yourself
 
 
-# Genotype and stage as factors
+# Genotype and stage as factors and filter genotype
 screening_data <- screening_data %>% 
   mutate(genotype = factor(genotype, levels = unique(genotype))) %>% 
-  mutate(stage = factor(stage, levels = c("egg", "fourth+exuviae")))
+  mutate(stage = factor(stage, levels = c("egg", "fourth+exuviae"))) %>%
+  filter(genotype == "Moneymaker" | genotype == "LA1840")
          
 
 
@@ -35,7 +36,7 @@ egg_nymph_plot <- ggplot(screening_data, aes(x=stage, y=number, fill=stage)) +
   geom_point(aes(fill = stage), size = 1, shape = 21,
              position = position_jitterdodge(jitter.width = 0.1)) +
   theme_classic() +
-  facet_wrap(~ genotype, nrow = 2)
+  facet_wrap(~ genotype)
 egg_nymph_plot
 
 ggsave(filename = "Fig.1_Bioassay_screen_Arjen/plot_eggs_nymphs.png", 
