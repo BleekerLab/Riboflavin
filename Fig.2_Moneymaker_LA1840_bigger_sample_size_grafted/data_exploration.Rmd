@@ -1,0 +1,152 @@
+---
+title: "data_exploration"
+author: "Lissy Denkers"
+date: "1/4/2022"
+output: html_document
+---
+
+```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE, 
+                      warning = FALSE, 
+                      message = FALSE, 
+                      fig.width = 8, 
+                      fig.height = 5, 
+                      fig.align = "center")
+suppressPackageStartupMessages(library("ggplot2"))
+suppressPackageStartupMessages(library("ggrepel"))
+suppressPackageStartupMessages(library("dplyr"))
+suppressPackageStartupMessages(library("skimr"))
+suppressPackageStartupMessages(library("Hmisc"))
+suppressPackageStartupMessages(library("tidyr"))
+suppressPackageStartupMessages(library("car"))
+suppressPackageStartupMessages(library("rstatix"))
+```
+
+# Data import 
+
+## Background information
+
+This is the data of the whitefly development bioassay on grafts of MM and LA1840. The nymphs in all developmental stages (first to fourth instar) were counted every other day. After the fourth instar stage, whiteflies develop into adults, leaving behind the larval skin called exuviae. Nymphs in the last phase of fourth instar stage and exuviae were removed from the leaf after each count to prevent a whitefly outbreak in the greanhouse.
+
+See metadata file for more information.
+
+## The raw data
+```{r flies}
+flies <- read.csv("raw_data.csv", 
+                         header = T, 
+                         sep = ",", 
+                         dec = ".", 
+                         check.names = FALSE)
+# The first 10 rows of the data
+knitr::kable(flies[1:10,1:8])
+```
+
+## Preparing the data for analysis
+
+A few improvements to the data should be made before analysis.
+
+First, three plants must be excluded from analysis, based on observations during counting (see metadata file).
+
+```{r filter}
+flies <- flies %>%     
+  dplyr::filter(place != 4) %>%     
+  dplyr::filter(place < 13)
+```
+
+Next, I make data wide for access to separate life stages.
+```{r wide}
+flies <- flies %>%
+  mutate(stage = as.factor(stage)) %>%
+  pivot_wider(names_from = stage, values_from = number) 
+```
+
+Because the fourth instars are the end point and taken of after counting, combine fourth instars and exuviae and make their numbers cumulative over time. 
+```{r total fourth instars}
+flies <- flies %>%
+  mutate(fourth_exuviae = `5_late_fourth_instar` + `6_exuviea`) %>%
+  group_by(place) %>%
+  mutate(`5_completed_lifecycle` = cumsum(fourth_exuviae)) %>%
+  mutate(`6_total_fourth_instars` = `4_early_fourth_instar` + `5_completed_lifecycle`) %>%
+  ungroup()
+```
+
+Remove separate and non-cumulative late fourth instar and exuviae columns.
+```{r remove unnessesary columns}
+flies <- flies %>%
+  select(-`5_late_fourth_instar`, -`6_exuviea`, -fourth_exuviae)
+```
+
+Now the data can be made long again.
+```{r long}
+flies <- flies %>%
+  pivot_longer(cols = `0_egg`:`6_total_fourth_instars`, 
+               names_to = "stage", values_to = "number")
+```
+
+Add the relative number of nymphs as percentage from the number of eggs and as percentage from the number of hatched eggs
+```{r relative numbers}
+flies <- flies %>%
+  mutate(percentage_from_eggs = number / eggs_start * 100) %>%
+  mutate(percentage_from_hatched = number / hatched * 100)
+
+```
+
+
+Add a new dataframe for the total number of nymphs per day without percentage, based on "flies"
+```{r flies_wide}
+flies_wide <- flies  %>%
+  select(-percentage_from_eggs) %>%
+  select(-percentage_from_hatched)
+```
+
+and make the data wide.
+```{r wide}
+flies_wide <- flies_wide %>%
+  mutate(stage = as.factor(stage)) %>%
+  pivot_wider(names_from = stage, values_from = number) 
+```
+
+Add the total number of nymphs per sample per day and the relative total as percentage from the number of eggs and as percentage from the number of hatched eggs
+```{r}
+flies_wide <- flies_wide %>%
+  mutate(total = rowSums(flies_wide[,8:12], na.rm = TRUE)) %>%
+  mutate(percentage_from_eggs = total / eggs_start * 100) %>%
+  mutate(percentage_from_hatched = total / hatched * 100)
+```
+
+# Different developmental stages, different effects
+
+In the original dataset of Arjen with ungrafted plants, you can see different effects of LA1840 on the different whitefly lifestages. The number of eggs was higher on LA1840 than on MM, while the number of fourth instar nymphs was drasticly decreased on LA1840. While the number of eggs is probably the result of the effect the plant has on adult flies, the nymph development is more likely to be influenced by the diet of the nymphs themselves.
+Another effect the plants could have, is affecting the hatching of the eggs. This can however not be analysed from Arjens data.
+
+Because I want to have a clear view of those different effects, I will go through each part separately.
+
+## Eggs
+
+On normal LA1840 plants, the number of eggs is increased compared to MM plants. Can we see the same effect when a LA1840 rootstock is used with a MM scion?
+```{r egg boxplot, echo=FALSE, warning=FALSE, message=FALSE}
+flies_wide %>%  
+  ggplot(., aes(x = genotype, y = `0_egg`)) +
+  geom_boxplot()  +
+  geom_jitter(size = 1, alpha = 0.5, width = 0.1) +
+  labs(y="number of eggs at start",
+       x= "rootstock genotype") +
+  theme_classic()
+
+
+```
+overview of the data:
+```{r}
+flies_wide %>%
+  group_by(genotype) %>%
+  get_summary_stats(`0_egg`, type = "mean_sd")
+
+```
+
+```{r warning = FALSE}
+
+shapiro.test(resid(aov(flies_wide$`0_egg`~flies_wide$genotype)))
+
+leveneTest(`0_egg`~genotype, data = flies_wide)
+```
+
