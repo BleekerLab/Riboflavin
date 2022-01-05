@@ -123,19 +123,9 @@ Because I want to have a clear view of those different effects, I will go throug
 
 ## Eggs
 
-On normal LA1840 plants, the number of eggs is increased compared to MM plants. Can we see the same effect when a LA1840 rootstock is used with a MM scion?
-```{r egg boxplot, echo=FALSE, warning=FALSE, message=FALSE}
-flies_wide %>%  
-  ggplot(., aes(x = genotype, y = `0_egg`)) +
-  geom_boxplot()  +
-  geom_jitter(size = 1, alpha = 0.5, width = 0.1) +
-  labs(y="number of eggs at start",
-       x= "rootstock genotype") +
-  theme_classic()
+On normal LA1840 plants, the number of eggs is increased compared to MM plants. Can we see the same effect when an LA1840 rootstock is used with a MM scion?
 
-
-```
-overview of the data:
+First a quick overview of the data:
 ```{r}
 flies_wide %>%
   group_by(genotype) %>%
@@ -143,10 +133,64 @@ flies_wide %>%
 
 ```
 
+And now visualized in a boxplot:
+```{r egg boxplot, echo=FALSE, message=FALSE, warning=FALSE}
+flies_wide %>%  
+  ggplot(., aes(x = genotype, y = `0_egg`)) +
+  geom_boxplot()  +
+  geom_jitter(size = 1, alpha = 0.5, width = 0.1) +
+  labs(y="number of eggs at start", 
+       x= "rootstock genotype") +
+  theme_classic()
+```
+
+It seems like the number of eggs might be higher on the grafts with an LA1840 rootstock.
+
+Before testing this, check the assumptions:
+- normality
+- homogeneity of variance
+- no significant outliers
+
 ```{r warning = FALSE}
 
 shapiro.test(resid(aov(flies_wide$`0_egg`~flies_wide$genotype)))
+```
+The p-value of the Shapiro-Wilk test is >0.05, so the data is normally distributed
 
+```{r warning = FALSE}
 leveneTest(`0_egg`~genotype, data = flies_wide)
 ```
+The Levene's test also has p>0.05, so the variance is equal between the two groups.
+
+Now the outliers:
+```{r warning = FALSE}
+flies_wide %>%
+  group_by(genotype) %>%
+  identify_outliers(`0_egg`)
+```
+There is one outlier, but it is not extreme.
+
+Because all assumptions for a t-test are met, we can do a Students t-test.
+```{r warning = FALSE}
+flies_wide %>%
+  t_test(`0_egg` ~ genotype, var.equal = TRUE) %>%
+  add_significance()
+```
+
+```{r warning = FALSE}
+flies_wide %>%
+  cohens_d(`0_egg` ~ genotype, var.equal = TRUE)
+```
+
+The difference in number of eggs on MM and LA1840 grafts is significant (p=0.0468) and the effectsize of the rootstock genotype on the number of eggs is large (d=1.39).
+
+The d-value indicates the difference between the two means in number of standard deviations. So the mean of LA1840 grafts is 1.39 standard deviations higher than that of MM grafts.
+
+### Effect of rootstock genotype on the number of eggs
+
+Similar to the previous findings on normal LA1840 and MM plants, the number of eggs are increased on grafts with an LA1840 rootstock compared to grafts with a MM rootstock. This indicates that the signal responsible for the increased oviposition is transported from the LA1840 rootstock to the MM scion.
+
+
+## Hatching
+
 
