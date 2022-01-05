@@ -193,4 +193,141 @@ Similar to the previous findings on normal LA1840 and MM plants, the number of e
 
 ## Hatching
 
+Is there an effect of rootstock genotype on the hatching of the eggs? For this I will use the absolute number of hatched eggs, as well as the percentage.
 
+### absolute number of hatched eggs
+
+An overview of the data:
+```{r warning = FALSE}
+flies_wide %>%  
+  mutate(day = as.factor(day)) %>%
+  group_by(genotype) %>%
+  dplyr::filter(day=="2") %>%
+  get_summary_stats(hatched, type = "mean_sd")
+```
+
+```{r warning = FALSE}
+flies_wide %>%  
+  mutate(day = as.factor(day)) %>%
+  dplyr::filter(day == "2") %>% 
+  ggplot(., aes(x = genotype, y = hatched)) +
+  geom_boxplot()  +
+  geom_jitter(size = 1, alpha = 0.5, width = 0.1) +
+  labs(y="number of hatched eggs",
+       x= "rootstock genotype") +
+  theme_classic()
+```
+Shapiro-Wilk test:
+```{r warning = FALSE}
+flies_wide %>%  
+  mutate(day = as.factor(day)) %>%
+  dplyr::filter(day == "2") %>%
+  group_by(genotype) %>%
+  shapiro_test(hatched)
+```
+Levene's test
+```{r warning = FALSE}
+flies_wide %>%  
+  mutate(day = as.factor(day)) %>%
+  dplyr::filter(day == "2") %>%
+  levene_test(hatched~genotype)
+```
+Identifying extreme outliers:
+```{r warning = FALSE}
+flies_wide %>%  
+  mutate(day = as.factor(day)) %>%
+  dplyr::filter(day == "2") %>%
+  group_by(genotype) %>%
+  identify_outliers(hatched)
+```
+
+The assumptions for a t-test are met.
+```{r warning = FALSE}
+flies_wide %>%  
+  mutate(day = as.factor(day)) %>%
+  dplyr::filter(day == "2") %>%
+  t_test(hatched ~ genotype, var.equal = TRUE) %>%
+  add_significance()
+```
+```{r warning = FALSE}
+flies_wide %>%  
+  mutate(day = as.factor(day)) %>%
+  dplyr::filter(day == "2") %>%
+  cohens_d(hatched ~ genotype, var.equal = TRUE)
+```
+
+Again, there is a significant difference between LA1840 and MM grafts (p=0.04) with a large effectsize of the rootstock genotype (d=1.45).
+This could, however, be caused by the difference in number of eggs. Therefore, I will also check the percentage of eggs that hatched
+
+### Percentage of hatching
+
+An overview of the data:
+```{r warning = FALSE}
+flies_wide <- flies_wide %>%
+  mutate(perc_hatched = hatched/eggs_start*100) %>%  
+  mutate(day = as.factor(day))
+
+flies_wide %>%
+  group_by(genotype) %>%
+  dplyr::filter(day=="2") %>%
+  get_summary_stats(perc_hatched, type = "mean_sd")
+```
+```{r}
+flies_wide %>%
+  dplyr::filter(day == "2") %>% 
+  ggplot(., aes(x = genotype, y = perc_hatched)) +
+  geom_boxplot()  +
+  geom_jitter(size = 1, alpha = 0.5, width = 0.1) +
+  labs(y="hatched eggs (%)",
+       x= "rootstock genotype") +
+  theme_classic()
+```
+
+Shapiro-Wilk test:
+```{r warning = FALSE}
+flies_wide %>% 
+  dplyr::filter(day == "2") %>%
+  group_by(genotype) %>%
+  shapiro_test(perc_hatched)
+```
+
+Levene's test
+```{r warning = FALSE}
+flies_wide %>% 
+  dplyr::filter(day == "2") %>%
+  levene_test(perc_hatched~genotype)
+```
+
+Identifying extreme outliers:
+```{r warning = FALSE}
+flies_wide %>%
+  dplyr::filter(day == "2") %>%
+  group_by(genotype) %>%
+  identify_outliers(perc_hatched)
+```
+
+The assumptions for a t-test are met.
+```{r warning = FALSE}
+flies_wide %>%
+  dplyr::filter(day == "2") %>%
+  t_test(perc_hatched ~ genotype, var.equal = TRUE) %>%
+  add_significance()
+```
+
+```{r warning = FALSE}
+flies_wide %>% 
+  dplyr::filter(day == "2") %>%
+  cohens_d(perc_hatched ~ genotype, var.equal = TRUE)
+```
+
+There is no difference in the percentage of hatched eggs between the two rootstock genotypes.
+There is, however, a large variation in hatching between plants
+
+
+### Effect of rootstock genotype on hatching
+
+Although the LA1840 grafts have a higher number of hatched eggs, the grafting itself does not seem to be influenced by the rootstock, as the percentage of hatched eggs is equal on the LA1840 and MM grafts. 
+
+## Nymph development
+
+For the nymph development, I want to focus on the development from first instar to fourth instar. To cancel-out effect on oviposition and variation in hatching, take percentage of later nymphs from first instars.
