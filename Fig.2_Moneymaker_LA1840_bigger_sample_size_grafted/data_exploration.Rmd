@@ -389,6 +389,63 @@ flies_total$stage <- factor(flies_total$stage,
 knitr::kable(flies_total[1:10,1:4])
 ```
 
+And also for the numbers relative to eggs and hatched eggs
+```{r}
+# new  wide dataframe from flies_total for numbers relative to eggs
+flies_relative_eggs <- flies_total %>%
+  pivot_wider(names_from = stage, values_from = number)
+
+# make a column for each stage relative to eggs
+flies_relative_eggs <- flies_relative_eggs %>%
+  mutate(eggs = eggs_start/eggs_start*100) %>%
+  mutate(hatched_eggs = hatched/eggs_start*100) %>%
+  mutate(second = second_instars/eggs_start*100) %>%
+  mutate(third = third_instars/eggs_start*100) %>%
+  mutate(fourth = fourth_instars/eggs_start*100)
+
+# remove absolute numbers and make long
+flies_relative_eggs <- flies_relative_eggs %>%
+  select(!c(eggs_start:fourth_instars)) %>%
+  pivot_longer(cols = eggs:fourth, 
+               names_to = "stage", values_to = "perc_from_eggs")
+
+# order the developmental stages
+flies_relative_eggs$stage <- factor(flies_relative_eggs$stage, 
+                          levels= c("eggs", "hatched_eggs", "second", 
+                                    "third", "fourth"))
+
+# The first 10 rows of the data
+knitr::kable(flies_relative_eggs[1:10,1:4])
+```
+
+```{r}
+# new  wide dataframe from flies_total for numbers relative to hatched
+flies_relative_hatched <- flies_total %>%
+  pivot_wider(names_from = stage, values_from = number)
+
+# make a column for each stage relative to hatched
+flies_relative_hatched <- flies_relative_hatched %>%
+  mutate(eggs = eggs_start/hatched*100) %>%
+  mutate(hatched_eggs = hatched/hatched*100) %>%
+  mutate(second = second_instars/hatched*100) %>%
+  mutate(third = third_instars/hatched*100) %>%
+  mutate(fourth = fourth_instars/hatched*100)
+
+# remove absolute numbers and make long
+flies_relative_hatched <- flies_relative_hatched %>%
+  select(!c(eggs_start:fourth_instars)) %>%
+  pivot_longer(cols = eggs:fourth, 
+               names_to = "stage", values_to = "perc_from_hatched")
+
+# order the developmental stages
+flies_relative_hatched$stage <- factor(flies_relative_hatched$stage, 
+                          levels= c("eggs", "hatched_eggs", "second", 
+                                    "third", "fourth"))
+
+# The first 10 rows of the data
+knitr::kable(flies_relative_hatched[1:10,1:4])
+```
+
 What happens in the absolute numbers through the development?
 
 ```{r}
@@ -404,4 +461,72 @@ flies_total %>%
   theme_classic()
 ```
 
+The number of nymphs appears to be higher on LA1840 grafts, but this could be the result of the higher number of eggs, as discussed above.
+
+What happens if we look at the number of nymphs relative to the number of hatched eggs?
+
+```{r}
+flies_relative_hatched %>%    
+  dplyr::filter(stage != "eggs") %>%    
+  dplyr::filter(stage != "hatched_eggs") %>%  
+  group_by(genotype, stage) %>% 
+  ggplot(., aes(x = stage, y = perc_from_hatched)) +
+  facet_wrap( vars(genotype), nrow = 1) +
+  geom_boxplot(aes(color = genotype))   +
+  geom_jitter(size = 1, alpha = 0.5, width = 0.1) +
+  labs(y="number of nymphs relative to hatched (%)",
+       x= "developmental stage") +
+  theme_classic()
+```
+
+Now it seems like a larger percentage of eggs which hatched on MM grafts developed into fourth instar nymph than on LA1840 grafts.
+
+Is this a significant difference?
+
+An overview of the data:
+```{r warning = FALSE}
+flies_relative_hatched %>%
+  group_by(genotype) %>%
+  dplyr::filter(stage=="fourth") %>%
+  get_summary_stats(perc_from_hatched, type = "mean_sd")
+```
+
+Shapiro-Wilk test:
+```{r warning = FALSE}
+flies_relative_hatched %>% 
+  dplyr::filter(stage=="fourth") %>%
+  group_by(genotype) %>%
+  shapiro_test(perc_from_hatched)
+```
+
+Levene's test
+```{r warning = FALSE}
+flies_relative_hatched %>%
+  dplyr::filter(stage=="fourth") %>%
+  levene_test(perc_from_hatched~genotype)
+```
+
+Identifying extreme outliers:
+```{r warning = FALSE}
+flies_relative_hatched %>%
+  dplyr::filter(stage=="fourth") %>%
+  group_by(genotype) %>%
+  identify_outliers(perc_from_hatched)
+```
+
+The assumptions for a t-test are met.
+```{r warning = FALSE}
+flies_relative_hatched %>%
+  dplyr::filter(stage=="fourth") %>%
+  t_test(perc_from_hatched ~ genotype, var.equal = TRUE) %>%
+  add_significance()
+```
+
+```{r warning = FALSE}
+flies_relative_hatched %>%
+  dplyr::filter(stage=="fourth") %>%
+  cohens_d(perc_from_hatched ~ genotype, var.equal = TRUE)
+```
+
+The percentage of hatched eggs that develop into fourth instar nymphsis indeed lower on LA1840 grafts than on MM grafts. The rootstock genotype has a large effect (d=1.40) on the development of nymphs into fourth instars after hatching.
 
