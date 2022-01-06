@@ -344,3 +344,64 @@ Although the LA1840 grafts have a higher number of hatched eggs, the grafting it
 ## Nymph development
 
 For the nymph development, I want to focus on the development from first instar to fourth instar. To cancel-out effect on oviposition and variation in hatching, take percentage of later nymphs from first instars.
+
+First, I'll make a new dataframe for the total number of nymphs that passed a developmental stage  for each plant
+```{r}
+# new data set from flies_wide without unnecessary columns
+flies_total <- flies_wide %>%
+  select(!c(`0_egg`, `1_first_instar`, `4_early_fourth_instar`, `5_completed_lifecycle`, total:perc_hatched)) 
+
+# create new columns for the number of nymphs passing a developmental stage
+flies_total <- flies_total %>%
+  mutate(second_instars = rowSums(flies_total[,7:9])) %>%
+  mutate(third_instars = rowSums(flies_total[,8:9])) %>%
+  mutate(fourth_instars = `6_total_fourth_instars`)
+
+# remove unnecessary columns
+flies_total <- flies_total %>%
+  select(!(`2_second_instar`:`6_total_fourth_instars`))
+
+# make data long
+flies_total <- flies_total %>%
+  pivot_longer(cols = eggs_start:fourth_instars, 
+               names_to = "stage", values_to = "number")
+ 
+# make data wide for day
+flies_total <- flies_total %>%
+  select(-date) %>%
+  pivot_wider(names_from = day, values_from = number)  
+
+# make a column for the highest number per developmental stage per plant over time
+flies_total <- flies_total %>%
+  rowwise() %>%
+  mutate(number = max(c_across(`2`:`29`)))
+
+# remove the counts per day
+flies_total <- flies_total %>%
+  select(!c(`2`:`29`))
+
+# order the developmental stages
+flies_total$stage <- factor(flies_total$stage, 
+                          levels= c("eggs_start", "hatched", "second_instars", 
+                                    "third_instars", "fourth_instars"))
+
+# The first 10 rows of the data
+knitr::kable(flies_total[1:10,1:4])
+```
+
+What happens in the absolute numbers through the development?
+
+```{r}
+flies_total %>%  
+  mutate(number = na_if(number, 0)) %>%
+  group_by(genotype, stage) %>% 
+  ggplot(., aes(x = stage, y = number)) +
+  facet_wrap( vars(genotype), nrow = 1) +
+  geom_boxplot(aes(color = genotype))   +
+  geom_jitter(size = 1, alpha = 0.5, width = 0.1) +
+  labs(y="absolute number of nymphs that developed past stage",
+       x= "developmental stage") +
+  theme_classic()
+```
+
+
