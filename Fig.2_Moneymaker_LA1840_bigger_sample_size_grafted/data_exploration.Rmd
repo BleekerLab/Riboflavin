@@ -257,7 +257,7 @@ flies_wide %>%
 ```
 
 Again, there is a significant difference between LA1840 and MM grafts (p=0.04) with a large effectsize of the rootstock genotype (d=1.45).
-This could, however, be caused by the difference in number of eggs. Therefore, I will also check the percentage of eggs that hatched
+This could, however, be caused by the difference in number of eggs. Therefore, I will also check the success of hatching relative to the amount of eggs.
 
 ### Percentage of hatching
 
@@ -321,7 +321,20 @@ flies_wide %>%
 ```
 
 There is no difference in the percentage of hatched eggs between the two rootstock genotypes.
-There is, however, a large variation in hatching between plants
+There is, however, a large variation in hatching between plants, as can be seen in the above boxplot.
+
+
+```{r}
+flies_wide %>%
+  select(!(`1_first_instar`:perc_hatched)) %>%  
+  dplyr::filter(day == "2") %>%
+  pivot_longer(cols = hatched:`0_egg`, 
+               names_to = "stage", values_to = "number") %>%
+  mutate(place = as.factor(place)) %>%
+  anova_test(number ~ stage*genotype + Error(place/stage)) %>%
+  get_anova_table()
+```
+The same result is visible in a two-way repeated measures anova. Although the number of eggs and of hatched eggs differs between the rootstock genotypes and the number of hatched eggs is lower than the initial number of eggs, there is no genotype*stage effect. This means that the rootstock genotype does not influence the hatching rate.
 
 
 ### Effect of rootstock genotype on hatching
