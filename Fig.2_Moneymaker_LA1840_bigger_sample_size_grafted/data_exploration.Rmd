@@ -20,6 +20,11 @@ suppressPackageStartupMessages(library("Hmisc"))
 suppressPackageStartupMessages(library("tidyr"))
 suppressPackageStartupMessages(library("car"))
 suppressPackageStartupMessages(library("rstatix"))
+suppressPackageStartupMessages(library("tidyverse"))
+suppressPackageStartupMessages(library("broom"))
+suppressPackageStartupMessages(library("drc"))
+suppressPackageStartupMessages(library("modelr"))
+suppressPackageStartupMessages(library("egg"))
 ```
 
 # Data import 
@@ -528,5 +533,28 @@ flies_relative_hatched %>%
   cohens_d(perc_from_hatched ~ genotype, var.equal = TRUE)
 ```
 
-The percentage of hatched eggs that develop into fourth instar nymphsis indeed lower on LA1840 grafts than on MM grafts. The rootstock genotype has a large effect (d=1.40) on the development of nymphs into fourth instars after hatching.
+The percentage of hatched eggs that develop into fourth instar nymphs is indeed lower on LA1840 grafts than on MM grafts (p=0.046). The rootstock genotype has a large effect (d=1.40) on the development of nymphs into fourth instars after hatching.
+
+
+### Effect of rootstock genotype on the nymph development
+
+In line with the previous results on normal LA1840 and MM plants, the nymph development is decreased on the LA1840 grafts compared to the MM grafts. Contrary to the previous findings, however, this is only visible in the development relative to the number of hatched eggs.
+
+
+## First conclusions
+
+overall similar to results of Arjen, but diluted.
+Two contradicting effects of LA1840 rootstock on whiteflies: 
+- increased oviposition
+- hampered nymph development
+
+Effects found on MM scion suggests transportable nature of responsible mechanism(s).
+
+
+# Phenotype in detail
+
+Now, let's have a more detailed look at the development.
+
+### Hatching (first instars)
+
 
