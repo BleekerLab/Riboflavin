@@ -2,7 +2,9 @@
 title: "data_exploration"
 author: "Lissy Denkers"
 date: "1/4/2022"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
@@ -82,7 +84,7 @@ flies <- flies %>%
 Remove separate and non-cumulative late fourth instar and exuviae columns.
 ```{r remove unnessesary columns}
 flies <- flies %>%
-  select(-`5_late_fourth_instar`, -`6_exuviea`, -fourth_exuviae)
+  dplyr::select(-`5_late_fourth_instar`, -`6_exuviea`, -fourth_exuviae)
 ```
 
 Now the data can be made long again.
@@ -104,12 +106,12 @@ flies <- flies %>%
 Add a new dataframe for the total number of nymphs per day without percentage, based on "flies"
 ```{r flies_wide}
 flies_wide <- flies  %>%
-  select(-percentage_from_eggs) %>%
-  select(-percentage_from_hatched)
+  dplyr::select(-percentage_from_eggs) %>%
+  dplyr::select(-percentage_from_hatched)
 ```
 
 and make the data wide.
-```{r wide}
+```{r wide2}
 flies_wide <- flies_wide %>%
   mutate(stage = as.factor(stage)) %>%
   pivot_wider(names_from = stage, values_from = number) 
@@ -335,7 +337,7 @@ There is, however, a large variation in hatching between plants, as can be seen 
 
 ```{r}
 flies_wide %>%
-  select(!(`1_first_instar`:perc_hatched)) %>%  
+  dplyr::select(!(`1_first_instar`:perc_hatched)) %>%  
   dplyr::filter(day == "2") %>%
   pivot_longer(cols = hatched:`0_egg`, 
                names_to = "stage", values_to = "number") %>%
@@ -358,7 +360,7 @@ First, I'll make a new dataframe for the total number of nymphs that passed a de
 ```{r}
 # new data set from flies_wide without unnecessary columns
 flies_total <- flies_wide %>%
-  select(!c(`0_egg`, `1_first_instar`, `4_early_fourth_instar`, `5_completed_lifecycle`, total:perc_hatched)) 
+  dplyr::select(!c(`0_egg`, `1_first_instar`, `4_early_fourth_instar`, `5_completed_lifecycle`, total:perc_hatched)) 
 
 # create new columns for the number of nymphs passing a developmental stage
 flies_total <- flies_total %>%
@@ -368,7 +370,7 @@ flies_total <- flies_total %>%
 
 # remove unnecessary columns
 flies_total <- flies_total %>%
-  select(!(`2_second_instar`:`6_total_fourth_instars`))
+  dplyr::select(!(`2_second_instar`:`6_total_fourth_instars`))
 
 # make data long
 flies_total <- flies_total %>%
@@ -377,7 +379,7 @@ flies_total <- flies_total %>%
  
 # make data wide for day
 flies_total <- flies_total %>%
-  select(-date) %>%
+  dplyr::select(-date) %>%
   pivot_wider(names_from = day, values_from = number)  
 
 # make a column for the highest number per developmental stage per plant over time
@@ -387,7 +389,7 @@ flies_total <- flies_total %>%
 
 # remove the counts per day
 flies_total <- flies_total %>%
-  select(!c(`2`:`29`))
+  dplyr::select(!c(`2`:`29`))
 
 # order the developmental stages
 flies_total$stage <- factor(flies_total$stage, 
@@ -414,7 +416,7 @@ flies_relative_eggs <- flies_relative_eggs %>%
 
 # remove absolute numbers and make long
 flies_relative_eggs <- flies_relative_eggs %>%
-  select(!c(eggs_start:fourth_instars)) %>%
+  dplyr::select(!c(eggs_start:fourth_instars)) %>%
   pivot_longer(cols = eggs:fourth, 
                names_to = "stage", values_to = "perc_from_eggs")
 
@@ -442,7 +444,7 @@ flies_relative_hatched <- flies_relative_hatched %>%
 
 # remove absolute numbers and make long
 flies_relative_hatched <- flies_relative_hatched %>%
-  select(!c(eggs_start:fourth_instars)) %>%
+  dplyr::select(!c(eggs_start:fourth_instars)) %>%
   pivot_longer(cols = eggs:fourth, 
                names_to = "stage", values_to = "perc_from_hatched")
 
@@ -786,7 +788,8 @@ tidydrc_model(flies_fourth, day, percentage_from_hatched,
 ```
 
 Trying to figure out how to get the statistics:
-```{r}
+Nest time, use summary(model_test)
+```{r eval=FALSE, include=FALSE}
 # define drm function to use with map
 drm.func <- function(x) {
   drm(first_instars ~ day, 
@@ -806,12 +809,11 @@ df2 <- filter(flies_model, day<15) %>% group_by(genotype) %>% nest() %>%
          pred = map(drmod, predict.fun),
          coefs = map(drmod, coefs.fun))
 
-tidy.drc(df2)
 # summary of coefficients
 df2 %>% unnest(coefs) %>% spread(names, x)
 ```
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 # define drm function to use with map
 drm.func <- function(x) {
   drm(percentage_from_hatched ~ day, 
@@ -834,7 +836,7 @@ df2 <- flies_first %>% group_by(genotype) %>% nest() %>%
 summary(model_test)
 ```
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 # plot raw data, model and ED50 line
 df2 %>%
   unnest(data) %>% 
@@ -857,6 +859,6 @@ df2 %>%
 #               filter(names == "d:(Intercept)")) +
 ```
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 df3 <- bind_cols(df2, test)
 ```
