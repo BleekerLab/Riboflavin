@@ -562,6 +562,26 @@ Now, let's have a more detailed look at the development.
 ### Hatching (first instars)
 
 ```{r}
+# new data set from flies_wide without unnecessary columns
+flies_model <- flies_wide %>%
+  mutate(day = as.numeric(as.character(day))) %>%
+  dplyr::select(!c(`0_egg`, `4_early_fourth_instar`, `5_completed_lifecycle`, 
+                   total:perc_hatched)) 
+
+# create new columns for the cumulative number of nymphs per developmental stage
+flies_model <- flies_model %>%
+  mutate(first_instars = rowSums(flies_model[,7:10])) %>%
+  mutate(second_instars = rowSums(flies_model[,8:10])) %>%
+  mutate(third_instars = rowSums(flies_model[,9:10])) %>%
+  mutate(fourth_instars = `6_total_fourth_instars`)
+
+# update columns for the percentage of nymphs from hatched per stage
+flies_model <- flies_model %>%
+  mutate(first_instars = first_instars/hatched*100) %>%
+  mutate(second_instars = second_instars/hatched*100) %>%
+  mutate(third_instars = third_instars/hatched*100) %>%
+  mutate(fourth_instars = fourth_instars/hatched*100)
+
 flies_first <- flies %>%
   dplyr::filter(stage=="1_first_instar") %>%
   dplyr::select(-eggs_start, -hatched, -percentage_from_eggs)
@@ -589,6 +609,31 @@ tidydrc_model(flies_first, day, percentage_from_hatched, model = lgaussian(),
   labs(x = "days after infection", y = "number relative to total hatched eggs (%)") +
   ylim(0,120)
 ```
+and cumulative:
+```{r warning=FALSE}
+#set-up first model
+model_test<- drm(first_instars ~ day,
+                data = filter(flies_model, day<15), 
+                fct = W2.3())
+
+#select model with best fit
+mselect(model_test, list(W1.3 (),
+                        W1.4 (), 
+                        W2.3 (), 
+                        W2.4 (),  
+                        LL.3 ()))
+```
+W1.3 has the best fit.
+
+```{r warning=FALSE}
+tidydrc_model(filter(flies_model, day<15), day, first_instars, 
+              model = W1.3(names = c("Slope", "Upper Limit", "ED50")),
+              genotype) %>%
+  tidydrc_plot(ed50 = F, color = ~genotype, confint = T) + 
+  labs(x = "days after infection", y = "relative cumulative number of first instars (%)") +
+  ylim(0,120)
+```
+
 
 ### Second instars
 
@@ -621,6 +666,32 @@ tidydrc_model(flies_second, day, percentage_from_hatched, model = lgaussian(),
   ylim(0,100)
 ```
 
+and cumulative:
+```{r warning=FALSE}
+#set-up first model
+model_test<- drm(second_instars ~ day,
+                data = filter(flies_model, day<20), 
+                fct = W2.3())
+
+#select model with best fit
+mselect(model_test, list(W1.3 (),
+                        W1.4 (), 
+                        W2.3 (), 
+                        W2.4 (),  
+                        LL.3 ()))
+```
+LL.3 has the best fit.
+
+```{r warning=FALSE}
+tidydrc_model(filter(flies_model, day<20), day, second_instars, 
+              model = LL.3(names = c("Slope", "Upper Limit", "ED50")),
+              genotype) %>%
+  tidydrc_plot(ed50 = F, color = ~genotype, confint = T) + 
+  labs(x = "days after infection", y = "relative cumulative number of second instars (%)") +
+  ylim(0,110)
+```
+
+
 ### Third instars
 
 ```{r}
@@ -652,7 +723,33 @@ tidydrc_model(flies_third, day, percentage_from_hatched, model = lgaussian(),
   ylim(0,100)
 ```
 
-### Hatching (first instars)
+and cumulative:
+```{r warning=FALSE}
+#set-up first model
+model_test<- drm(third_instars ~ day,
+                data = flies_model, 
+                fct = W2.3())
+
+#select model with best fit
+mselect(model_test, list(W1.3 (),
+                        W1.4 (), 
+                        W2.3 (), 
+                        W2.4 (),  
+                        LL.3 ()))
+```
+W1.3 has the best fit.
+
+```{r warning=FALSE}
+tidydrc_model(flies_model, day, third_instars, 
+              model = W1.3(names = c("Slope", "Upper Limit", "ED50")),
+              genotype) %>%
+  tidydrc_plot(ed50 = F, color = ~genotype, confint = T) + 
+  labs(x = "days after infection", y = "relative cumulative number of third instars (%)") +
+  ylim(-1,100)
+```
+
+
+### Fourth instars
 
 ```{r}
 flies_fourth <- flies %>%
@@ -684,11 +781,36 @@ tidydrc_model(flies_fourth, day, percentage_from_hatched,
               model = LL.3(names = c("Slope", "Upper Limit", "ED50")),
               genotype) %>%
   tidydrc_plot(ed50 = F, color = ~genotype, confint = T) + 
-  labs(x = "days after infection", y = "number relative to total hatched eggs (%)") +
+  labs(x = "days after infection", y = "relative cumulative number of third instars (%)") +
   ylim(0,100)
 ```
 
 Trying to figure out how to get the statistics:
+```{r}
+# define drm function to use with map
+drm.func <- function(x) {
+  drm(first_instars ~ day, 
+      fct = W1.3(names = c("Slope", "Upper Limit", "ED50")), 
+      data = x)
+}
+
+predict.fun <- function(x) {
+  add_predictions(data.frame(day = seq(0,15)), x)
+}
+
+coefs.fun <- function(x) {coef(x) %>% tibble()}
+
+
+df2 <- filter(flies_model, day<15) %>% group_by(genotype) %>% nest() %>%
+  mutate(drmod = map(data, drm.func), 
+         pred = map(drmod, predict.fun),
+         coefs = map(drmod, coefs.fun))
+
+tidy.drc(df2)
+# summary of coefficients
+df2 %>% unnest(coefs) %>% spread(names, x)
+```
+
 ```{r}
 # define drm function to use with map
 drm.func <- function(x) {
