@@ -14,6 +14,7 @@ knitr::opts_chunk$set(echo = TRUE,
                       fig.align = "center")
 suppressPackageStartupMessages(library("ggplot2"))
 suppressPackageStartupMessages(library("ggrepel"))
+suppressPackageStartupMessages(library("plyr"))
 suppressPackageStartupMessages(library("dplyr"))
 suppressPackageStartupMessages(library("skimr"))
 suppressPackageStartupMessages(library("Hmisc"))
@@ -25,6 +26,9 @@ suppressPackageStartupMessages(library("broom"))
 suppressPackageStartupMessages(library("drc"))
 suppressPackageStartupMessages(library("modelr"))
 suppressPackageStartupMessages(library("egg"))
+suppressPackageStartupMessages(library("tidydrc"))
+suppressPackageStartupMessages(library("aomisc"))
+suppressPackageStartupMessages(library("devtools"))
 ```
 
 # Data import 
@@ -557,4 +561,180 @@ Now, let's have a more detailed look at the development.
 
 ### Hatching (first instars)
 
+```{r}
+flies_first <- flies %>%
+  dplyr::filter(stage=="1_first_instar") %>%
+  dplyr::select(-eggs_start, -hatched, -percentage_from_eggs)
+```
 
+I want to use the right model, so that it the first step. The drc package has a function for selection the best fitting model, but needs an initial model to start with.
+```{r warning=FALSE}
+#set-up first model
+model_test<- drm(percentage_from_hatched ~ day,
+                data = flies_first, 
+                fct = lgaussian())
+
+#select model with best fit
+mselect(model_test, list(gaussian(), lgaussian()))
+```
+
+The data follows a skewed bell-shaped pattern, so the best fitting model is lgaussian.
+
+```{r warning=FALSE}
+
+
+tidydrc_model(flies_first, day, percentage_from_hatched, model = lgaussian(),
+              genotype) %>%
+  tidydrc_plot(ed50 = F, color = ~genotype, confint = T) + 
+  labs(x = "days after infection", y = "number relative to total hatched eggs (%)") +
+  ylim(0,120)
+```
+
+### Second instars
+
+```{r}
+flies_second <- flies %>%
+  dplyr::filter(stage=="2_second_instar") %>%
+  dplyr::select(-eggs_start, -hatched, -percentage_from_eggs)
+```
+
+I want to use the right model, so that it the first step. The drc package has a function for selection the best fitting model, but needs an initial model to start with.
+```{r warning=FALSE}
+#set-up first model
+model_test<- drm(percentage_from_hatched ~ day,
+                data = flies_second, 
+                fct = lgaussian())
+
+#select model with best fit
+mselect(model_test, list(gaussian(), lgaussian()))
+```
+
+The data follows a skewed bell-shaped pattern, so the best fitting model is lgaussian.
+
+```{r warning=FALSE}
+
+
+tidydrc_model(flies_second, day, percentage_from_hatched, model = lgaussian(),
+              genotype) %>%
+  tidydrc_plot(ed50 = F, color = ~genotype, confint = T) + 
+  labs(x = "days after infection", y = "relative number of second instars (%)") +
+  ylim(0,100)
+```
+
+### Third instars
+
+```{r}
+flies_third <- flies %>%
+  dplyr::filter(stage=="3_third_instar") %>%
+  dplyr::select(-eggs_start, -hatched, -percentage_from_eggs)
+```
+
+I want to use the right model, so that it the first step. The drc package has a function for selection the best fitting model, but needs an initial model to start with.
+```{r warning=FALSE}
+#set-up first model
+model_test<- drm(percentage_from_hatched ~ day,
+                data = flies_third, 
+                fct = lgaussian())
+
+#select model with best fit
+mselect(model_test, list(gaussian(), lgaussian()))
+```
+
+The data follows a skewed bell-shaped pattern, so the best fitting model is lgaussian.
+
+```{r warning=FALSE}
+
+
+tidydrc_model(flies_third, day, percentage_from_hatched, model = lgaussian(),
+              genotype) %>%
+  tidydrc_plot(ed50 = F, color = ~genotype, confint = T) + 
+  labs(x = "days after infection", y = "number relative to total hatched eggs (%)") +
+  ylim(0,100)
+```
+
+### Hatching (first instars)
+
+```{r}
+flies_fourth <- flies %>%
+  dplyr::filter(stage=="6_total_fourth_instars") %>%
+  dplyr::select(-eggs_start, -hatched, -percentage_from_eggs)
+```
+
+I want to use the right model, so that it the first step. The drc package has a function for selection the best fitting model, but needs an initial model to start with.
+```{r warning=FALSE}
+#set-up first model
+model_test<- drm(percentage_from_hatched ~ day,
+                data = flies_fourth, 
+                fct = W2.3())
+
+#select model with best fit
+mselect(model_test, list(W1.3 (),
+                        W1.4 (), 
+                        W2.3 (), 
+                        W2.4 (),  
+                        LL.3 ()))
+```
+
+The best fitting model is LL.3.
+
+```{r warning=FALSE}
+
+
+tidydrc_model(flies_fourth, day, percentage_from_hatched, 
+              model = LL.3(names = c("Slope", "Upper Limit", "ED50")),
+              genotype) %>%
+  tidydrc_plot(ed50 = F, color = ~genotype, confint = T) + 
+  labs(x = "days after infection", y = "number relative to total hatched eggs (%)") +
+  ylim(0,100)
+```
+
+Trying to figure out how to get the statistics:
+```{r}
+# define drm function to use with map
+drm.func <- function(x) {
+  drm(percentage_from_hatched ~ day, 
+      fct = lgaussian(), 
+      data = x)
+}
+
+predict.fun <- function(x) {
+  add_predictions(data.frame(day = seq(0,30)), x)
+}
+
+coefs.fun <- function(x) {coef(x) %>% tibble()}
+
+
+df2 <- flies_first %>% group_by(genotype) %>% nest() %>%
+  mutate(drmod = map(data, drm.func), 
+         pred = map(drmod, predict.fun),
+         coefs = map(drmod, coefs.fun))
+
+summary(model_test)
+```
+
+```{r}
+# plot raw data, model and ED50 line
+df2 %>%
+  unnest(data) %>% 
+  ggplot() + 
+  geom_point(aes(day, 
+                 percentage_from_hatched, 
+                 color = genotype)) +
+  geom_line(aes(day, 
+                pred, 
+                color = genotype), 
+            data = df2 %>% 
+              unnest(pred)) +
+    theme_bw() 
+
+#geom_vline(aes(xintercept = x, 
+#                 color = genotype), 
+#             linetype = 5,
+#             data = df2 %>% 
+#               unnest(coefs) %>% 
+#               filter(names == "d:(Intercept)")) +
+```
+
+```{r}
+df3 <- bind_cols(df2, test)
+```
