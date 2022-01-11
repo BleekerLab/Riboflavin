@@ -559,9 +559,9 @@ Effects found on MM scion suggests transportable nature of responsible mechanism
 
 # Phenotype in detail
 
-Now, let's have a more detailed look at the development.
+Now, let's have a more detailed look at the development. Because I am specifically interested in the effect of the rootstock genotype on the development of the nymphs and we just saw a variation in hatching and an effect of the rootstock genotype on the number of eggs, I will use nymph numbers relative to the number of hatched eggs. 
 
-### Hatching (first instars)
+## Hatching (first instars)
 
 ```{r}
 # new data set from flies_wide without unnecessary columns
@@ -593,6 +593,7 @@ I want to use the right model, so that it the first step. The drc package has a 
 ```{r warning=FALSE}
 #set-up first model
 model_test<- drm(percentage_from_hatched ~ day,
+                 curveid = genotype,
                 data = flies_first, 
                 fct = lgaussian())
 
@@ -608,15 +609,19 @@ The data follows a skewed bell-shaped pattern, so the best fitting model is lgau
 tidydrc_model(flies_first, day, percentage_from_hatched, model = lgaussian(),
               genotype) %>%
   tidydrc_plot(ed50 = F, color = ~genotype, confint = T) + 
-  labs(x = "days after infection", y = "number relative to total hatched eggs (%)") +
-  ylim(0,120)
+  labs(x = "days after infection", y = "relative number of first instars (%)") 
+ # ylim(0,120)
 ```
 and cumulative:
 ```{r warning=FALSE}
 #set-up first model
 model_test<- drm(first_instars ~ day,
+                 curveid = genotype,
                 data = filter(flies_model, day<15), 
-                fct = W2.3())
+                fct = W2.3(),
+                pmodels = list(~genotype,
+                               ~genotype,
+                               ~genotype))
 
 #select model with best fit
 mselect(model_test, list(W1.3 (),
@@ -632,12 +637,39 @@ tidydrc_model(filter(flies_model, day<15), day, first_instars,
               model = W1.3(names = c("Slope", "Upper Limit", "ED50")),
               genotype) %>%
   tidydrc_plot(ed50 = F, color = ~genotype, confint = T) + 
-  labs(x = "days after infection", y = "relative cumulative number of first instars (%)") +
-  ylim(0,120)
+  labs(x = "days after infection", y = "cumulative relative number of first instars (%)") 
+  
 ```
 
+The two curves are mostly overlapping. Are there any differences?
 
-### Second instars
+```{r statistics first instars}
+model_stats <- drm(first_instars ~ day,
+                 curveid = genotype,
+                data = filter(flies_model, day<15), 
+                fct = W1.3(names = c("Slope", 
+                                     "Upper Limit", 
+                                     "ED50")),
+                pmodels = list(~genotype,
+                               ~genotype,
+                               ~genotype))
+
+
+model_test <- drm(first_instars ~ day,
+                data = filter(flies_model, day<15), 
+                fct = W1.3(names = c("Slope", 
+                                     "Upper Limit", 
+                                     "ED50")))
+
+# Global comparison
+anova(model_stats, model_test)
+
+# comparison of individual parameters 
+summary(model_stats)
+```
+No, the hatching of first instars from the eggs is simmilar for the two rootstock genotypes.
+
+## Second instars
 
 ```{r}
 flies_second <- flies %>%
@@ -665,15 +697,19 @@ tidydrc_model(flies_second, day, percentage_from_hatched, model = lgaussian(),
               genotype) %>%
   tidydrc_plot(ed50 = F, color = ~genotype, confint = T) + 
   labs(x = "days after infection", y = "relative number of second instars (%)") +
-  ylim(0,100)
+  ylim(-4,100)
 ```
 
 and cumulative:
 ```{r warning=FALSE}
 #set-up first model
 model_test<- drm(second_instars ~ day,
+                 curveid = genotype,
                 data = filter(flies_model, day<20), 
-                fct = W2.3())
+                fct = W2.3(),
+                pmodels = list(~genotype,
+                               ~genotype,
+                               ~genotype))
 
 #select model with best fit
 mselect(model_test, list(W1.3 (),
@@ -689,12 +725,40 @@ tidydrc_model(filter(flies_model, day<20), day, second_instars,
               model = LL.3(names = c("Slope", "Upper Limit", "ED50")),
               genotype) %>%
   tidydrc_plot(ed50 = F, color = ~genotype, confint = T) + 
-  labs(x = "days after infection", y = "relative cumulative number of second instars (%)") +
-  ylim(0,110)
+  labs(x = "days after infection", y = "cumulative relative number of second instars (%)") +
+  ylim(-0.5,110)
 ```
 
+The two curves are mostly, but not completely overlapping. Are there any differences?
 
-### Third instars
+```{r statistics second instars}
+model_stats <- drm(second_instars ~ day,
+                 curveid = genotype,
+                data = filter(flies_model, day<20), 
+                fct = LL.3(names = c("Slope", 
+                                     "Upper Limit", 
+                                     "ED50")),
+                pmodels = list(~genotype,
+                               ~genotype,
+                               ~genotype))
+
+
+model_test <- drm(second_instars ~ day,
+                data = filter(flies_model, day<20), 
+                fct = LL.3(names = c("Slope", 
+                                     "Upper Limit", 
+                                     "ED50")))
+
+# Global comparison
+anova(model_stats, model_test)
+
+# comparison of individual parameters 
+summary(model_stats)
+```
+Globally, the curves of the two genotypes are similar, but they do have a different ED50 (p=0.044). The development of 50% of the nymphs to second instar stage is 0.5 (SE=0.2) day faster on LA1840 grafts than on MM grafts.
+
+
+## Third instars
 
 ```{r}
 flies_third <- flies %>%
@@ -721,16 +785,20 @@ The data follows a skewed bell-shaped pattern, so the best fitting model is lgau
 tidydrc_model(flies_third, day, percentage_from_hatched, model = lgaussian(),
               genotype) %>%
   tidydrc_plot(ed50 = F, color = ~genotype, confint = T) + 
-  labs(x = "days after infection", y = "number relative to total hatched eggs (%)") +
-  ylim(0,100)
+  labs(x = "days after infection", y = "relative number of third instars (%)") +
+  ylim(-4,100)
 ```
 
 and cumulative:
 ```{r warning=FALSE}
 #set-up first model
 model_test<- drm(third_instars ~ day,
+                 curveid = genotype,
                 data = flies_model, 
-                fct = W2.3())
+                fct = W2.3(),
+                pmodels = list(~genotype,
+                               ~genotype,
+                               ~genotype))
 
 #select model with best fit
 mselect(model_test, list(W1.3 (),
@@ -746,12 +814,39 @@ tidydrc_model(flies_model, day, third_instars,
               model = W1.3(names = c("Slope", "Upper Limit", "ED50")),
               genotype) %>%
   tidydrc_plot(ed50 = F, color = ~genotype, confint = T) + 
-  labs(x = "days after infection", y = "relative cumulative number of third instars (%)") +
+  labs(x = "days after infection", y = "cumulative relative number of third instars (%)") +
   ylim(-1,100)
 ```
+Although there is stil overlap between the curves, it appears like a difference is starting to form. Are there any significant differences?
+
+```{r statistics third instars}
+model_stats <- drm(third_instars ~ day,
+                 curveid = genotype,
+                data = flies_model, 
+                fct = W1.3(names = c("Slope", 
+                                     "Upper Limit", 
+                                     "ED50")),
+                pmodels = list(~genotype,
+                               ~genotype,
+                               ~genotype))
 
 
-### Fourth instars
+model_test <- drm(third_instars ~ day,
+                data = flies_model, 
+                fct = W1.3(names = c("Slope", 
+                                     "Upper Limit", 
+                                     "ED50")))
+
+# Global comparison
+anova(model_stats, model_test)
+
+# comparison of individual parameters 
+summary(model_stats)
+```
+
+There is a global difference between the curves of the two rootstock genotypes (p=0.018). For the individual parameters, this difference can be found in the upper limit (p=0.029), which is 4.4 (SE=2.0) higher for MM grafts than for LA1840 grafts
+
+## Fourth instars
 
 ```{r}
 flies_fourth <- flies %>%
@@ -763,8 +858,12 @@ I want to use the right model, so that it the first step. The drc package has a 
 ```{r warning=FALSE}
 #set-up first model
 model_test<- drm(percentage_from_hatched ~ day,
+                 curveid = genotype,
                 data = flies_fourth, 
-                fct = W2.3())
+                fct = W2.3(),
+                pmodels = list(~genotype,
+                               ~genotype,
+                               ~genotype))
 
 #select model with best fit
 mselect(model_test, list(W1.3 (),
@@ -783,82 +882,44 @@ tidydrc_model(flies_fourth, day, percentage_from_hatched,
               model = LL.3(names = c("Slope", "Upper Limit", "ED50")),
               genotype) %>%
   tidydrc_plot(ed50 = F, color = ~genotype, confint = T) + 
-  labs(x = "days after infection", y = "relative cumulative number of third instars (%)") +
+  labs(x = "days after infection", y = "relative cumulative number of fourth instars (%)") +
   ylim(0,100)
 ```
 
-Trying to figure out how to get the statistics:
-Nest time, use summary(model_test)
-```{r eval=FALSE, include=FALSE}
-# define drm function to use with map
-drm.func <- function(x) {
-  drm(first_instars ~ day, 
-      fct = W1.3(names = c("Slope", "Upper Limit", "ED50")), 
-      data = x)
-}
+The curves of the two treatments do not overlap, so let's see if they are indeed different and which specific parameters are influenced strongest.
 
-predict.fun <- function(x) {
-  add_predictions(data.frame(day = seq(0,15)), x)
-}
+```{r statistics fourth instars}
+model_stats <- drm(percentage_from_hatched ~ day,
+                 curveid = genotype,
+                data = flies_fourth, 
+                fct = LL.3(names = c("Slope", 
+                                     "Upper Limit", 
+                                     "ED50")),
+                pmodels = list(~genotype,
+                               ~genotype,
+                               ~genotype))
 
-coefs.fun <- function(x) {coef(x) %>% tibble()}
+model_test <- drm(percentage_from_hatched ~ day,
+                data = flies_fourth, 
+                fct = LL.3(names = c("Slope", 
+                                     "Upper Limit", 
+                                     "ED50")))
 
+# Global comparison
+anova(model_stats, model_test)
 
-df2 <- filter(flies_model, day<15) %>% group_by(genotype) %>% nest() %>%
-  mutate(drmod = map(data, drm.func), 
-         pred = map(drmod, predict.fun),
-         coefs = map(drmod, coefs.fun))
-
-# summary of coefficients
-df2 %>% unnest(coefs) %>% spread(names, x)
+# comparison of individual parameters 
+summary(model_stats)
 ```
+The ANOVA compares a model based on the pooled data of the two genotypes to the model used to compare the genotypes. This global test shows that the rootstock genotypes indeed have different curves (p<0.0001): The rootstock genotype has an effect on the development to fourth instar nymphs.
 
-```{r eval=FALSE, include=FALSE}
-# define drm function to use with map
-drm.func <- function(x) {
-  drm(percentage_from_hatched ~ day, 
-      fct = lgaussian(), 
-      data = x)
-}
-
-predict.fun <- function(x) {
-  add_predictions(data.frame(day = seq(0,30)), x)
-}
-
-coefs.fun <- function(x) {coef(x) %>% tibble()}
+The parameters with significant diferences are the upper limit (p=0.017) and ED50 (p=0.021). The upper limit of MM is 7.4 (SE=3.1) higher than that of LA1840. The ED50 indicates the day at which 50% of nymphs have reached fourth instar stage and is 0.6 (SE=0.2) day earlier for MM than for LA1840. In other words, nymphs on grafts with a MM rootstock develop faster and more into fourth instar nymphs, than those on grafts with an LA1840 rootstock.
 
 
-df2 <- flies_first %>% group_by(genotype) %>% nest() %>%
-  mutate(drmod = map(data, drm.func), 
-         pred = map(drmod, predict.fun),
-         coefs = map(drmod, coefs.fun))
+## Conclusion on details
 
-summary(model_test)
-```
+Overall, we can see a difference in development between MM and LA1840 grafts that is increasing over time. The hatching happens simultaneously and in the same relative amounts on MM and LA1840 grafts, but the developmental speed and relative amount of nymphs developing to the next stage gradually decrease on LA1840 in the later stages. This leads to the conclusion that an LA1840 has a negative effect on the development of whitefly nymphs on the MM scion.
 
-```{r eval=FALSE, include=FALSE}
-# plot raw data, model and ED50 line
-df2 %>%
-  unnest(data) %>% 
-  ggplot() + 
-  geom_point(aes(day, 
-                 percentage_from_hatched, 
-                 color = genotype)) +
-  geom_line(aes(day, 
-                pred, 
-                color = genotype), 
-            data = df2 %>% 
-              unnest(pred)) +
-    theme_bw() 
+# Final conclusion
 
-#geom_vline(aes(xintercept = x, 
-#                 color = genotype), 
-#             linetype = 5,
-#             data = df2 %>% 
-#               unnest(coefs) %>% 
-#               filter(names == "d:(Intercept)")) +
-```
-
-```{r eval=FALSE, include=FALSE}
-df3 <- bind_cols(df2, test)
-```
+On normal LA1840 plants, whitefly adults have an increased oviposition, while the nymphs hatched from those eggs have a strongly hampered development. Here, we used grafts of MM scions on MM and LA1840 rootstocks, to test if the observed phenotype is phloem-mobile. On the LA1840 grafts, we again saw an increased number of eggs and a decreased relative number of fourth instars. 
