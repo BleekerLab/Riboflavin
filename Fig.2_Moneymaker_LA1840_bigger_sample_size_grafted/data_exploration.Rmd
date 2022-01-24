@@ -37,7 +37,7 @@ suppressPackageStartupMessages(library("devtools"))
 
 ## Background information
 
-This is the data of the whitefly development bioassay on grafts of MM and LA1840. The nymphs in all developmental stages (first to fourth instar) were counted every other day. After the fourth instar stage, whiteflies develop into adults, leaving behind the larval skin called exuviae. Nymphs in the last phase of fourth instar stage and exuviae were removed from the leaf after each count to prevent a whitefly outbreak in the greanhouse.
+This is the data of the whitefly development bioassay on grafts of MM and LA1840. The nymphs in all developmental stages (first to fourth instar) were counted every other day. After the fourth instar stage, whiteflies develop into adults, leaving behind the larval skin called exuviae. Nymphs in the last phase of fourth instar stage and exuviae were removed from the leaf after each count to prevent a whitefly outbreak in the greenhouse.
 
 See metadata file for more information.
 
