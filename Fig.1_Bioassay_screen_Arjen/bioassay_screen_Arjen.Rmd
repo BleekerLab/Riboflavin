@@ -124,4 +124,11 @@ p3 <- flies %>%
 ```
 
 # statistics
+```{r two-way ANOVA}
+flies %>%
+  mutate(id = paste(genotype, replicate, sep = "_")) %>%
+  anova_test(number ~ stage*genotype + Error(id/stage)) %>%
+  get_anova_table()
+```
+
 
