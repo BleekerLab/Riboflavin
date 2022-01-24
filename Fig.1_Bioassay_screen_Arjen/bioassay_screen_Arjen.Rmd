@@ -16,9 +16,112 @@ knitr::opts_chunk$set(echo = FALSE,
                       fig.align = "center")
 suppressPackageStartupMessages(library("ggplot2"))
 suppressPackageStartupMessages(library("ggpubr"))
+suppressPackageStartupMessages(library("ggpubfigs"))
+suppressPackageStartupMessages(library("patchwork"))
 suppressPackageStartupMessages(library("multcomp"))
 suppressPackageStartupMessages(library("car"))
 suppressPackageStartupMessages(library("tidyverse"))
 suppressPackageStartupMessages(library("rstatix"))
 ```
+
+# Data import 
+
+## Background information
+
+This is the data of the whitefly development bioassay performed by Arjen van Doorn. Only MM and LA1840 will be used.
+
+## The raw data
+```{r flies}
+flies <- read.csv("hertelling.csv", 
+                         header = T, 
+                         sep = ",", 
+                         dec = ".", 
+                         check.names = FALSE)%>%     
+  dplyr::filter(genotype == "Moneymaker" | genotype == "LA1840") %>%
+  mutate_if(is.character, str_replace_all, 
+            pattern = "Moneymaker", replacement = "MM") %>%
+  mutate(genotype = factor(genotype, levels = c("MM", "LA1840"))) 
+# The first 10 rows of the data
+knitr::kable(flies[1:10,1:4])
+```
+
+# plots
+
+I'm doubting whether I should use the absolute or relative number of 4th instars for the plot, so I will try both.
+
+## plot with absolute numbers
+
+```{r absolute plot}
+palette <- c("#E69F00", "#56B4E9", "#009E73",
+          "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+flies %>%
+  ggplot(aes(x=genotype, y=number, fill=genotype)) + 
+  labs(y = "# of individuals") +
+  geom_boxplot() + 
+  scale_fill_manual(values = palette) +
+  geom_point(aes(fill = genotype), size = 1, shape = 21,
+             position = position_jitterdodge(jitter.width = 0.1)) +
+  theme_simple() +
+  facet_wrap(~ stage)
+
+```
+
+
+## plot with relative 4th instar numbers
+
+```{r relative plot}
+flies %>% 
+  pivot_wider(names_from = stage, values_from = number) %>%
+  mutate(percentage_from_eggs = fourth_instar / egg * 100) %>%
+  pivot_longer(cols = fourth_instar:percentage_from_eggs, 
+               names_to = "stage", values_to = "number") %>%
+  dplyr::filter(stage == "percentage_from_eggs") %>%
+  ggplot(aes(x=genotype, y=number, fill=genotype)) + 
+  labs(y = "development of eggs to 4th instars (%)") +
+  geom_boxplot() + 
+  geom_point(aes(fill = genotype), size = 1, shape = 21,
+             position = position_jitterdodge(jitter.width = 0.1)) +
+  theme_simple() + 
+  scale_fill_manual(values = palette) 
+
+```
+
+## combined
+It might be best to use both for the most complete view of the phnotype.
+```{r relative plot}
+p1 <- flies %>% 
+  dplyr::filter(stage == "egg") %>%
+  ggplot(aes(x=genotype, y=number, fill=genotype)) + 
+  labs(y = "eggs (count)") +
+  ylim(0,60) +
+  geom_boxplot() + 
+  theme_simple() + 
+  scale_fill_manual(values = palette) 
+
+p2 <- flies %>% 
+  dplyr::filter(stage == "fourth_instar") %>%
+  ggplot(aes(x=genotype, y=number, fill=genotype)) + 
+  labs(y = "4th instar nymphs (count)") +
+  geom_boxplot() + 
+  theme_simple() + 
+  scale_fill_manual(values = palette) 
+
+p3 <- flies %>% 
+  pivot_wider(names_from = stage, values_from = number) %>%
+  mutate(percentage_from_eggs = fourth_instar / egg * 100) %>%
+  pivot_longer(cols = fourth_instar:percentage_from_eggs, 
+               names_to = "stage", values_to = "number") %>%
+  dplyr::filter(stage == "percentage_from_eggs") %>%
+  ggplot(aes(x=genotype, y=number, fill=genotype)) + 
+  labs(y = "development of eggs to 4th instars (%)") +
+  geom_boxplot() + 
+  theme_simple() + 
+  scale_fill_manual(values = palette) 
+
+(p1 + p2 + p3) / guide_area() +
+  plot_layout(guides = 'collect')
+```
+
+# statistics
 
