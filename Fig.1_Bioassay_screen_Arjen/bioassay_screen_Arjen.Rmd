@@ -22,6 +22,7 @@ suppressPackageStartupMessages(library("multcomp"))
 suppressPackageStartupMessages(library("car"))
 suppressPackageStartupMessages(library("tidyverse"))
 suppressPackageStartupMessages(library("rstatix"))
+suppressPackageStartupMessages(library("broom"))
 ```
 
 # Data import 
@@ -78,7 +79,7 @@ flies %>%
                names_to = "stage", values_to = "number") %>%
   dplyr::filter(stage == "percentage_from_eggs") %>%
   ggplot(aes(x=genotype, y=number, fill=genotype)) + 
-  labs(y = "development of eggs to 4th instars (%)") +
+  labs(y = "development eggs to 4th instars (%)") +
   geom_boxplot() + 
   geom_point(aes(fill = genotype), size = 1, shape = 21,
              position = position_jitterdodge(jitter.width = 0.1)) +
@@ -89,7 +90,7 @@ flies %>%
 
 ## combined
 It might be best to use both for the most complete view of the phnotype.
-```{r relative plot}
+```{r combined plot}
 p1 <- flies %>% 
   dplyr::filter(stage == "egg") %>%
   ggplot(aes(x=genotype, y=number, fill=genotype)) + 
@@ -114,7 +115,7 @@ p3 <- flies %>%
                names_to = "stage", values_to = "number") %>%
   dplyr::filter(stage == "percentage_from_eggs") %>%
   ggplot(aes(x=genotype, y=number, fill=genotype)) + 
-  labs(y = "development of eggs to 4th instars (%)") +
+  labs(y = "development to 4th instar (%)") +
   geom_boxplot() + 
   theme_simple() + 
   scale_fill_manual(values = palette) 
@@ -136,7 +137,7 @@ flies %>%
 For MM not. On LA1840, there were significantly less 4th instars than eggs.
 
 Are the number off eggs and 4th instars the same on MM and LA1840?
-```{r paired t-test}
+```{r paired t-test 2}
 flies %>%
   group_by(stage) %>%
   pairwise_t_test(
@@ -195,6 +196,7 @@ mod2 <- lm(number ~ stage, data = mod)
 summary(mod2)
 ```
 comparing the performance
+
 model1:
 ```{r metrics mod1}
 glance(mod1)%>%
