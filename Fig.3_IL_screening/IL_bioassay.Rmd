@@ -49,3 +49,54 @@ flies <- read.csv("IL_screen.csv",
 knitr::kable(flies[1:10,1:4])
 ```
 
+# plots
+```{r absolute plot}
+palette <- c("#E69F00", "#D55E00", "#0072B2")
+```
+
+```{r combined plot}
+p1 <- flies %>% 
+  dplyr::filter(stage == "egg") %>%
+  ggplot(aes(x=genotype, y=number, fill=genotype)) + 
+  labs(y = "eggs (count)") +
+  ylim(0,130) +
+  geom_boxplot() + 
+  theme_simple() + 
+  scale_fill_manual(values = palette) 
+
+p2 <- flies %>% 
+  dplyr::filter(stage == "fourth_instar") %>%
+  ggplot(aes(x=genotype, y=number, fill=genotype)) + 
+  labs(y = "4th instar nymphs (count)") +
+  geom_boxplot() + 
+  theme_simple() + 
+  scale_fill_manual(values = palette) 
+
+p3 <- flies %>% 
+  pivot_wider(names_from = stage, values_from = number) %>%
+  mutate(percentage_from_eggs = fourth_instar / egg * 100) %>%
+  pivot_longer(cols = fourth_instar:percentage_from_eggs, 
+               names_to = "stage", values_to = "number") %>%
+  dplyr::filter(stage == "percentage_from_eggs") %>%
+  ggplot(aes(x=genotype, y=number, fill=genotype)) + 
+  labs(y = "development to 4th instar (%)") +
+  geom_boxplot() + 
+  theme_simple() + 
+  scale_fill_manual(values = palette) 
+
+(p1 + p2 + p3) / guide_area() +
+  plot_layout(guides = 'collect')
+```
+
+
+# statistics
+Are the number of 4th instars lower than the number of eggs per genotype?
+```{r paired t-test}
+flies %>%
+  group_by(genotype) %>%
+  pairwise_t_test(
+    number ~ stage, paired = TRUE, 
+    p.adjust.method = "bonferroni"
+  )
+```
+
