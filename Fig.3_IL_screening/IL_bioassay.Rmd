@@ -100,3 +100,92 @@ flies %>%
   )
 ```
 
+For comparing the genotypes: dunnett's
+
+## Linear model for comparison of regression
+note: for 'stage'on the x-axis: 1 is eggs and 4 is 4th instars
+```{r lineplot}
+p4 <- flies %>% 
+  mutate_if(is.character, str_replace_all, 
+            pattern = "egg", replacement = "1") %>% 
+  mutate_if(is.character, str_replace_all, 
+            pattern = "fourth_instar", replacement = "4") %>%
+  mutate(stage = as.numeric(stage)) %>%
+  ggscatter(x = "stage", y = "number", color = "genotype", add = "reg.line") +
+  stat_regline_equation(aes( label = paste(..eq.label.., ..rr.label.., 
+                                           sep = "~~~~"), color = genotype)) +
+  scale_y_continuous(trans = 'log2') +  
+  scale_color_manual(values = palette) 
+
+p5 <- flies %>% 
+  mutate_if(is.character, str_replace_all, 
+            pattern = "egg", replacement = "1") %>% 
+  mutate_if(is.character, str_replace_all, 
+            pattern = "fourth_instar", replacement = "4") %>%
+  mutate(stage = as.numeric(stage)) %>%
+  ggscatter(x = "stage", y = "number",  add = "reg.line") +
+  stat_regline_equation(aes( label = paste(..eq.label.., ..rr.label.., 
+                                           sep = "~~~~"))) +
+  scale_y_continuous(trans = 'log2')
+
+p4 + p5
+```
+
+```{r lineplot MB IL28}
+p4 <- flies %>% 
+  dplyr::filter(genotype != "IL27") %>%
+  mutate_if(is.character, str_replace_all, 
+            pattern = "egg", replacement = "1") %>% 
+  mutate_if(is.character, str_replace_all, 
+            pattern = "fourth_instar", replacement = "4") %>%
+  mutate(stage = as.numeric(stage)) %>%
+  ggscatter(x = "stage", y = "number", color = "genotype", add = "reg.line") +
+  stat_regline_equation(aes( label = paste(..eq.label.., ..rr.label.., 
+                                           sep = "~~~~"), color = genotype)) +
+  scale_y_continuous(trans = 'log2') + 
+  scale_color_manual(values = palette) 
+
+p5 <- flies %>% 
+  dplyr::filter(genotype != "IL27") %>%
+  mutate_if(is.character, str_replace_all, 
+            pattern = "egg", replacement = "1") %>% 
+  mutate_if(is.character, str_replace_all, 
+            pattern = "fourth_instar", replacement = "4") %>%
+  mutate(stage = as.numeric(stage)) %>%
+  ggscatter(x = "stage", y = "number",  add = "reg.line") +
+  stat_regline_equation(aes( label = paste(..eq.label.., ..rr.label.., 
+                                           sep = "~~~~"))) +
+  scale_y_continuous(trans = 'log2')
+p4 + p5
+```
+
+```{r lineplot MB IL27}
+p4 <- flies %>% 
+  dplyr::filter(genotype != "IL28") %>%
+  mutate_if(is.character, str_replace_all, 
+            pattern = "egg", replacement = "1") %>% 
+  mutate_if(is.character, str_replace_all, 
+            pattern = "fourth_instar", replacement = "4") %>%
+  mutate(stage = as.numeric(stage)) %>%
+  ggscatter(x = "stage", y = "number", color = "genotype", add = "reg.line") +
+  stat_regline_equation(aes( label = paste(..eq.label.., ..rr.label.., 
+                                           sep = "~~~~"), color = genotype)) +
+  scale_y_continuous(trans = 'log2') +  
+  scale_color_manual(values = c("#E69F00", "#0072B2")) 
+
+p5 <- flies %>% 
+  dplyr::filter(genotype != "IL28") %>%
+  mutate_if(is.character, str_replace_all, 
+            pattern = "egg", replacement = "1") %>% 
+  mutate_if(is.character, str_replace_all, 
+            pattern = "fourth_instar", replacement = "4") %>%
+  mutate(stage = as.numeric(stage)) %>%
+  ggscatter(x = "stage", y = "number",  add = "reg.line") +
+  stat_regline_equation(aes( label = paste(..eq.label.., ..rr.label.., 
+                                           sep = "~~~~"))) +
+  scale_y_continuous(trans = 'log2')
+
+p4 + p5
+```
+
+I used a log2 y axis, but I'm not sure if that's ok.
