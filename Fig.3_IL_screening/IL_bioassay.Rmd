@@ -1,0 +1,51 @@
+---
+title: "IL bioassay"
+author: "Lissy Denkers"
+date: "`r Sys.Date()`"
+output: 
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = FALSE, 
+                      warning = FALSE, 
+                      message = FALSE, 
+                      fig.width = 8, 
+                      fig.height = 5, 
+                      fig.align = "center")
+suppressPackageStartupMessages(library("ggplot2"))
+suppressPackageStartupMessages(library("ggpubr"))
+suppressPackageStartupMessages(library("ggpubfigs"))
+suppressPackageStartupMessages(library("patchwork"))
+suppressPackageStartupMessages(library("multcomp"))
+suppressPackageStartupMessages(library("car"))
+suppressPackageStartupMessages(library("tidyverse"))
+suppressPackageStartupMessages(library("rstatix"))
+suppressPackageStartupMessages(library("broom"))
+```
+
+# Data import 
+
+## Background information
+
+This is the  the whitefly development bioassay on the ILs performed by Arjen van Doorn. Only the cultivated parent (MB) is included, not LA1840. IL29 will be excluded from the data, because it is not part of the metabolomics data.
+
+## The raw data
+```{r flies}
+flies <- read.csv("IL_screen.csv", 
+                         header = T, 
+                         sep = ",", 
+                         dec = ".", 
+                         check.names = FALSE)%>%     
+  dplyr::filter(genotype != "IL29") %>%
+  mutate_if(is.character, str_replace_all, 
+            pattern = "KG1955", replacement = "MB") %>%
+  mutate_if(is.character, str_replace_all, 
+            pattern = "eggs", replacement = "egg") %>%
+  mutate(genotype = factor(genotype, levels = c("MB", "IL28", "IL27"))) %>%
+  mutate(stage = factor(stage, levels = c("egg", "fourth_instar")))
+# The first 10 rows of the data
+knitr::kable(flies[1:10,1:4])
+```
+
