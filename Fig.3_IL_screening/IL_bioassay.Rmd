@@ -101,8 +101,24 @@ flies %>%
 ```
 
 For comparing the genotypes: dunnett's
+```{r Kruskal-wallis}
+flies %>%
+  group_by(stage) %>%
+  kruskal_test(number ~ genotype)
+```
 
-## Linear model for comparison of regression
+```{r dunnett}
+flies %>%
+  group_by(stage) %>%
+  dunn_test(number ~ genotype)
+```
+
+The number of eggs is simmilar for all genotypes. The number of fourth instars is lower on IL27 than on MB, but equal on IL28 and MB.
+
+## conclusion
+IL27 has the nymph development phenotype of LA1840. IL28 has the MM/MB phenotype.
+
+# Linear model for comparison of regression
 note: for 'stage'on the x-axis: 1 is eggs and 4 is 4th instars
 ```{r lineplot}
 p4 <- flies %>% 
