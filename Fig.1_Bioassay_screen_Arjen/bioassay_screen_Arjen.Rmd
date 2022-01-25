@@ -124,11 +124,102 @@ p3 <- flies %>%
 ```
 
 # statistics
-```{r two-way ANOVA}
+Are the number of 4th instars lower than the number of eggs for MM and LA1840?
+```{r paired t-test}
 flies %>%
-  mutate(id = paste(genotype, replicate, sep = "_")) %>%
-  anova_test(number ~ stage*genotype + Error(id/stage)) %>%
-  get_anova_table()
+  group_by(genotype) %>%
+  pairwise_t_test(
+    number ~ stage, paired = TRUE, 
+    p.adjust.method = "bonferroni"
+  )
+```
+For MM not. On LA1840, there were significantly less 4th instars than eggs.
+
+Are the number off eggs and 4th instars the same on MM and LA1840?
+```{r paired t-test}
+flies %>%
+  group_by(stage) %>%
+  pairwise_t_test(
+    number ~ genotype, paired = TRUE, 
+    p.adjust.method = "bonferroni"
+  )
+```
+The number of eggs are equal on MM and LA1840. The 4th instars are less on LA1840.
+
+What does this look like?
+note: for 'stage'on the x-axis: 1 is eggs and 4 is 4th instars
+```{r lineplot}
+p4 <- flies %>% 
+  mutate_if(is.character, str_replace_all, 
+            pattern = "egg", replacement = "1") %>% 
+  mutate_if(is.character, str_replace_all, 
+            pattern = "fourth_instar", replacement = "4") %>%
+  mutate(stage = as.numeric(stage)) %>%
+  ggscatter(x = "stage", y = "number", color = "genotype", add = "reg.line") +
+  stat_regline_equation(aes( label = paste(..eq.label.., ..rr.label.., 
+                                           sep = "~~~~"), color = genotype)) + 
+  scale_color_manual(values = palette) 
+
+p5 <- flies %>% 
+  mutate_if(is.character, str_replace_all, 
+            pattern = "egg", replacement = "1") %>% 
+  mutate_if(is.character, str_replace_all, 
+            pattern = "fourth_instar", replacement = "4") %>%
+  mutate(stage = as.numeric(stage)) %>%
+  ggscatter(x = "stage", y = "number",  add = "reg.line") +
+  stat_regline_equation(aes( label = paste(..eq.label.., ..rr.label.., 
+                                           sep = "~~~~"))) 
+p4 + p5
+```
+
+Comparing the regression of the nymph development on the two genotypes:
+
+First fit a model with interaction an interaction term for genotype:
+```{r interaction model}
+mod <- flies %>% 
+  mutate_if(is.character, str_replace_all, 
+            pattern = "egg", replacement = "1") %>% 
+  mutate_if(is.character, str_replace_all, 
+            pattern = "fourth_instar", replacement = "4") %>%
+  mutate(stage = as.numeric(stage)) 
+
+mod1 <- lm(number ~ stage + genotype + stage:genotype, data = mod)
+
+summary(mod1)
+```
+
+Now a model without the genotype effect
+```{r combined model}
+mod2 <- lm(number ~ stage, data = mod)
+
+summary(mod2)
+```
+comparing the performance
+model1:
+```{r metrics mod1}
+glance(mod1)%>%
+  dplyr::select(adj.r.squared, sigma, AIC, BIC, p.value)
+```
+
+model2:
+```{r metrics mod2}
+glance(mod2)%>%
+  dplyr::select(adj.r.squared, sigma, AIC, BIC, p.value)
+```
+
+The first model (with genotype interaction) has a better fit.
+
+The nymph survival during the development from egg to 4th instar is higher on MM than on LA1840.
+
+```{r}
+mod1 <- augment(mod1)
+
+mod1 %>%
+  ggplot(aes(x = stage, y = number, color = genotype)) +
+  geom_point() +
+  geom_line(aes(x = stage, y = .fitted))+ 
+  theme_simple() + 
+  scale_color_manual(values = palette) 
 ```
 
 
