@@ -50,7 +50,7 @@ knitr::kable(flies[1:10,1:4])
 ```
 
 # plots
-```{r absolute plot}
+```{r color palette}
 palette <- c("#E69F00", "#D55E00", "#0072B2")
 ```
 
@@ -115,8 +115,6 @@ flies %>%
 
 The number of eggs is simmilar for all genotypes. The number of fourth instars is lower on IL27 than on MB, but equal on IL28 and MB.
 
-## conclusion
-IL27 has the nymph development phenotype of LA1840. IL28 has the MM/MB phenotype.
 
 # Linear model for comparison of regression
 note: for 'stage'on the x-axis: 1 is eggs and 4 is 4th instars
@@ -147,6 +145,8 @@ p5 <- flies %>%
 p4 + p5
 ```
 
+## comparing MB and IL28
+
 ```{r lineplot MB IL28}
 p4 <- flies %>% 
   dplyr::filter(genotype != "IL27") %>%
@@ -174,6 +174,34 @@ p5 <- flies %>%
   scale_y_continuous(trans = 'log2')
 p4 + p5
 ```
+
+First fit a model with interaction an interaction term for genotype:
+```{r interaction model IL28}
+mod <- flies %>% 
+  dplyr::filter(genotype != "IL27") %>%
+  mutate_if(is.character, str_replace_all, 
+            pattern = "egg", replacement = "1") %>% 
+  mutate_if(is.character, str_replace_all, 
+            pattern = "fourth_instar", replacement = "4") %>%
+  mutate(stage = as.numeric(stage)) 
+
+mod1 <- lm(number ~ stage + genotype + stage:genotype, data = mod)
+
+glance(mod1)%>%
+  dplyr::select(adj.r.squared, sigma, AIC, BIC, p.value)
+```
+
+Now a model without the genotype effect
+```{r combined model IL28}
+mod2 <- lm(number ~ stage, data = mod)
+
+glance(mod2)%>%
+  dplyr::select(adj.r.squared, sigma, AIC, BIC, p.value)
+```
+
+The second model (without the genotype interaction) fits better. The survival/development from egg to 4th instar is simmilar for IL28 and MB.
+
+## comparing MB and IL27
 
 ```{r lineplot MB IL27}
 p4 <- flies %>% 
@@ -204,4 +232,34 @@ p5 <- flies %>%
 p4 + p5
 ```
 
-I used a log2 y axis, but I'm not sure if that's ok.
+Again, fit a model with interaction an interaction term for genotype:
+```{r interaction model IL27}
+mod <- flies %>% 
+  dplyr::filter(genotype != "IL28") %>%
+  mutate_if(is.character, str_replace_all, 
+            pattern = "egg", replacement = "1") %>% 
+  mutate_if(is.character, str_replace_all, 
+            pattern = "fourth_instar", replacement = "4") %>%
+  mutate(stage = as.numeric(stage)) 
+
+mod1 <- lm(number ~ stage + genotype + stage:genotype, data = mod)
+
+glance(mod1)%>%
+  dplyr::select(adj.r.squared, sigma, AIC, BIC, p.value)
+```
+
+And a model without the genotype effect
+```{r combined model IL27}
+mod2 <- lm(number ~ stage, data = mod)
+
+glance(mod2)%>%
+  dplyr::select(adj.r.squared, sigma, AIC, BIC, p.value)
+```
+
+The first model (with genotype effect) fits better. The survival/development from egg to 4th instar is hampered on IL28 compared to MB.
+
+note:
+I used a log2 y axis for the graphs, but not for the models I compared.
+
+# conclusion
+IL27 has the nymph development phenotype of LA1840. IL28 has the MM/MB phenotype.
