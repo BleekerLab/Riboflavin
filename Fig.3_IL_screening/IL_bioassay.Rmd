@@ -117,7 +117,8 @@ The number of eggs is simmilar for all genotypes. The number of fourth instars i
 
 
 # Linear model for comparison of regression
-note: for 'stage'on the x-axis: 1 is eggs and 4 is 4th instars
+note: for 'stage' on the x-axis: 1 is eggs and 4 is 4th instars
+(the '4' became '2' in the graphs, I don't know why)
 ```{r lineplot}
 p4 <- flies %>% 
   mutate_if(is.character, str_replace_all, 
