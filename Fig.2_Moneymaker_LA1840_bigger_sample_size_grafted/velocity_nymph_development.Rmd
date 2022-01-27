@@ -17,6 +17,9 @@ knitr::opts_chunk$set(echo = FALSE,
                       fig.align = "center")
 suppressPackageStartupMessages(library("ggplot2"))
 suppressPackageStartupMessages(library("ggrepel"))
+suppressPackageStartupMessages(library("ggpubr"))
+suppressPackageStartupMessages(library("ggpubfigs"))
+suppressPackageStartupMessages(library("patchwork"))
 suppressPackageStartupMessages(library("plyr"))
 suppressPackageStartupMessages(library("dplyr"))
 suppressPackageStartupMessages(library("skimr"))
@@ -83,16 +86,141 @@ flies <- flies %>%
   ungroup()
 ```
 
+
+# Velocity
+
+I'm wondering if I would get the same result if I do
+
+\begin{align*}
+\Delta 1^{st} & = 1^{st}_t - 1^{st}_t-1 \\
+\Delta 2^{nd} & = 2^{nd}_t - 2^{nd}_t-1 \\
+\Delta 3^{rd} & = 3^{rd}_t - 3^{rd}_t-1 \\
+\Delta 4^{th} & = 4^{th}_t - 4^{th}_t-1
+\end{align*}
+
+Let's try with the absolute counts.
+
+```{r change per stage per 2 days}
+absolute_velocity <- flies %>%
+  group_by(place) %>%
+  mutate(d_1st = `1_first_instar` - lag(`1_first_instar`))%>%
+  mutate(d_2nd = `2_second_instar` - lag(`2_second_instar`))%>%
+  mutate(d_3rd = `3_third_instar` - lag(`3_third_instar`))%>%
+  mutate(d_4th = `6_total_fourth_instars` - lag(`6_total_fourth_instars`)) %>%
+  ungroup()
+```
+
 ```{r remove unnessesary columns}
-flies <- flies %>%
-  dplyr::select(-`4_early_fourth_instar`, -`5_completed_lifecycle`,
-                -`5_late_fourth_instar`, -`6_exuviea`, -fourth_exuviae)
+absolute_velocity <- absolute_velocity %>%
+  dplyr::select(-`0_egg` : -`6_total_fourth_instars`) %>%
+  pivot_longer(cols = d_1st:d_4th, 
+               names_to = "stage", values_to = "velocity") %>%
+  mutate(genotype = factor(genotype, levels = c("MM", "LA1840"))) 
+# The first 10 rows of the data
+absolute_velocity %>%     
+  dplyr::filter(place == 1) %>%     
+  dplyr::filter(between(day, 9, 13)) %>%
+knitr::kable("pipe", caption = "An example from 1 plant")
 ```
 
-```{r long}
-flies <- flies %>%
-  pivot_longer(cols = `0_egg`:`6_total_fourth_instars`, 
-               names_to = "stage", values_to = "number")
+```{r graph}
+palette <- c("#E69F00", "#56B4E9")
+
+absolute_velocity %>%
+  dplyr::filter(day > 7) %>% 
+  mutate(velocity = na_if(velocity, 0)) %>%
+  group_by(genotype, day, stage) %>% 
+  ggplot(aes(x=day, y=velocity, group = (interaction (day, genotype)))) + 
+  labs(y = "velocity of development",
+       x = "days after infection") +
+  geom_boxplot(aes(color = genotype)) + 
+  scale_color_manual(values = palette) +
+  theme_simple() +
+  facet_wrap(vars(stage), scales = "free_y")
+```
+Behind the y-label should be: ($\frac{\Delta instar}{2 days}$), but i don't know how to do that.
+
+I now realize that this just shows the derivative of the counting data and is't much more informative. If the nymphs are stuck in some stage of development the velocity goes to 0, similar to when they have moved on.
+
+For now I  don't know if and how to continue with this.
+
+# development relative to previous stage
+
+Another suggestion was to make the data relative to the previous stage.
+
+This is what happens for the cummulative numbers:
+
+```{r graph}
+relative_cummulative <- flies %>%
+  dplyr::select(-`4_early_fourth_instar`: -`5_completed_lifecycle`)
+
+relative_cummulative <- relative_cummulative %>%
+  mutate(first_instars = rowSums(relative_cummulative[,8:11])) %>%
+  mutate(second_instars = rowSums(relative_cummulative[,9:11])) %>%
+  mutate(third_instars = rowSums(relative_cummulative[,10:11])) %>%
+  mutate(fourth_instars = `6_total_fourth_instars`)
+
+relative_cummulative <- relative_cummulative %>%
+  group_by(place) %>%
+  mutate(first = first_instars / max(eggs_start))%>%
+  mutate(second = second_instars / max(first_instars))%>%
+  mutate(third = third_instars / max(second_instars))%>%
+  mutate(fourth = fourth_instars / max(third_instars)) %>%
+  ungroup()
+
+relative_cummulative <- relative_cummulative %>%
+  dplyr::select(-eggs_start: -fourth_instars)
+
+relative_cummulative <- relative_cummulative %>%
+  pivot_longer(cols = first:fourth, 
+               names_to = "stage", values_to = "number") %>%
+  mutate(genotype = factor(genotype, levels = c("MM", "LA1840"))) 
+
+p1 <- relative_cummulative %>%
+  dplyr::filter(stage == "first") %>% 
+  dplyr::filter(day < 15) %>% 
+  group_by(genotype, day) %>% 
+  ggplot(aes(x=day, y=number, group = (interaction (day, genotype)))) + 
+  labs(y = "first instars",
+       x = "days after infection") +
+  geom_boxplot(aes(color = genotype)) + 
+  scale_color_manual(values = palette) +
+  theme_simple()
+
+p2 <- relative_cummulative %>%
+  dplyr::filter(stage == "second") %>% 
+  dplyr::filter(day < 20) %>% 
+  group_by(genotype, day) %>% 
+  ggplot(aes(x=day, y=number, group = (interaction (day, genotype)))) + 
+  labs(y = "second instars",
+       x = "days after infection") +
+  geom_boxplot(aes(color = genotype)) + 
+  scale_color_manual(values = palette) +
+  theme_simple()
+
+p3 <- relative_cummulative %>%
+  dplyr::filter(stage == "third") %>% 
+  group_by(genotype, day) %>% 
+  ggplot(aes(x=day, y=number, group = (interaction (day, genotype)))) + 
+  labs(y = "third instars",
+       x = "days after infection") +
+  geom_boxplot(aes(color = genotype)) + 
+  scale_color_manual(values = palette) +
+  theme_simple()
+
+p4 <- relative_cummulative %>%
+  dplyr::filter(stage == "fourth") %>% 
+  group_by(genotype, day) %>% 
+  ggplot(aes(x=day, y=number, group = (interaction (day, genotype)))) + 
+  labs(y = "fourth instars",
+       x = "days after infection") +
+  geom_boxplot(aes(color = genotype)) + 
+  scale_color_manual(values = palette) +
+  theme_simple()
+
+(p1 + p2) / (p3 + p4)  / guide_area() +
+  plot_layout(guides = 'collect')
 ```
 
+The development to fourth instar appears to be the most crucial step for the phenotype.
 
