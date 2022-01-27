@@ -1,0 +1,98 @@
+---
+title: "Velocity of nymph development"
+author: "Lissy Denkers"
+date: "`r Sys.Date()`"
+output: 
+  pdf_document: default
+  html_document: default
+---
+
+
+```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = FALSE, 
+                      warning = FALSE, 
+                      message = FALSE, 
+                      fig.width = 8, 
+                      fig.height = 5, 
+                      fig.align = "center")
+suppressPackageStartupMessages(library("ggplot2"))
+suppressPackageStartupMessages(library("ggrepel"))
+suppressPackageStartupMessages(library("plyr"))
+suppressPackageStartupMessages(library("dplyr"))
+suppressPackageStartupMessages(library("skimr"))
+suppressPackageStartupMessages(library("Hmisc"))
+suppressPackageStartupMessages(library("tidyr"))
+suppressPackageStartupMessages(library("car"))
+suppressPackageStartupMessages(library("rstatix"))
+suppressPackageStartupMessages(library("tidyverse"))
+suppressPackageStartupMessages(library("broom"))
+suppressPackageStartupMessages(library("drc"))
+suppressPackageStartupMessages(library("modelr"))
+suppressPackageStartupMessages(library("egg"))
+suppressPackageStartupMessages(library("tidydrc"))
+suppressPackageStartupMessages(library("aomisc"))
+suppressPackageStartupMessages(library("devtools"))
+```
+
+# Data import 
+
+## Background information
+
+As discussed with Huub Hoefsloot and Marc Galland, I will try to calculate the velocity of nymph development per stage. This is the change in number of nymphs per x amount of time. For the amount of time I will start with two days, because I counted once per two days. The calculations are as follows:
+
+\begin{align*}
+\Delta 1^{st} & = +1^{st} - +2^{nd} \\
+\Delta 2^{nd} & = +2^{nd} - +3^{rd} \\
+\Delta 3^{rd} & = +3^{rd} - +4^{th} \\
+\Delta 4^{th} & = +4^{th} 
+\end{align*}
+
+For more information on the data, see 'data_exploration.pdf'.
+
+
+## The raw data
+```{r flies}
+flies <- read.csv("raw_data.csv", 
+                         header = T, 
+                         sep = ",", 
+                         dec = ".", 
+                         check.names = FALSE)
+# The first 10 rows of the data
+knitr::kable(flies[1:10,1:8])
+```
+
+
+```{r filter}
+flies <- flies %>%     
+  dplyr::filter(place != 4) %>%     
+  dplyr::filter(place < 13)
+```
+
+```{r wide}
+flies <- flies %>%
+  mutate(stage = as.factor(stage)) %>%
+  pivot_wider(names_from = stage, values_from = number) 
+```
+ 
+```{r total fourth instars}
+flies <- flies %>%
+  mutate(fourth_exuviae = `5_late_fourth_instar` + `6_exuviea`) %>%
+  group_by(place) %>%
+  mutate(`5_completed_lifecycle` = cumsum(fourth_exuviae)) %>%
+  mutate(`6_total_fourth_instars` = `4_early_fourth_instar` + `5_completed_lifecycle`) %>%
+  ungroup()
+```
+
+```{r remove unnessesary columns}
+flies <- flies %>%
+  dplyr::select(-`4_early_fourth_instar`, -`5_completed_lifecycle`,
+                -`5_late_fourth_instar`, -`6_exuviea`, -fourth_exuviae)
+```
+
+```{r long}
+flies <- flies %>%
+  pivot_longer(cols = `0_egg`:`6_total_fourth_instars`, 
+               names_to = "stage", values_to = "number")
+```
+
+
