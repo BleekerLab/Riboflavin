@@ -279,8 +279,10 @@ p6 <- relative_flies %>%
   labs(y = "second instars",
        x = "days after infection") +
   geom_point(aes(color = genotype)) + 
+  geom_smooth(method = 'loess', formula = 'y~poly(x)', aes(color = genotype)) +
   scale_color_manual(values = palette) +
   theme_simple()
+
 
 fit1 <- relative_flies %>%
   dplyr::filter(stage == "third") %>% 
@@ -307,6 +309,8 @@ p7 <- relative_flies %>%
   #geom_line(aes(y = fitted(fit), color = genotype)) +
   geom_smooth(method = drm, method.args = list(fct = L.5()), 
               se = FALSE) + 
+   geom_smooth(aes(x = day,
+                y = median_number, color = genotype), method = "glm", method.args = list(family = "binomial"), formula = y ~ splines::bs(x), se = FALSE)
   scale_color_manual(values = palette) +
   theme_simple()
 

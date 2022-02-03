@@ -1,0 +1,207 @@
+---
+title: "nymph plots"
+author: "Lissy Denkers"
+date: "2/2/2022"
+output: html_document
+---
+
+```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = FALSE, 
+                      warning = FALSE, 
+                      message = FALSE, 
+                      fig.width = 8, 
+                      fig.height = 5, 
+                      fig.align = "center")
+suppressPackageStartupMessages(library("ggplot2"))
+suppressPackageStartupMessages(library("ggrepel"))
+suppressPackageStartupMessages(library("ggpubr"))
+suppressPackageStartupMessages(library("ggpubfigs"))
+suppressPackageStartupMessages(library("patchwork"))
+suppressPackageStartupMessages(library("plyr"))
+suppressPackageStartupMessages(library("dplyr"))
+suppressPackageStartupMessages(library("skimr"))
+suppressPackageStartupMessages(library("Hmisc"))
+suppressPackageStartupMessages(library("tidyr"))
+suppressPackageStartupMessages(library("car"))
+suppressPackageStartupMessages(library("rstatix"))
+suppressPackageStartupMessages(library("tidyverse"))
+suppressPackageStartupMessages(library("broom"))
+suppressPackageStartupMessages(library("drc"))
+suppressPackageStartupMessages(library("modelr"))
+suppressPackageStartupMessages(library("egg"))
+suppressPackageStartupMessages(library("tidydrc"))
+suppressPackageStartupMessages(library("aomisc"))
+suppressPackageStartupMessages(library("devtools"))
+```
+
+# data import
+
+Take relative_flies from velocity script. If everything works, take over part of script to make relative_flies.
+
+```{r test_flies}
+test_flies <- relative_flies
+# 10 rows of middle of the data
+knitr::kable(test_flies[197:207,1:6])
+```
+
+## adjust data
+
+```{r wide}
+test_flies <- test_flies %>%
+  mutate(stage = as.factor(stage)) %>%
+  mutate(place = as.factor(place)) %>%
+  group_by(stage, genotype) %>%
+  pivot_wider(names_from = place, values_from = number) 
+
+# 10 rows of middle of the data
+knitr::kable(test_flies[41:51,1:15])
+``` 
+
+```{r median SD}
+test_flies <- test_flies %>%
+  mutate(day = as.factor(day)) %>%
+  rowwise() %>%
+  mutate(mean_number = mean(c_across(`1`:`12`), na.rm = TRUE)) %>%
+  mutate(median_number = median(c_across(`1`:`12`), na.rm = TRUE)) %>%
+  mutate(sd_number = sd(c_across(`1`:`12`), na.rm = TRUE)) %>%
+  mutate(max_number = max(c_across(`1`:`12`), na.rm = TRUE)) %>%
+  mutate(min_number = min(c_across(`1`:`12`), na.rm = TRUE))
+
+test_flies <- test_flies %>%
+  dplyr::select(-`1`: -`12`)
+
+# 10 rows of middle of the data
+knitr::kable(test_flies[41:51,1:9])
+```
+
+# graphs
+
+graph with observed minima en maxima (dotted lines), confidence interval (median +/- SD; filled area) and median (solid line) per genotype per day for each stage, relative to the previous stage.
+```{r first instars}
+
+pfirst <- test_flies %>%
+  dplyr::filter(stage == "first") %>% 
+  mutate(day = as.numeric(day)) %>% 
+  group_by(genotype) %>% 
+  ggplot() +
+  theme_simple() +
+  labs(y = "first",
+       x = "days after infection") +
+  scale_color_manual(values = palette) +
+  scale_fill_manual(values = palette) +
+  geom_line(aes(x = day,
+                  y = min_number,
+                  color = genotype),
+              linetype = "dotted") +
+  geom_line(aes(x = day,
+                  y = max_number,
+                  color = genotype),
+              linetype = "dotted") +
+  geom_ribbon(aes(x = day,
+                  ymin = (median_number - sd_number),
+                  ymax = (median_number + sd_number),
+                  fill = genotype),
+              alpha = 0.35) +
+  geom_line(aes(x = day,
+                y = median_number,
+                color = genotype),
+            size = 1.2)
+
+```
+
+```{r second instars}
+psecond <- test_flies %>%
+  dplyr::filter(stage == "second") %>% 
+  mutate(day = as.numeric(day)) %>% 
+  group_by(genotype) %>% 
+  ggplot() +
+  theme_simple() +
+  labs(y = "second",
+       x = "days after infection") +
+  scale_color_manual(values = palette) +
+  scale_fill_manual(values = palette) +
+  geom_line(aes(x = day,
+                  y = min_number,
+                  color = genotype),
+              linetype = "dotted") +
+  geom_line(aes(x = day,
+                  y = max_number,
+                  color = genotype),
+              linetype = "dotted") +
+  geom_ribbon(aes(x = day,
+                  ymin = (median_number - sd_number),
+                  ymax = (median_number + sd_number),
+                  fill = genotype),
+              alpha = 0.35) +
+  geom_line(aes(x = day,
+                y = median_number,
+                color = genotype),
+            size = 1.2)
+
+```
+
+```{r third instars}
+pthird <- test_flies %>%
+  dplyr::filter(stage == "third") %>% 
+  mutate(day = as.numeric(day)) %>% 
+  group_by(genotype) %>% 
+  ggplot() +
+  theme_simple() +
+  labs(y = "Third",
+       x = "days after infection") +
+  scale_color_manual(values = palette) +
+  scale_fill_manual(values = palette) +
+  geom_line(aes(x = day,
+                  y = min_number,
+                  color = genotype),
+              linetype = "dotted") +
+  geom_line(aes(x = day,
+                  y = max_number,
+                  color = genotype),
+              linetype = "dotted") +
+  geom_ribbon(aes(x = day,
+                  ymin = (median_number - sd_number),
+                  ymax = (median_number + sd_number),
+                  fill = genotype),
+              alpha = 0.35) +
+  geom_line(aes(x = day,
+                y = median_number,
+                color = genotype),
+            size = 1.2) 
+
+```
+
+```{r fourth instars}
+pfourth <- test_flies %>%
+  dplyr::filter(stage == "fourth") %>% 
+  mutate(day = as.numeric(day)) %>% 
+  group_by(genotype) %>% 
+  ggplot() +
+  theme_simple() +
+  labs(y = "fourth",
+       x = "days after infection") +
+  scale_color_manual(values = palette) +
+  scale_fill_manual(values = palette) +
+  geom_line(aes(x = day,
+                  y = min_number,
+                  color = genotype),
+              linetype = "dotted") +
+  geom_line(aes(x = day,
+                  y = max_number,
+                  color = genotype),
+              linetype = "dotted") +
+  geom_ribbon(aes(x = day,
+                  ymin = (median_number - sd_number),
+                  ymax = (median_number + sd_number),
+                  fill = genotype),
+              alpha = 0.35) +
+  geom_line(aes(x = day,
+                y = median_number,
+                color = genotype),
+            size = 1.2)
+
+(pfirst + psecond) / (pthird + pfourth)  / guide_area() +
+  plot_layout(guides = 'collect')
+```
+
+Add cumulative graphs and try with relative abundance
