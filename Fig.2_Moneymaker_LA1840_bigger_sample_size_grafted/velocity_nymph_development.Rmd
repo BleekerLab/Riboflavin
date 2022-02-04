@@ -142,11 +142,13 @@ Behind the y-label should be: ($\frac{\Delta instar}{2 days}$), but i don't know
 
 I now realize that this just shows the derivative of the counting data and is't much more informative. If the nymphs are stuck in some stage of development the velocity goes to 0, similar to when they have moved on.
 
+I don't know if I did everything right, but I don't think this gives a clearer picture of the development.
+
 For now I  don't know if and how to continue with this.
 
 
 
-```{r graph, eval=FALSE, include=FALSE}
+```{r eval=FALSE, include=FALSE}
 # development relative to previous stage
 
 #Another suggestion was to make the data relative to the previous stage.
@@ -232,7 +234,7 @@ p4 <- relative_cummulative %>%
 
 
 
-```{r graph, eval=FALSE, include=FALSE}
+```{r eval=FALSE, include=FALSE}
 
 ## per count numbers
 
@@ -337,8 +339,9 @@ p7 +
 ```
 
 
+
+```{r eval=FALSE, include=FALSE}
 ### first instars
-```{r richards, eval=FALSE, include=FALSE}
 fit1 <- relative_cummulative %>%
   dplyr::filter(stage == "first") %>% 
   dplyr::filter(genotype == "LA1840") %>%
@@ -455,11 +458,10 @@ MM_first + LA1840_first
 
 ```
 
-Below are graphs showing the derivative of the cumulative data. I wanted to show the counts per day and not the growh speed of the cumulative curve, but at least it's already the type of model I could use. Later more
 
 
+```{r eval=FALSE, include=FALSE}
 ### second instars
-```{r richards eval=FALSE, include=FALSE}
 fit1 <- relative_cummulative %>%
   dplyr::filter(stage == "second") %>% 
   #dplyr::filter(place == 1) %>% 
@@ -579,8 +581,9 @@ MM_second + LA1840_second
 ```
 
 
+
+```{r eval=FALSE, include=FALSE}
 ### third instars
-```{r richards eval=FALSE, include=FALSE}
 fit1 <- relative_cummulative %>%
   dplyr::filter(stage == "third") %>% 
   #dplyr::filter(place == 1) %>% 
