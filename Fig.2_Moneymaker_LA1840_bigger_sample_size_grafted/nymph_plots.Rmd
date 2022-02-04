@@ -46,7 +46,7 @@ flies <- read.csv("raw_data.csv",
                          dec = ".", 
                          check.names = FALSE)
 # The first 10 rows of the data
-knitr::kable(flies[1:10,1:8])
+#knitr::kable(flies[1:10,1:8])
 ```
 
 
@@ -71,7 +71,7 @@ flies <- flies %>%
   ungroup()
 ```
 
-```{r graph}
+```{r relative flies}
 relative_flies <- flies %>%
   dplyr::select(-`4_early_fourth_instar`: -`5_completed_lifecycle`)
 
@@ -106,7 +106,7 @@ knitr::kable(test_flies[197:207,1:6])
 
 ## adjust data
 
-```{r wide}
+```{r wide2}
 test_flies <- test_flies %>%
   mutate(stage = as.factor(stage)) %>%
   mutate(place = as.factor(place)) %>%
@@ -114,7 +114,7 @@ test_flies <- test_flies %>%
   pivot_wider(names_from = place, values_from = number) 
 
 # 10 rows of middle of the data
-knitr::kable(test_flies[41:51,1:15])
+#knitr::kable(test_flies[41:51,1:15])
 ``` 
 
 ```{r median SD}
@@ -136,7 +136,12 @@ knitr::kable(test_flies[41:51,1:9])
 
 # graphs development relative to previous stage
 
-graph with observed minima en maxima (dotted lines), confidence interval (median +/- SD; filled area) and median (solid line) per genotype per day for each stage, relative to the previous stage.
+Graphs with observed minima en maxima (dotted lines), confidence interval (median +/- SD; filled area) and median (solid line) per genotype per day for each stage, relative to the previous stage.
+
+```{r palette}
+palette <- c("#E69F00", "#56B4E9")
+```
+
 ```{r first instars}
 
 pfirst <- test_flies %>%
@@ -264,14 +269,13 @@ pfourth <- test_flies %>%
   plot_layout(guides = 'collect')
 ```
 
-Add cumulative graphs and try with relative abundance
 
 
 ## cummulative numbers
 
-This is what happens for the cummulative numbers:
 
-```{r graph}
+
+```{r cumulative graph}
 relative_cummulative <- flies %>%
   dplyr::select(-`4_early_fourth_instar`: -`5_completed_lifecycle`)
 
@@ -345,4 +349,141 @@ p4 <- relative_cummulative %>%
 
 (p1 + p2) / (p3 + p4)  / guide_area() +
   plot_layout(guides = 'collect')
+```
+
+
+
+## relative abundance
+
+```{r new df}
+relative_abundance <- flies %>%
+  dplyr::select(-eggs_start: -`0_egg`,
+                -`4_early_fourth_instar`:-`5_completed_lifecycle`)
+```
+
+```{r total abundance}
+relative_abundance <- relative_abundance %>%
+  rowwise() %>%
+  mutate(total = sum(c_across(`1_first_instar`:`6_total_fourth_instars`),
+                     na.rm = TRUE))
+  
+```
+
+```{r relative abundances}
+relative_abundance <- relative_abundance %>%
+  mutate(first = `1_first_instar`/total) %>%
+  mutate(second = `2_second_instar`/total) %>%
+  mutate(third = `3_third_instar`/total) %>%
+  mutate(fourth = `6_total_fourth_instars`/total)
+```
+
+```{r clean df}
+relative_abundance <- relative_abundance %>%
+  dplyr::select(-`1_first_instar`: -`6_total_fourth_instars`) %>%
+  subset(total>0)
+```
+
+```{r longer}
+relative_abundance <- relative_abundance %>%
+  dplyr::select(-total) %>%
+  pivot_longer(cols = first:fourth, 
+               names_to = "stage", values_to = "relat_abund") %>%
+  mutate(genotype = factor(genotype, levels = c("MM", "LA1840")))
+
+# 10 rows of middle of the data
+#knitr::kable(relative_abundance[41:51,1:6])
+```
+
+```{r wide3}
+relative_abundance <- relative_abundance %>%
+  mutate(stage = as.factor(stage)) %>%
+  mutate(place = as.factor(place)) %>%
+  group_by(stage, genotype) %>%
+  pivot_wider(names_from = place, values_from = relat_abund) 
+
+``` 
+
+```{r summarised}
+relative_abundance <- relative_abundance %>%
+  mutate(day = as.factor(day)) %>%
+  rowwise() %>%
+  mutate(median_abundance = median(c_across(`1`:`12`), na.rm = TRUE)) %>%
+  mutate(sd_abundance = sd(c_across(`1`:`12`), na.rm = TRUE)) %>%
+  mutate(max_abundance = max(c_across(`1`:`12`), na.rm = TRUE)) %>%
+  mutate(min_abundance = min(c_across(`1`:`12`), na.rm = TRUE))
+
+relative_abundance <- relative_abundance %>%
+  dplyr::select(-`1`: -`12`) 
+
+# 10 rows of middle of the data
+knitr::kable(relative_abundance[41:51,1:8])
+```
+
+```{r relative abundance on MM}
+MMpalette <- c("#FF8900", "#FFB300", "#FFCD00", "#FFE280")
+pMM <- relative_abundance %>%
+  mutate(stage = factor(stage, 
+                        levels = c("first", "second", "third", "fourth"))) %>%
+  dplyr::filter(genotype == "MM") %>% 
+  mutate(day = as.numeric(day)) %>% 
+  group_by(stage) %>% 
+  ggplot() +
+  theme_simple() +
+  labs(y = "relative abundance",
+       x = "days after infection") +
+  scale_color_manual(values = MMpalette) +
+  scale_fill_manual(values = MMpalette) +
+  geom_line(aes(x = day,
+                  y = min_abundance,
+                  color = stage),
+              linetype = "dotted") +
+  geom_line(aes(x = day,
+                  y = max_abundance,
+                  color = stage),
+              linetype = "dotted") +
+  geom_ribbon(aes(x = day,
+                  ymin = (median_abundance - sd_abundance),
+                  ymax = (median_abundance + sd_abundance),
+                  fill = stage),
+              alpha = 0.35) +
+  geom_line(aes(x = day,
+                y = median_abundance,
+                color = stage),
+            size = 1.2)
+pMM
+```
+
+
+```{r relative abundance on LA1840}
+LApalette <- c("#0062F6", "#008DFF", "#2CB9FF", "#91E6FF")
+pLA1840 <- relative_abundance %>%
+  mutate(stage = factor(stage, 
+                        levels = c("first", "second", "third", "fourth"))) %>%
+  dplyr::filter(genotype == "LA1840") %>% 
+  mutate(day = as.numeric(day)) %>% 
+  group_by(stage) %>% 
+  ggplot() +
+  theme_simple() +
+  labs(y = "relative abundance",
+       x = "days after infection") +
+  scale_color_manual(values = LApalette) +
+  scale_fill_manual(values = LApalette) +
+  geom_line(aes(x = day,
+                  y = min_abundance,
+                  color = stage),
+              linetype = "dotted") +
+  geom_line(aes(x = day,
+                  y = max_abundance,
+                  color = stage),
+              linetype = "dotted") +
+  geom_ribbon(aes(x = day,
+                  ymin = (median_abundance - sd_abundance),
+                  ymax = (median_abundance + sd_abundance),
+                  fill = stage),
+              alpha = 0.35) +
+  geom_line(aes(x = day,
+                y = median_abundance,
+                color = stage),
+            size = 1.2)
+pLA1840
 ```
