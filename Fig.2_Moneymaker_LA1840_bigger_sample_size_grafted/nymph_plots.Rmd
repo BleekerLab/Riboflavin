@@ -1,8 +1,10 @@
 ---
 title: "nymph plots"
 author: "Lissy Denkers"
-date: "2/2/2022"
-output: html_document
+date: "`r Sys.Date()`"
+output: 
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
@@ -36,7 +38,65 @@ suppressPackageStartupMessages(library("devtools"))
 
 # data import
 
-Take relative_flies from velocity script. If everything works, take over part of script to make relative_flies.
+## The raw data
+```{r flies}
+flies <- read.csv("raw_data.csv", 
+                         header = T, 
+                         sep = ",", 
+                         dec = ".", 
+                         check.names = FALSE)
+# The first 10 rows of the data
+knitr::kable(flies[1:10,1:8])
+```
+
+
+```{r filter}
+flies <- flies %>%     
+  dplyr::filter(place != 4) %>%     
+  dplyr::filter(place < 13)
+```
+
+```{r wide}
+flies <- flies %>%
+  mutate(stage = as.factor(stage)) %>%
+  pivot_wider(names_from = stage, values_from = number) 
+```
+ 
+```{r total fourth instars}
+flies <- flies %>%
+  mutate(fourth_exuviae = `5_late_fourth_instar` + `6_exuviea`) %>%
+  group_by(place) %>%
+  mutate(`5_completed_lifecycle` = cumsum(fourth_exuviae)) %>%
+  mutate(`6_total_fourth_instars` = `4_early_fourth_instar` + `5_completed_lifecycle`) %>%
+  ungroup()
+```
+
+```{r graph}
+relative_flies <- flies %>%
+  dplyr::select(-`4_early_fourth_instar`: -`5_completed_lifecycle`)
+
+relative_flies <- relative_flies %>%
+  mutate(first_instars = rowSums(relative_flies[,8:11])) %>%
+  mutate(second_instars = rowSums(relative_flies[,9:11])) %>%
+  mutate(third_instars = rowSums(relative_flies[,10:11])) %>%
+  mutate(fourth_instars = `6_total_fourth_instars`)
+
+relative_flies <- relative_flies %>%
+  group_by(place) %>%
+  mutate(first = `1_first_instar` / max(eggs_start))%>%
+  mutate(second = `2_second_instar` / max(first_instars))%>%
+  mutate(third = `3_third_instar` / max(second_instars))%>%
+  mutate(fourth = fourth_instars / max(third_instars)) %>%
+  ungroup()
+
+relative_flies <- relative_flies %>%
+  dplyr::select(-eggs_start: -fourth_instars)
+
+relative_flies <- relative_flies %>%
+  pivot_longer(cols = first:fourth, 
+               names_to = "stage", values_to = "number") %>%
+  mutate(genotype = factor(genotype, levels = c("MM", "LA1840"))) 
+```
 
 ```{r test_flies}
 test_flies <- relative_flies
@@ -74,7 +134,7 @@ test_flies <- test_flies %>%
 knitr::kable(test_flies[41:51,1:9])
 ```
 
-# graphs
+# graphs development relative to previous stage
 
 graph with observed minima en maxima (dotted lines), confidence interval (median +/- SD; filled area) and median (solid line) per genotype per day for each stage, relative to the previous stage.
 ```{r first instars}
@@ -205,3 +265,84 @@ pfourth <- test_flies %>%
 ```
 
 Add cumulative graphs and try with relative abundance
+
+
+## cummulative numbers
+
+This is what happens for the cummulative numbers:
+
+```{r graph}
+relative_cummulative <- flies %>%
+  dplyr::select(-`4_early_fourth_instar`: -`5_completed_lifecycle`)
+
+relative_cummulative <- relative_cummulative %>%
+  mutate(first_instars = rowSums(relative_cummulative[,8:11])) %>%
+  mutate(second_instars = rowSums(relative_cummulative[,9:11])) %>%
+  mutate(third_instars = rowSums(relative_cummulative[,10:11])) %>%
+  mutate(fourth_instars = `6_total_fourth_instars`)
+
+relative_cummulative <- relative_cummulative %>%
+  group_by(place) %>%
+  mutate(first = first_instars / max(eggs_start))%>%
+  mutate(second = second_instars / max(first_instars))%>%
+  mutate(third = third_instars / max(second_instars))%>%
+  mutate(fourth = fourth_instars / max(third_instars)) %>%
+  ungroup()
+
+relative_cummulative <- relative_cummulative %>%
+  dplyr::select(-eggs_start: -fourth_instars)
+
+relative_cummulative <- relative_cummulative %>%
+  pivot_longer(cols = first:fourth, 
+               names_to = "stage", values_to = "number") %>%
+  mutate(genotype = factor(genotype, levels = c("MM", "LA1840"))) 
+
+p1 <- relative_cummulative %>%
+  dplyr::filter(stage == "first") %>% 
+  dplyr::filter(day < 15) %>% 
+  group_by(genotype) %>% 
+  ggplot(aes(x=day, y=number, color = genotype)) +
+  labs(y = "first instars",
+       x = "days after infection") +
+  geom_point() +
+  stat_smooth(method = drm, method.args = list(fct = W1.3()), se = FALSE) +
+  scale_color_manual(values = palette) +
+  theme_simple()
+
+p2 <- relative_cummulative %>%
+  dplyr::filter(stage == "second") %>% 
+  dplyr::filter(day < 20) %>% 
+  group_by(genotype) %>% 
+  ggplot(aes(x=day, y=number, color = genotype)) +
+  labs(y = "second instars",
+       x = "days after infection") +
+  geom_point() +
+  stat_smooth(method = drm, method.args = list(fct = LL.3()), se = FALSE) +
+  scale_color_manual(values = palette) +
+  theme_simple()
+
+p3 <- relative_cummulative %>%
+  dplyr::filter(stage == "third") %>% 
+  group_by(genotype) %>% 
+  ggplot(aes(x=day, y=number, color = genotype)) +
+  labs(y = "third instars",
+       x = "days after infection") +
+  geom_point() +
+  stat_smooth(method = drm, method.args = list(fct = LL.3()), se = FALSE) +
+  scale_color_manual(values = palette) +
+  theme_simple()
+
+p4 <- relative_cummulative %>%
+  dplyr::filter(stage == "fourth") %>% 
+  group_by(genotype) %>% 
+  ggplot(aes(x=day, y=number, color = genotype)) + 
+  labs(y = "fourth instars",
+       x = "days after infection") +
+  geom_point() +
+  stat_smooth(method = drm, method.args = list(fct = LL.3()), se = FALSE) +  
+  scale_color_manual(values = palette) +
+  theme_simple()
+
+(p1 + p2) / (p3 + p4)  / guide_area() +
+  plot_layout(guides = 'collect')
+```

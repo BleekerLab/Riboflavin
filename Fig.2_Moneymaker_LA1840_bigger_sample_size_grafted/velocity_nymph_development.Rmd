@@ -144,15 +144,17 @@ I now realize that this just shows the derivative of the counting data and is't 
 
 For now I  don't know if and how to continue with this.
 
+
+
+```{r graph, eval=FALSE, include=FALSE}
 # development relative to previous stage
 
-Another suggestion was to make the data relative to the previous stage.
+#Another suggestion was to make the data relative to the previous stage.
 
 ## cummulative numbers
 
-This is what happens for the cummulative numbers:
+##This is what happens for the cummulative numbers:
 
-```{r graph}
 relative_cummulative <- flies %>%
   dplyr::select(-`4_early_fourth_instar`: -`5_completed_lifecycle`)
 
@@ -228,13 +230,14 @@ p4 <- relative_cummulative %>%
   plot_layout(guides = 'collect')
 ```
 
-The development to fourth instar appears to be the most crucial step for the phenotype.
+
+
+```{r graph, eval=FALSE, include=FALSE}
 
 ## per count numbers
 
-This is what happens for the non-cummulative numbers:
+##This is what happens for the non-cummulative numbers:
 
-```{r graph}
 relative_flies <- flies %>%
   dplyr::select(-`4_early_fourth_instar`: -`5_completed_lifecycle`)
 
@@ -307,10 +310,8 @@ p7 <- relative_flies %>%
   #ylim(0,1)+
   geom_point()  + 
   #geom_line(aes(y = fitted(fit), color = genotype)) +
-  geom_smooth(method = drm, method.args = list(fct = L.5()), 
-              se = FALSE) + 
    geom_smooth(aes(x = day,
-                y = median_number, color = genotype), method = "glm", method.args = list(family = "binomial"), formula = y ~ splines::bs(x), se = FALSE)
+                y = number, color = genotype), method = "glm", method.args = list(family = "binomial"), formula = y ~ splines2::bSpline(x), se = TRUE) +
   scale_color_manual(values = palette) +
   theme_simple()
 
@@ -337,7 +338,7 @@ p7 +
 
 
 ### first instars
-```{r richards}
+```{r richards, eval=FALSE, include=FALSE}
 fit1 <- relative_cummulative %>%
   dplyr::filter(stage == "first") %>% 
   dplyr::filter(genotype == "LA1840") %>%
@@ -345,18 +346,18 @@ fit1 <- relative_cummulative %>%
   mutate(y = number)
 ```
 
-```{r }
+```{r eval=FALSE, include=FALSE}
 model.au.cases <- fit1$number
 model.au.day <- fit1$day
 model.au.richards <- drm(model.au.cases ~ model.au.day, fct = L.5())
 model.au.summary <- summary(model.au.richards)
 ```
-```{r }
+```{r eval=FALSE, include=FALSE}
 prediction_days <- data.frame(model.au.day )
 model.au.pred <- data.frame(predict(model.au.richards, newdata = prediction_days, interval = 'prediction'))
 model.au.predCI <- data.frame(predict(model.au.richards, newdata = prediction_days, interval = 'confidence'))
 ```
-```{r }
+```{r eval=FALSE, include=FALSE}
 model.au <- data.frame(day = prediction_days, fit = model.au.pred$Prediction, lwr = model.au.pred$Lower, upr = model.au.pred$Upper)
 model.auCI <- data.frame(day = prediction_days, fit = model.au.predCI$Prediction, lwr = model.au.predCI$Lower, upr = model.au.predCI$Upper)
 
@@ -365,7 +366,7 @@ model.auCI <- data.frame(day = prediction_days, fit = model.au.predCI$Prediction
 model.au$lwr[model.au$lwr < 0] <- 0
 model.auCI$lwr[model.auCI$lwr < 0] <- 0
 ```
-```{r }
+```{r eval=FALSE, include=FALSE}
 model.au.fit.fn <- splinefun(model.au.day, model.au$fit)
 model.au.fit.deriv <- model.au.fit.fn(model.au.day, deriv = 1)
 model.au.fit.deriv[model.au.fit.deriv < 0] <- 0
@@ -374,7 +375,7 @@ model.au.upr.deriv <- model.au.fit.deriv + (model.au$upr - model.au$fit)
 model.au.lwr.deriv <- model.au.fit.deriv - (model.au$fit - model.au$lwr)
 model.au.lwr.deriv[model.au.lwr.deriv < 0] <- 0
 ```
-```{r }
+```{r eval=FALSE, include=FALSE}
 model.auCI.fit.fn <- splinefun(model.au.day, model.auCI$fit)
 model.auCI.fit.deriv <- model.auCI.fit.fn(model.au.day, deriv = 1)
 model.auCI.fit.deriv[model.auCI.fit.deriv < 0] <- 0
@@ -383,7 +384,7 @@ model.auCI.upr.deriv <- model.auCI.fit.deriv + (model.auCI$upr - model.auCI$fit)
 model.auCI.lwr.deriv <- model.auCI.fit.deriv - (model.auCI$fit - model.auCI$lwr)
 model.auCI.lwr.deriv[model.auCI.lwr.deriv < 0] <- 0
 ```
-```{r }
+```{r eval=FALSE, include=FALSE}
 LA1840_first <- ggplot(data=fit1, aes(x=day, y=number)) +  
 	geom_ribbon(aes(ymin=model.auCI.lwr.deriv, ymax=model.auCI.upr.deriv), fill="#56B4E9", colour=NA, alpha=0.1) +
     geom_line(aes(y=model.au.fit.deriv), colour="#56B4E9", size = 1, linetype=1)  +
@@ -392,7 +393,7 @@ LA1840_first <- ggplot(data=fit1, aes(x=day, y=number)) +
 ```
 
 
-```{r }
+```{r eval=FALSE, include=FALSE}
 fit2 <- relative_cummulative %>%
   dplyr::filter(stage == "first") %>% 
   dplyr::filter(genotype == "MM") %>%
@@ -400,29 +401,29 @@ fit2 <- relative_cummulative %>%
   mutate(y = number)
 ```
 
-```{r }
+```{r eval=FALSE, include=FALSE}
 model.mm.cases <- fit2$number
 model.mm.day <- fit2$day
 model.mm.richards <- drm(model.mm.cases ~ model.mm.day, fct = L.5())
 model.mm.summary <- summary(model.mm.richards)
 ```
-```{r }
+```{r eval=FALSE, include=FALSE}
 prediction_days <- data.frame(model.mm.day )
 model.mm.pred <- data.frame(predict(model.mm.richards, newdata = prediction_days, interval = 'prediction'))
 model.mm.predCI <- data.frame(predict(model.mm.richards, newdata = prediction_days, interval = 'confidence'))
 ```
-```{r }
+```{r eval=FALSE, include=FALSE}
 model.mm <- data.frame(day = prediction_days, fit = model.mm.pred$Prediction, lwr = model.mm.pred$Lower, upr = model.mm.pred$Upper)
 model.mmCI <- data.frame(day = prediction_days, fit = model.mm.predCI$Prediction, lwr = model.mm.predCI$Lower, upr = model.mm.predCI$Upper)
 ```
-```{r }
+```{r eval=FALSE, include=FALSE}
 # Replace any predicted values < 0 to be equal to zero.
 # Obviously, there can't be less than 0 cases.
 model.mm$lwr[model.mm$lwr < 0] <- 0
 model.mmCI$lwr[model.mmCI$lwr < 0] <- 0
 ```
 
-```{r }
+```{r eval=FALSE, include=FALSE}
 model.mm.fit.fn <- splinefun(model.mm.day, model.mm$fit)
 model.mm.fit.deriv <- model.mm.fit.fn(model.mm.day, deriv = 1)
 model.mm.fit.deriv[model.mm.fit.deriv < 0] <- 0
@@ -431,7 +432,7 @@ model.mm.upr.deriv <- model.mm.fit.deriv + (model.mm$upr - model.mm$fit)
 model.mm.lwr.deriv <- model.mm.fit.deriv - (model.mm$fit - model.mm$lwr)
 model.mm.lwr.deriv[model.mm.lwr.deriv < 0] <- 0
 ```
-```{r }
+```{r eval=FALSE, include=FALSE}
 model.mmCI.fit.fn <- splinefun(model.mm.day, model.mmCI$fit)
 model.mmCI.fit.deriv <- model.mmCI.fit.fn(model.mm.day, deriv = 1)
 model.mmCI.fit.deriv[model.mmCI.fit.deriv < 0] <- 0
@@ -440,7 +441,7 @@ model.mmCI.upr.deriv <- model.mmCI.fit.deriv + (model.mmCI$upr - model.mmCI$fit)
 model.mmCI.lwr.deriv <- model.mmCI.fit.deriv - (model.mmCI$fit - model.mmCI$lwr)
 model.mmCI.lwr.deriv[model.mmCI.lwr.deriv < 0] <- 0
 ```
-```{r }
+```{r eval=FALSE, include=FALSE}
 MM_first <-
   ggplot(data=fit2, aes(x=day, y=number)) +  
 	geom_ribbon(aes(ymin=model.mmCI.lwr.deriv, ymax=model.mmCI.upr.deriv), fill="#E69F00", colour=NA, alpha=0.1) +
@@ -448,7 +449,7 @@ MM_first <-
   theme_simple()
 ```
 
-```{r }
+```{r eval=FALSE, include=FALSE}
 
 MM_first + LA1840_first
 
@@ -458,7 +459,7 @@ Below are graphs showing the derivative of the cumulative data. I wanted to show
 
 
 ### second instars
-```{r richards}
+```{r richards eval=FALSE, include=FALSE}
 fit1 <- relative_cummulative %>%
   dplyr::filter(stage == "second") %>% 
   #dplyr::filter(place == 1) %>% 
@@ -467,18 +468,18 @@ fit1 <- relative_cummulative %>%
   mutate(y = number)
 ```
 
-```{r }
+```{r eval=FALSE, include=FALSE}
 model.au.cases <- fit1$number
 model.au.day <- fit1$day
 model.au.richards <- drm(model.au.cases ~ model.au.day, fct = L.5())
 model.au.summary <- summary(model.au.richards)
 ```
-```{r }
+```{r eval=FALSE, include=FALSE}
 prediction_days <- data.frame(model.au.day )
 model.au.pred <- data.frame(predict(model.au.richards, newdata = prediction_days, interval = 'prediction'))
 model.au.predCI <- data.frame(predict(model.au.richards, newdata = prediction_days, interval = 'confidence'))
 ```
-```{r }
+```{r eval=FALSE, include=FALSE}
 model.au <- data.frame(day = prediction_days, fit = model.au.pred$Prediction, lwr = model.au.pred$Lower, upr = model.au.pred$Upper)
 model.auCI <- data.frame(day = prediction_days, fit = model.au.predCI$Prediction, lwr = model.au.predCI$Lower, upr = model.au.predCI$Upper)
 
@@ -487,7 +488,7 @@ model.auCI <- data.frame(day = prediction_days, fit = model.au.predCI$Prediction
 model.au$lwr[model.au$lwr < 0] <- 0
 model.auCI$lwr[model.auCI$lwr < 0] <- 0
 ```
-```{r }
+```{r eval=FALSE, include=FALSE}
 model.au.fit.fn <- splinefun(model.au.day, model.au$fit)
 model.au.fit.deriv <- model.au.fit.fn(model.au.day, deriv = 1)
 model.au.fit.deriv[model.au.fit.deriv < 0] <- 0
@@ -496,7 +497,7 @@ model.au.upr.deriv <- model.au.fit.deriv + (model.au$upr - model.au$fit)
 model.au.lwr.deriv <- model.au.fit.deriv - (model.au$fit - model.au$lwr)
 model.au.lwr.deriv[model.au.lwr.deriv < 0] <- 0
 ```
-```{r }
+```{r eval=FALSE, include=FALSE}
 model.auCI.fit.fn <- splinefun(model.au.day, model.auCI$fit)
 model.auCI.fit.deriv <- model.auCI.fit.fn(model.au.day, deriv = 1)
 model.auCI.fit.deriv[model.auCI.fit.deriv < 0] <- 0
@@ -505,7 +506,7 @@ model.auCI.upr.deriv <- model.auCI.fit.deriv + (model.auCI$upr - model.auCI$fit)
 model.auCI.lwr.deriv <- model.auCI.fit.deriv - (model.auCI$fit - model.auCI$lwr)
 model.auCI.lwr.deriv[model.auCI.lwr.deriv < 0] <- 0
 ```
-```{r }
+```{r eval=FALSE, include=FALSE}
 LA1840_second <- ggplot(data=fit1, aes(x=day, y=number)) +  
 	geom_ribbon(aes(ymin=model.auCI.lwr.deriv, ymax=model.auCI.upr.deriv), fill="#56B4E9", colour=NA, alpha=0.1) +
     geom_line(aes(y=model.au.fit.deriv), colour="#56B4E9", size = 1, linetype=1)  +
@@ -514,7 +515,7 @@ LA1840_second <- ggplot(data=fit1, aes(x=day, y=number)) +
 ```
 
 
-```{r }
+```{r eval=FALSE, include=FALSE}
 fit2 <- relative_cummulative %>%
   dplyr::filter(stage == "second") %>% 
   #dplyr::filter(place == 1) %>% 
@@ -523,29 +524,29 @@ fit2 <- relative_cummulative %>%
   mutate(y = number)
 ```
 
-```{r }
+```{r eval=FALSE, include=FALSE}
 model.mm.cases <- fit2$number
 model.mm.day <- fit2$day
 model.mm.richards <- drm(model.mm.cases ~ model.mm.day, fct = L.5())
 model.mm.summary <- summary(model.mm.richards)
 ```
-```{r }
+```{r eval=FALSE, include=FALSE}
 prediction_days <- data.frame(model.mm.day )
 model.mm.pred <- data.frame(predict(model.mm.richards, newdata = prediction_days, interval = 'prediction'))
 model.mm.predCI <- data.frame(predict(model.mm.richards, newdata = prediction_days, interval = 'confidence'))
 ```
-```{r }
+```{r eval=FALSE, include=FALSE}
 model.mm <- data.frame(day = prediction_days, fit = model.mm.pred$Prediction, lwr = model.mm.pred$Lower, upr = model.mm.pred$Upper)
 model.mmCI <- data.frame(day = prediction_days, fit = model.mm.predCI$Prediction, lwr = model.mm.predCI$Lower, upr = model.mm.predCI$Upper)
 ```
-```{r }
+```{r eval=FALSE, include=FALSE}
 # Replace any predicted values < 0 to be equal to zero.
 # Obviously, there can't be less than 0 cases.
 model.mm$lwr[model.mm$lwr < 0] <- 0
 model.mmCI$lwr[model.mmCI$lwr < 0] <- 0
 ```
 
-```{r }
+```{r eval=FALSE, include=FALSE}
 model.mm.fit.fn <- splinefun(model.mm.day, model.mm$fit)
 model.mm.fit.deriv <- model.mm.fit.fn(model.mm.day, deriv = 1)
 model.mm.fit.deriv[model.mm.fit.deriv < 0] <- 0
@@ -554,7 +555,7 @@ model.mm.upr.deriv <- model.mm.fit.deriv + (model.mm$upr - model.mm$fit)
 model.mm.lwr.deriv <- model.mm.fit.deriv - (model.mm$fit - model.mm$lwr)
 model.mm.lwr.deriv[model.mm.lwr.deriv < 0] <- 0
 ```
-```{r }
+```{r eval=FALSE, include=FALSE}
 model.mmCI.fit.fn <- splinefun(model.mm.day, model.mmCI$fit)
 model.mmCI.fit.deriv <- model.mmCI.fit.fn(model.mm.day, deriv = 1)
 model.mmCI.fit.deriv[model.mmCI.fit.deriv < 0] <- 0
@@ -563,7 +564,7 @@ model.mmCI.upr.deriv <- model.mmCI.fit.deriv + (model.mmCI$upr - model.mmCI$fit)
 model.mmCI.lwr.deriv <- model.mmCI.fit.deriv - (model.mmCI$fit - model.mmCI$lwr)
 model.mmCI.lwr.deriv[model.mmCI.lwr.deriv < 0] <- 0
 ```
-```{r }
+```{r eval=FALSE, include=FALSE}
 MM_second <-
   ggplot(data=fit2, aes(x=day, y=number)) +  
 	geom_ribbon(aes(ymin=model.mmCI.lwr.deriv, ymax=model.mmCI.upr.deriv), fill="#E69F00", colour=NA, alpha=0.1) +
@@ -571,7 +572,7 @@ MM_second <-
   theme_simple()
 ```
 
-```{r }
+```{r eval=FALSE, include=FALSE}
 
 MM_second + LA1840_second
 
@@ -579,7 +580,7 @@ MM_second + LA1840_second
 
 
 ### third instars
-```{r richards}
+```{r richards eval=FALSE, include=FALSE}
 fit1 <- relative_cummulative %>%
   dplyr::filter(stage == "third") %>% 
   #dplyr::filter(place == 1) %>% 
@@ -588,18 +589,18 @@ fit1 <- relative_cummulative %>%
   mutate(y = number)
 ```
 
-```{r }
+```{r eval=FALSE, include=FALSE}
 model.au.cases <- fit1$number
 model.au.day <- fit1$day
 model.au.richards <- drm(model.au.cases ~ model.au.day, fct = L.5())
 model.au.summary <- summary(model.au.richards)
 ```
-```{r }
+```{r eval=FALSE, include=FALSE}
 prediction_days <- data.frame(model.au.day )
 model.au.pred <- data.frame(predict(model.au.richards, newdata = prediction_days, interval = 'prediction'))
 model.au.predCI <- data.frame(predict(model.au.richards, newdata = prediction_days, interval = 'confidence'))
 ```
-```{r }
+```{r eval=FALSE, include=FALSE}
 model.au <- data.frame(day = prediction_days, fit = model.au.pred$Prediction, lwr = model.au.pred$Lower, upr = model.au.pred$Upper)
 model.auCI <- data.frame(day = prediction_days, fit = model.au.predCI$Prediction, lwr = model.au.predCI$Lower, upr = model.au.predCI$Upper)
 
@@ -608,7 +609,7 @@ model.auCI <- data.frame(day = prediction_days, fit = model.au.predCI$Prediction
 model.au$lwr[model.au$lwr < 0] <- 0
 model.auCI$lwr[model.auCI$lwr < 0] <- 0
 ```
-```{r }
+```{r eval=FALSE, include=FALSE}
 model.au.fit.fn <- splinefun(model.au.day, model.au$fit)
 model.au.fit.deriv <- model.au.fit.fn(model.au.day, deriv = 1)
 model.au.fit.deriv[model.au.fit.deriv < 0] <- 0
@@ -617,7 +618,7 @@ model.au.upr.deriv <- model.au.fit.deriv + (model.au$upr - model.au$fit)
 model.au.lwr.deriv <- model.au.fit.deriv - (model.au$fit - model.au$lwr)
 model.au.lwr.deriv[model.au.lwr.deriv < 0] <- 0
 ```
-```{r }
+```{r eval=FALSE, include=FALSE}
 model.auCI.fit.fn <- splinefun(model.au.day, model.auCI$fit)
 model.auCI.fit.deriv <- model.auCI.fit.fn(model.au.day, deriv = 1)
 model.auCI.fit.deriv[model.auCI.fit.deriv < 0] <- 0
@@ -626,7 +627,7 @@ model.auCI.upr.deriv <- model.auCI.fit.deriv + (model.auCI$upr - model.auCI$fit)
 model.auCI.lwr.deriv <- model.auCI.fit.deriv - (model.auCI$fit - model.auCI$lwr)
 model.auCI.lwr.deriv[model.auCI.lwr.deriv < 0] <- 0
 ```
-```{r }
+```{r eval=FALSE, include=FALSE}
 LA1840_third <- ggplot(data=fit1, aes(x=day, y=number)) +  
 	geom_ribbon(aes(ymin=model.auCI.lwr.deriv, ymax=model.auCI.upr.deriv), fill="#56B4E9", colour=NA, alpha=0.1) +
     geom_line(aes(y=model.au.fit.deriv), colour="#56B4E9", size = 1, linetype=1)  +
@@ -635,7 +636,7 @@ LA1840_third <- ggplot(data=fit1, aes(x=day, y=number)) +
 ```
 
 
-```{r }
+```{r eval=FALSE, include=FALSE}
 fit2 <- relative_cummulative %>%
   dplyr::filter(stage == "third") %>% 
   #dplyr::filter(place == 1) %>% 
@@ -644,29 +645,29 @@ fit2 <- relative_cummulative %>%
   mutate(y = number)
 ```
 
-```{r }
+```{r eval=FALSE, include=FALSE}
 model.mm.cases <- fit2$number
 model.mm.day <- fit2$day
 model.mm.richards <- drm(model.mm.cases ~ model.mm.day, fct = L.5())
 model.mm.summary <- summary(model.mm.richards)
 ```
-```{r }
+```{r eval=FALSE, include=FALSE}
 prediction_days <- data.frame(model.mm.day )
 model.mm.pred <- data.frame(predict(model.mm.richards, newdata = prediction_days, interval = 'prediction'))
 model.mm.predCI <- data.frame(predict(model.mm.richards, newdata = prediction_days, interval = 'confidence'))
 ```
-```{r }
+```{r eval=FALSE, include=FALSE}
 model.mm <- data.frame(day = prediction_days, fit = model.mm.pred$Prediction, lwr = model.mm.pred$Lower, upr = model.mm.pred$Upper)
 model.mmCI <- data.frame(day = prediction_days, fit = model.mm.predCI$Prediction, lwr = model.mm.predCI$Lower, upr = model.mm.predCI$Upper)
 ```
-```{r }
+```{r eval=FALSE, include=FALSE}
 # Replace any predicted values < 0 to be equal to zero.
 # Obviously, there can't be less than 0 cases.
 model.mm$lwr[model.mm$lwr < 0] <- 0
 model.mmCI$lwr[model.mmCI$lwr < 0] <- 0
 ```
 
-```{r }
+```{r eval=FALSE, include=FALSE}
 model.mm.fit.fn <- splinefun(model.mm.day, model.mm$fit)
 model.mm.fit.deriv <- model.mm.fit.fn(model.mm.day, deriv = 1)
 model.mm.fit.deriv[model.mm.fit.deriv < 0] <- 0
@@ -675,7 +676,7 @@ model.mm.upr.deriv <- model.mm.fit.deriv + (model.mm$upr - model.mm$fit)
 model.mm.lwr.deriv <- model.mm.fit.deriv - (model.mm$fit - model.mm$lwr)
 model.mm.lwr.deriv[model.mm.lwr.deriv < 0] <- 0
 ```
-```{r }
+```{r eval=FALSE, include=FALSE}
 model.mmCI.fit.fn <- splinefun(model.mm.day, model.mmCI$fit)
 model.mmCI.fit.deriv <- model.mmCI.fit.fn(model.mm.day, deriv = 1)
 model.mmCI.fit.deriv[model.mmCI.fit.deriv < 0] <- 0
@@ -684,7 +685,7 @@ model.mmCI.upr.deriv <- model.mmCI.fit.deriv + (model.mmCI$upr - model.mmCI$fit)
 model.mmCI.lwr.deriv <- model.mmCI.fit.deriv - (model.mmCI$fit - model.mmCI$lwr)
 model.mmCI.lwr.deriv[model.mmCI.lwr.deriv < 0] <- 0
 ```
-```{r }
+```{r eval=FALSE, include=FALSE}
 MM_third <-
   ggplot(data=fit2, aes(x=day, y=number)) +  
 	geom_ribbon(aes(ymin=model.mmCI.lwr.deriv, ymax=model.mmCI.upr.deriv), fill="#E69F00", colour=NA, alpha=0.1) +
@@ -692,7 +693,7 @@ MM_third <-
   theme_simple()
 ```
 
-```{r }
+```{r eval=FALSE, include=FALSE}
 
 MM_third + LA1840_third
 
