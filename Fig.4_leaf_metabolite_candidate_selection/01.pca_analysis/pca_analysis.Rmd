@@ -195,6 +195,10 @@ peaks_wo_outliers = peaks[-row_index_of_outliers,]
 
 # remove it from the sample to genotype df
 sample_info_wo_outliers <- sample_info[-row_index_of_outliers,]
+
+sample_info_wo_outliers <- sample_info_wo_outliers %>%
+  mutate(genotype = factor(genotype, levels = c("KG1955", "IL1928", "IL1927", "LA1840")))
+  
 knitr::kable(sample_info_wo_outliers)
 ```
 
@@ -225,6 +229,8 @@ ggsave("scree_plot.png")
 
 ### PC1 versus PC2
 ```{r PC1 vs PC2 wo outlier, echo=FALSE}
+palette <- c("#E69F00", "#D55E00", "#0072B2", "#56B4E9")
+
 scores2 <- pca_results2$scores
 scores2["genotype"] <- sample_info_wo_outliers$genotype
 scores2["phenotype"] <- sample_info_wo_outliers$phenotype
@@ -234,7 +240,10 @@ pc1_vs_pc2 <- ggplot(scores2) +
   geom_point(aes(x = PC1, y = PC2, shape = phenotype, col = genotype), size = 4) + 
   xlab(paste0('PC1 (',df_explained_variance2[1,2],'% explained variance)')) + 
   ylab(paste0('PC2 (',df_explained_variance2[2,2],'% explained variance)')) + 
-  ggtitle('PCA score plot: PC1 versus PC2')
+  ggtitle('PCA score plot: PC1 versus PC2') +
+  scale_color_manual(values = palette) +
+  scale_fill_manual(values = palette) +
+  theme_simple()
 pc1_vs_pc2
 ggsave("sample_score_plot.png")
 ```
