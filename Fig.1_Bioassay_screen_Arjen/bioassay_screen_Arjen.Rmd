@@ -90,7 +90,7 @@ flies %>%
 
 ## combined
 It might be best to use both for the most complete view of the phnotype.
-```{r combined plot}
+```{r combined plot, fig.width = 16, fig.height = 10}
 p1 <- flies %>% 
   dplyr::filter(stage == "egg") %>%
   ggplot(aes(x=genotype, y=number, fill=genotype)) + 
@@ -115,13 +115,18 @@ p3 <- flies %>%
                names_to = "stage", values_to = "number") %>%
   dplyr::filter(stage == "percentage_from_eggs") %>%
   ggplot(aes(x=genotype, y=number, fill=genotype)) + 
-  labs(y = "development to 4th instar (%)") +
+  labs(y = "development egg to 4th instar (%)") +
   geom_boxplot() + 
   theme_simple() + 
   scale_fill_manual(values = palette) 
 
-(p1 + p2 + p3) / guide_area() +
-  plot_layout(guides = 'collect')
+collected <- (p1 + p2 + p3) / guide_area() +
+  plot_layout(guides = 'collect') +
+  plot_annotation(tag_levels = 'a')
+
+collected
+
+ggsave(filename = "first_bioassay_screen.png", plot = collected, width = 10, height = 10)
 ```
 
 # statistics

@@ -54,7 +54,7 @@ knitr::kable(flies[1:10,1:4])
 palette <- c("#E69F00", "#D55E00", "#0072B2")
 ```
 
-```{r combined plot}
+```{r combined plot, fig.width = 16, fig.height = 10}
 p1 <- flies %>% 
   dplyr::filter(stage == "egg") %>%
   ggplot(aes(x=genotype, y=number, fill=genotype)) + 
@@ -84,8 +84,11 @@ p3 <- flies %>%
   theme_simple() + 
   scale_fill_manual(values = palette) 
 
-(p1 + p2 + p3) / guide_area() +
-  plot_layout(guides = 'collect')
+collected <- (p1 + p2 + p3) / guide_area() +
+  plot_layout(guides = 'collect') +
+  plot_annotation(tag_levels = 'a')
+
+ggsave(filename = "IL_bioassay.png", plot = collected, width = 10, height = 10)
 ```
 
 
