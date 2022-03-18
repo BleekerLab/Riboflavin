@@ -1,0 +1,707 @@
+---
+title: "nymph plots"
+author: "Lissy Denkers"
+date: "`r Sys.Date()`"
+output: 
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = FALSE, 
+                      warning = FALSE, 
+                      message = FALSE, 
+                      fig.width = 8, 
+                      fig.height = 5, 
+                      fig.align = "center")
+suppressPackageStartupMessages(library("ggplot2"))
+suppressPackageStartupMessages(library("ggrepel"))
+suppressPackageStartupMessages(library("ggpubr"))
+suppressPackageStartupMessages(library("ggpubfigs"))
+suppressPackageStartupMessages(library("patchwork"))
+suppressPackageStartupMessages(library("lemon"))
+suppressPackageStartupMessages(library("plyr"))
+suppressPackageStartupMessages(library("dplyr"))
+suppressPackageStartupMessages(library("skimr"))
+suppressPackageStartupMessages(library("Hmisc"))
+suppressPackageStartupMessages(library("tidyr"))
+suppressPackageStartupMessages(library("car"))
+suppressPackageStartupMessages(library("rstatix"))
+suppressPackageStartupMessages(library("tidyverse"))
+suppressPackageStartupMessages(library("broom"))
+suppressPackageStartupMessages(library("drc"))
+suppressPackageStartupMessages(library("modelr"))
+suppressPackageStartupMessages(library("egg"))
+suppressPackageStartupMessages(library("tidydrc"))
+suppressPackageStartupMessages(library("aomisc"))
+suppressPackageStartupMessages(library("devtools"))
+```
+
+# data import
+
+## The raw data
+```{r flies}
+flies <- read.csv("raw_data.csv", 
+                         header = T, 
+                         sep = ",", 
+                         dec = ".", 
+                         check.names = FALSE)
+# The first 10 rows of the data
+#knitr::kable(flies[1:10,1:8])
+```
+
+
+```{r filter}
+flies <- flies %>%     
+  dplyr::filter(place != 4) %>%     
+  dplyr::filter(place < 13)
+```
+
+```{r wide}
+flies <- flies %>%
+  mutate(stage = as.factor(stage)) %>%
+  pivot_wider(names_from = stage, values_from = number) 
+```
+ 
+```{r total fourth instars}
+flies <- flies %>%
+  mutate(fourth_exuviae = `5_late_fourth_instar` + `6_exuviea`) %>%
+  group_by(place) %>%
+  mutate(`5_completed_lifecycle` = cumsum(fourth_exuviae)) %>%
+  mutate(`6_total_fourth_instars` = `4_early_fourth_instar` + `5_completed_lifecycle`) %>%
+  ungroup()
+```
+
+```{r relative flies}
+relative_flies <- flies %>%
+  dplyr::select(-`4_early_fourth_instar`: -`5_completed_lifecycle`)
+
+relative_flies <- relative_flies %>%
+  mutate(first_instars = rowSums(relative_flies[,8:11])) %>%
+  mutate(second_instars = rowSums(relative_flies[,9:11])) %>%
+  mutate(third_instars = rowSums(relative_flies[,10:11])) %>%
+  mutate(fourth_instars = `6_total_fourth_instars`)
+
+relative_flies <- relative_flies %>%
+  group_by(place) %>%
+  mutate(first = `1_first_instar` / max(eggs_start))%>%
+  mutate(second = `2_second_instar` / max(first_instars))%>%
+  mutate(third = `3_third_instar` / max(second_instars))%>%
+  mutate(fourth = fourth_instars / max(third_instars)) %>%
+  ungroup()
+
+relative_flies <- relative_flies %>%
+  dplyr::select(-eggs_start: -fourth_instars)
+
+relative_flies <- relative_flies %>%
+  pivot_longer(cols = first:fourth, 
+               names_to = "stage", values_to = "number") %>%
+  mutate(genotype = factor(genotype, levels = c("MM", "LA1840"))) 
+```
+
+```{r test_flies}
+test_flies <- relative_flies
+# 10 rows of middle of the data
+knitr::kable(test_flies[197:207,1:6])
+```
+
+## adjust data
+
+```{r wide2}
+test_flies <- test_flies %>%
+  mutate(stage = as.factor(stage)) %>%
+  mutate(place = as.factor(place)) %>%
+  group_by(stage, genotype) %>%
+  pivot_wider(names_from = place, values_from = number) 
+
+# 10 rows of middle of the data
+#knitr::kable(test_flies[41:51,1:15])
+``` 
+
+```{r median SD}
+test_flies <- test_flies %>%
+  mutate(day = as.factor(day)) %>%
+  rowwise() %>%
+  mutate(mean_number = mean(c_across(`1`:`12`), na.rm = TRUE)) %>%
+  mutate(median_number = median(c_across(`1`:`12`), na.rm = TRUE)) %>%
+  mutate(sd_number = sd(c_across(`1`:`12`), na.rm = TRUE)) %>%
+  mutate(max_number = max(c_across(`1`:`12`), na.rm = TRUE)) %>%
+  mutate(min_number = min(c_across(`1`:`12`), na.rm = TRUE))
+
+test_flies <- test_flies %>%
+  dplyr::select(-`1`: -`12`)
+
+# 10 rows of middle of the data
+knitr::kable(test_flies[41:51,1:9])
+```
+
+# graphs development relative to previous stage
+
+Graphs with observed minima en maxima (dotted lines), confidence interval (median +/- SD; filled area) and median (solid line) per genotype per day for each stage, relative to the previous stage.
+
+```{r palette}
+palette <- c("#E69F00", "#56B4E9")
+LApalette <- c("#aad9f4", "#56B4E9", "#2b5a74")
+MMpalette <- c("#f2cf7f", "#E69F00", "#734f00")
+```
+
+```{r first instars}
+
+pfirst <- test_flies %>%
+  dplyr::filter(stage == "first") %>% 
+  mutate(day = as.numeric(as.character(day))) %>% 
+  group_by(genotype) %>% 
+  ggplot() +
+  theme_simple() +
+  labs(y = "first",
+       x = "days after infection") +
+  scale_color_manual(values = palette) +
+  scale_fill_manual(values = palette) +
+  geom_line(aes(x = day,
+                  y = min_number,
+                  color = genotype),
+              linetype = "dotted") +
+  geom_line(aes(x = day,
+                  y = max_number,
+                  color = genotype),
+              linetype = "dotted") +
+  geom_ribbon(aes(x = day,
+                  ymin = (median_number - sd_number),
+                  ymax = (median_number + sd_number),
+                  fill = genotype),
+              alpha = 0.35) +
+  geom_line(aes(x = day,
+                y = median_number,
+                color = genotype),
+            size = 1.2)
+
+```
+
+```{r second instars}
+psecond <- test_flies %>%
+  dplyr::filter(stage == "second") %>% 
+  mutate(day = as.numeric(as.character(day))) %>% 
+  group_by(genotype) %>% 
+  ggplot() +
+  theme_simple() +
+  labs(y = "second",
+       x = "days after infection") +
+  scale_color_manual(values = palette) +
+  scale_fill_manual(values = palette) +
+  geom_line(aes(x = day,
+                  y = min_number,
+                  color = genotype),
+              linetype = "dotted") +
+  geom_line(aes(x = day,
+                  y = max_number,
+                  color = genotype),
+              linetype = "dotted") +
+  geom_ribbon(aes(x = day,
+                  ymin = (median_number - sd_number),
+                  ymax = (median_number + sd_number),
+                  fill = genotype),
+              alpha = 0.35) +
+  geom_line(aes(x = day,
+                y = median_number,
+                color = genotype),
+            size = 1.2)
+
+```
+
+```{r third instars}
+pthird <- test_flies %>%
+  dplyr::filter(stage == "third") %>% 
+  mutate(day = as.numeric(as.character(day))) %>% 
+  group_by(genotype) %>% 
+  ggplot() +
+  theme_simple() +
+  labs(y = "Third",
+       x = "days after infection") +
+  scale_color_manual(values = palette) +
+  scale_fill_manual(values = palette) +
+  geom_line(aes(x = day,
+                  y = min_number,
+                  color = genotype),
+              linetype = "dotted") +
+  geom_line(aes(x = day,
+                  y = max_number,
+                  color = genotype),
+              linetype = "dotted") +
+  geom_ribbon(aes(x = day,
+                  ymin = (median_number - sd_number),
+                  ymax = (median_number + sd_number),
+                  fill = genotype),
+              alpha = 0.35) +
+  geom_line(aes(x = day,
+                y = median_number,
+                color = genotype),
+            size = 1.2) 
+
+```
+
+```{r fourth instars}
+pfourth <- test_flies %>%
+  dplyr::filter(stage == "fourth") %>% 
+  mutate(day = as.numeric(as.character(day))) %>% 
+  group_by(genotype) %>% 
+  ggplot() +
+  theme_simple() +
+  labs(y = "fourth",
+       x = "days after infection") +
+  scale_color_manual(values = palette) +
+  scale_fill_manual(values = palette) +
+  geom_line(aes(x = day,
+                  y = min_number,
+                  color = genotype),
+              linetype = "dotted") +
+  geom_line(aes(x = day,
+                  y = max_number,
+                  color = genotype),
+              linetype = "dotted") +
+  geom_ribbon(aes(x = day,
+                  ymin = (median_number - sd_number),
+                  ymax = (median_number + sd_number),
+                  fill = genotype),
+              alpha = 0.35) +
+  geom_line(aes(x = day,
+                y = median_number,
+                color = genotype),
+            size = 1.2)
+
+(pfirst + psecond) / (pthird + pfourth)  / guide_area() +
+  plot_layout(guides = 'collect')
+```
+
+
+
+## cummulative numbers
+
+```{r functions}
+cumul_median <- function(data) {
+    for(i in 1:dim(data)[1]) {
+    if(data$day[i] == 2) { data$var_new[i] <- data$var_new[i]  
+    } else {
+      if(data$var_new[i] < data$var_new[i-1]) {
+    data$var_new[i] <- data$var_new[i-1] 
+      } else {
+    data$var_new[i] <- data$var_new[i]    
+      } 
+    }
+    }   
+    data$var_new
+  } 
+  
+cumul_fun <- function(data) {
+  rel_cumul = tibble()
+ for(i in c("LA1840_1", "MM_2", "MM_3", "LA1840_5", "LA1840_6", "LA1840_7", "MM_8", "MM_9", "MM_10", "LA1840_11", "LA1840_12")){
+   subdata = subset(data, id == i)
+   subdata[[i]] = cumul_median(subdata)
+   rel_cumul <- bind_rows(rel_cumul, subdata)
+ }
+  }
+  
+```
+
+```{r cumulative data}
+relative_cummulative <- flies %>%
+  dplyr::select(-`4_early_fourth_instar`: -`5_completed_lifecycle`)
+
+relative_cummulative <- relative_cummulative %>%
+  mutate(first_instars = rowSums(relative_cummulative[,8:11])) %>%
+  mutate(second_instars = rowSums(relative_cummulative[,9:11])) %>%
+  mutate(third_instars = rowSums(relative_cummulative[,10:11])) %>%
+  mutate(fourth_instars = `6_total_fourth_instars`)
+```
+
+
+```{r correct}
+relative_cummulative <- relative_cummulative %>%
+  mutate(var_new = first_instars) %>%
+  mutate(day = as.numeric(as.character(day))) %>%
+  unite("id", c(genotype, place), remove = FALSE) %>%
+  mutate(id = as.factor(id)) %>%
+  group_by(id)
+
+
+  rel_cumul = tibble()
+ for(i in c("LA1840_1", "MM_2", "MM_3", "LA1840_5", "LA1840_6", "LA1840_7", "MM_8", "MM_9", "MM_10", "LA1840_11", "LA1840_12")){
+   subdata = subset(relative_cummulative, id == i)
+   subdata[i] = cumul_median(subdata)
+   rel_cumul <- bind_rows(rel_cumul, subdata)
+ }
+
+
+relative_cummulative <- rel_cumul %>%
+  unite("first_instars", LA1840_1:LA1840_12, 
+                                  na.rm = TRUE)  %>%
+  mutate(var_new = second_instars)
+
+  rel_cumul = tibble()
+ for(i in c("LA1840_1", "MM_2", "MM_3", "LA1840_5", "LA1840_6", "LA1840_7", "MM_8", "MM_9", "MM_10", "LA1840_11", "LA1840_12")){
+   subdata = subset(relative_cummulative, id == i)
+   subdata[i] = cumul_median(subdata)
+   rel_cumul <- bind_rows(rel_cumul, subdata)
+ }
+
+
+relative_cummulative <- rel_cumul %>%
+  unite("second_instars", LA1840_1:LA1840_12, 
+                                  na.rm = TRUE)  %>%
+  mutate(var_new = third_instars)
+
+
+
+  rel_cumul = tibble()
+ for(i in c("LA1840_1", "MM_2", "MM_3", "LA1840_5", "LA1840_6", "LA1840_7", "MM_8", "MM_9", "MM_10", "LA1840_11", "LA1840_12")){
+   subdata = subset(relative_cummulative, id == i)
+   subdata[i] = cumul_median(subdata)
+   rel_cumul <- bind_rows(rel_cumul, subdata)
+ }
+
+
+relative_cummulative <- rel_cumul %>%
+  unite("third_instars", LA1840_1:LA1840_12, 
+                                  na.rm = TRUE)
+```
+
+
+```{r}
+relative_cummulative <- relative_cummulative %>%
+  mutate(day = as.factor(day)) %>% 
+  mutate(first_instars = as.numeric(as.character(first_instars))) %>% 
+  mutate(second_instars = as.numeric(as.character(second_instars))) %>% 
+  mutate(third_instars = as.numeric(as.character(third_instars))) 
+
+
+relative_cummulative <- relative_cummulative %>%
+  dplyr::select(-`hatched`: -`6_total_fourth_instars`) 
+```
+
+```{r}
+relative_cummulative <- relative_cummulative %>%
+  group_by(place) %>%
+  mutate(first = (first_instars / eggs_start)*100)%>%
+  mutate(second = (second_instars / max(first_instars))*100)%>%
+  mutate(third = (third_instars / max(first_instars))*100)%>%
+  mutate(fourth = (fourth_instars / max(first_instars))*100) %>%
+  ungroup() %>%
+  mutate(genotype = factor(genotype, levels = c("MM", "LA1840")))
+
+relative_cummulative <- relative_cummulative %>%
+  dplyr::select(-var_new)
+
+relative_cummulative <- relative_cummulative %>%
+  pivot_longer(cols = eggs_start:fourth, 
+               names_to = "stage", values_to = "number") %>%
+  mutate(genotype = factor(genotype, levels = c("MM", "LA1840")))  %>%
+  mutate(stage = factor(stage, levels = c("eggs_start", "first_instars", "second_instars", "third_instars", "fourth_instars", 
+                                          "first", "second", "third", "fourth"))) 
+```
+
+```{r combined plot, fig.width = 16, fig.height = 10}
+
+#egg and hatching
+p_eggs <- relative_cummulative %>% 
+  dplyr::filter(day == 29) %>%
+  dplyr::filter(stage == "eggs_start") %>%
+  ggplot(aes(x=genotype, y=number, fill=genotype)) + 
+  labs(y = "eggs (count)") +
+  geom_boxplot() + 
+  ylim(0,90) +
+  theme_simple() + 
+  scale_fill_manual(values = palette) 
+
+p_first <- relative_cummulative %>% 
+  dplyr::filter(day == 29) %>%
+  dplyr::filter(stage == "first_instars") %>%
+  ggplot(aes(x=genotype, y=number, fill=genotype)) + 
+  labs(y = "hatched eggs (count)") +
+  geom_boxplot() + 
+  ylim(0,90) +
+  theme_simple() + 
+  scale_fill_manual(values = palette) 
+
+p1 <- relative_cummulative %>% 
+  dplyr::filter(day == 29) %>%
+  dplyr::filter(stage == "first") %>%
+  ggplot(aes(x=genotype, y=number, fill=genotype)) + 
+  labs(y = "hatched eggs (%)") +
+  geom_boxplot() + 
+  ylim(0,100) +
+  theme_simple() + 
+  scale_fill_manual(values = palette) 
+
+#nymph counts
+p_MM <- relative_cummulative %>% 
+  dplyr::filter(day == 29) %>%
+  dplyr::filter(genotype == "MM") %>%
+  dplyr::filter(stage == "second_instars" | stage == "third_instars" | stage == "fourth_instars") %>%
+  ggplot(aes(x=stage, y=number, fill=stage)) + 
+  labs(y = "nymphs (count)") +
+  geom_boxplot() + 
+  ylim(0,90) +
+  theme_simple() + 
+  scale_fill_manual(values = MMpalette) 
+
+p_LA1840 <-  relative_cummulative %>% 
+  dplyr::filter(day == 29) %>%
+  dplyr::filter(genotype == "LA1840") %>%
+  dplyr::filter(stage == "second_instars" | stage == "third_instars" | stage == "fourth_instars") %>%
+  ggplot(aes(x=stage, y=number, fill=stage)) + 
+  labs(y = "nymphs (count)") +
+  geom_boxplot() + 
+  ylim(0,90) +
+  theme_simple() + 
+  scale_fill_manual(values = LApalette) 
+
+# development %
+p_M <- relative_cummulative %>% 
+  dplyr::filter(day == 29) %>%
+  dplyr::filter(genotype == "MM") %>%
+  dplyr::filter(stage == "second" | stage == "third" | stage == "fourth") %>%
+  ggplot(aes(x=stage, y=number, fill=stage)) + 
+  labs(y = "development to nymph stage (%)") +
+  geom_boxplot() + 
+  ylim(80,100) +
+  theme_simple() + 
+  scale_fill_manual(values = MMpalette) 
+
+p_L <-  relative_cummulative %>% 
+  dplyr::filter(day == 29) %>%
+  dplyr::filter(genotype == "LA1840") %>%
+  dplyr::filter(stage == "second" | stage == "third" | stage == "fourth") %>%
+  ggplot(aes(x=stage, y=number, fill=stage)) + 
+  labs(y = "development to nymph stage (%)") +
+  geom_boxplot() + 
+  ylim(80,100) +
+  theme_simple() + 
+  scale_fill_manual(values = LApalette) 
+
+
+collected <- ((p_eggs | p_first | p1) / (p_MM| p_LA1840) / (p_M | p_L)) / guide_area() +
+  plot_layout(guides = 'collect') +
+  plot_annotation(tag_levels = 'a')
+
+collected
+
+ggsave(filename = "graft_bioassay_boxplots.png", plot = collected, width = 10, height = 15)
+```
+
+```{r}
+relative_cummulative <- relative_cummulative %>%
+  dplyr::select(-eggs_start: -third_instars)
+
+relative_cummulative <- relative_cummulative %>%
+  pivot_longer(cols = first:fourth, 
+               names_to = "stage", values_to = "number") %>%
+  mutate(genotype = factor(genotype, levels = c("MM", "LA1840"))) 
+
+relative_cummulative <- relative_cummulative %>%
+  dplyr::select(-id) %>%
+  mutate(stage = as.factor(stage)) %>%
+  mutate(place = as.factor(place)) %>%
+  group_by(stage, genotype) %>%
+  pivot_wider(names_from = place, values_from = number)
+
+relative_cummulative <- relative_cummulative %>%
+  mutate(day = as.factor(day)) %>%
+  rowwise() %>%
+  mutate(median_abundance = median(c_across(`1`:`12`), na.rm = TRUE)) %>%
+  mutate(max_abundance = max(c_across(`1`:`12`), na.rm = TRUE)) %>%
+  mutate(min_abundance = min(c_across(`1`:`12`), na.rm = TRUE)) %>%
+  mutate(sd_abundance = sd(c_across(`1`:`12`), na.rm = TRUE)) %>%
+  mutate(ymin_ribbon = (median_abundance - sd_abundance)) %>%
+  mutate(ymin_ribbon = if_else(ymin_ribbon < 0, 0, ymin_ribbon)) %>%
+  mutate(day = as.numeric(as.character(day))) %>%
+  dplyr::select(-`1`: -`12`) 
+```
+
+
+```{r relative cumulative graph, fig.width = 16, fig.height = 10}
+p_cumulative <- relative_cummulative %>%
+  mutate(stage = factor(stage, 
+                        levels = c("first", "second", "third", "fourth"))) %>%
+  mutate(day = as.numeric(as.character(day))) %>% 
+  dplyr::filter(day > 6) %>% 
+  group_by(genotype) %>% 
+  ggplot() +
+  theme_simple() +
+  labs(y = "cumulative count (relative to hatched)",
+       x = "days after infection") +
+  scale_color_manual(values = palette) +
+  scale_fill_manual(values = palette) +
+  geom_line(aes(x = day,
+                  y = min_abundance,
+                  color = genotype),
+              linetype = "dotted") +
+  geom_line(aes(x = day,
+                  y = max_abundance,
+                  color = genotype),
+              linetype = "dotted") +
+  geom_ribbon(aes(x = day,
+                  ymin = ymin_ribbon,
+                  ymax = (median_abundance + sd_abundance),
+                  fill = genotype),
+              alpha = 0.35) +
+  geom_line(aes(x = day,
+                y = median_abundance,
+                color = genotype),
+            size = 1) +
+  facet_rep_wrap(vars(stage), nrow = 1) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
+  theme(panel.spacing = unit(0.1, "lines"))
+
+p_cumulative 
+
+ggsave(filename = "graft_bioassay_lineplots.png", plot = p_cumulative, width = 10, height = 5)
+```
+
+
+
+## relative abundance
+
+```{r new df}
+relative_abundance <- flies %>%
+  dplyr::select(-eggs_start: -`0_egg`,
+                -`4_early_fourth_instar`:-`5_completed_lifecycle`)
+```
+
+```{r total abundance}
+relative_abundance <- relative_abundance %>%
+  rowwise() %>%
+  mutate(total = sum(c_across(`1_first_instar`:`6_total_fourth_instars`),
+                     na.rm = TRUE))
+  
+```
+
+```{r relative abundances}
+relative_abundance <- relative_abundance %>%
+  mutate(first = `1_first_instar`/total) %>%
+  mutate(second = `2_second_instar`/total) %>%
+  mutate(third = `3_third_instar`/total) %>%
+  mutate(fourth = `6_total_fourth_instars`/total)
+```
+
+```{r clean df}
+relative_abundance <- relative_abundance %>%
+  dplyr::select(-`1_first_instar`: -`6_total_fourth_instars`) %>%
+  subset(total>0)
+```
+
+```{r longer}
+relative_abundance <- relative_abundance %>%
+  dplyr::select(-total) %>%
+  pivot_longer(cols = first:fourth, 
+               names_to = "stage", values_to = "relat_abund") %>%
+  mutate(genotype = factor(genotype, levels = c("MM", "LA1840")))
+
+# 10 rows of middle of the data
+#knitr::kable(relative_abundance[41:51,1:6])
+```
+
+```{r wide3}
+relative_abundance <- relative_abundance %>%
+  mutate(stage = as.factor(stage)) %>%
+  mutate(place = as.factor(place)) %>%
+  group_by(stage, genotype) %>%
+  pivot_wider(names_from = place, values_from = relat_abund) 
+
+``` 
+
+```{r summarised}
+relative_abundance <- relative_abundance %>%
+  mutate(day = as.factor(day)) %>%
+  rowwise() %>%
+  mutate(median_abundance = median(c_across(`1`:`12`), na.rm = TRUE)) %>%
+  mutate(sd_abundance = sd(c_across(`1`:`12`), na.rm = TRUE)) %>%
+  mutate(max_abundance = max(c_across(`1`:`12`), na.rm = TRUE)) %>%
+  mutate(min_abundance = min(c_across(`1`:`12`), na.rm = TRUE)) %>%
+  mutate(ymin_ribbon = (median_abundance - sd_abundance)) %>%
+  mutate(ymin_ribbon = if_else(ymin_ribbon < 0, 0, ymin_ribbon))
+
+relative_abundance <- relative_abundance %>%
+  dplyr::select(-`1`: -`12`) 
+
+# 10 rows of middle of the data
+knitr::kable(relative_abundance[41:51,1:9])
+```
+
+```{r relative abundance on MM, eval=FALSE, include=FALSE}
+MMpalette <- c("#E69F00")
+#MMpalette <- c("#FF8900", "#FFB300", "#FFCD00", "#FFE280")
+pMM <- relative_abundance %>%
+  mutate(stage = factor(stage, 
+                        levels = c("first", "second", "third", "fourth"))) %>%
+  dplyr::filter(genotype == "MM") %>% 
+  mutate(day = as.numeric(as.character(day))) %>% 
+  group_by(stage) %>% 
+  ggplot() +
+  theme_simple() +
+  labs(y = "relative abundance",
+       x = "days after infection") +
+  scale_color_manual(values = MMpalette) +
+  scale_fill_manual(values = MMpalette) +
+  geom_line(aes(x = day,
+                  y = min_abundance,
+                  color = genotype),
+              linetype = "dotted") +
+  geom_line(aes(x = day,
+                  y = max_abundance,
+                  color = genotype),
+              linetype = "dotted") +
+  geom_ribbon(aes(x = day,
+                  ymin = ymin_ribbon,
+                  ymax = (median_abundance + sd_abundance),
+                  fill = genotype),
+              alpha = 0.35) +
+  geom_line(aes(x = day,
+                y = median_abundance,
+                color = genotype),
+            size = 1.2) +
+  facet_wrap(vars(stage), nrow = 4) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, NA))
+```
+
+
+```{r relative abundance graph, fig.width = 8, fig.height = 15}
+#LApalette <- c("#0062F6", "#008DFF", "#2CB9FF", "#91E6FF")
+p_abundance <- relative_abundance %>%
+  mutate(stage = factor(stage, 
+                        levels = c("first", "second", "third", "fourth"))) %>%
+  #dplyr::filter(genotype == "LA1840") %>% 
+  mutate(day = as.numeric(as.character(day))) %>% 
+  group_by(genotype) %>% 
+  ggplot() +
+  theme_simple() +
+  labs(y = "relative abundance per plant",
+       x = "days after infection") +
+  scale_color_manual(values = palette) +
+  scale_fill_manual(values = palette) +
+  geom_line(aes(x = day,
+                  y = min_abundance,
+                  color = genotype),
+              linetype = "dotted") +
+  geom_line(aes(x = day,
+                  y = max_abundance,
+                  color = genotype),
+              linetype = "dotted") +
+  geom_ribbon(aes(x = day,
+                  ymin = ymin_ribbon,
+                  ymax = (median_abundance + sd_abundance),
+                  fill = genotype),
+              alpha = 0.35) +
+  geom_line(aes(x = day,
+                y = median_abundance,
+                color = genotype),
+            size = 1) +
+  facet_rep_wrap(vars(stage), nrow = 1) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
+  theme(panel.spacing = unit(0.1, "lines"))
+
+
+(p_abundance / p_cumulative) / guide_area() +
+  plot_layout(guides = 'collect') 
+              heights = unit(c(30, 30), 'cm'))
+```
+```
+
