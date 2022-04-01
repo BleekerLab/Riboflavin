@@ -1,0 +1,514 @@
+---
+title: "data_exploration"
+author: "Lissy Denkers"
+date: "11-01-2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = FALSE, 
+                      warning = FALSE, 
+                      message = FALSE, 
+                      fig.width = 8, 
+                      fig.height = 5, 
+                      fig.align = "center")
+suppressPackageStartupMessages(library("ggplot2"))
+suppressPackageStartupMessages(library("ggrepel"))
+suppressPackageStartupMessages(library("patchwork"))
+suppressPackageStartupMessages(library("ggpubr"))
+suppressPackageStartupMessages(library("ggpubfigs"))
+suppressPackageStartupMessages(library("lemon"))
+suppressPackageStartupMessages(library("plyr"))
+suppressPackageStartupMessages(library("dplyr"))
+suppressPackageStartupMessages(library("skimr"))
+suppressPackageStartupMessages(library("Hmisc"))
+suppressPackageStartupMessages(library("tidyr"))
+suppressPackageStartupMessages(library("car"))
+suppressPackageStartupMessages(library("rstatix"))
+suppressPackageStartupMessages(library("tidyverse"))
+suppressPackageStartupMessages(library("broom"))
+suppressPackageStartupMessages(library("drc"))
+suppressPackageStartupMessages(library("modelr"))
+suppressPackageStartupMessages(library("egg"))
+suppressPackageStartupMessages(library("tidydrc"))
+suppressPackageStartupMessages(library("aomisc"))
+suppressPackageStartupMessages(library("devtools"))
+```
+
+# Data import 
+
+## Background information
+
+This is the data of the whitefly development bioassay on hydroponically grown S. chmielewskii LA1840. Control plants were grown on standard hydroponics solution, inhibitor treated plants were grown on hydroponics solution with riboflavin synthase inhibitor. 
+The raw data also contains the data of a simultaniously performed bioassay on MM. This data should be removed before analysis.
+After the fourth instar stage, whiteflies develop into adults, leaving behind the larval skin called exuviae. Nymphs in the last phase of fourth instar stage and exuviae were removed from the leaf after each count to prevent a whitefly outbreak in the greenhouse.
+
+See metadata file for more information.
+
+## The raw data
+```{r flies}
+flies <- read.csv("raw_data.csv", 
+                         header = T, 
+                         sep = ",", 
+                         dec = ".", 
+                         check.names = FALSE)
+# The first 10 rows of the data
+knitr::kable(flies[1:10,1:8])
+```
+
+```{r palette}
+palette <- c("#E69F00", "#D55E00", "#56B4E9", "#0072B2")
+LA_palette <- c("#56B4E9", "#0072B2") 
+```
+
+## Preparing the data for analysis
+
+A few improvements to the data should be made before analysis.
+
+First, the MM data must be removed.
+
+```{r filter}
+flies <- flies %>%
+  dplyr::filter(genotype != "MM") 
+```
+
+Next, I make data wide for access to separate life stages.
+```{r wide}
+flies <- flies %>%
+  mutate(stage = as.factor(stage)) %>%
+  pivot_wider(names_from = stage, values_from = number) 
+```
+
+Because the fourth instars are the end point and taken of after counting, combine fourth instars and exuviae and make their numbers cumulative over time. 
+```{r total fourth instars}
+flies <- flies %>%
+  mutate(fourth_exuviae = `5_late_fourth_instar` + `6_exuviea`) %>%
+  group_by(id) %>%
+  mutate(`5_completed_lifecycle` = cumsum(fourth_exuviae)) %>%
+  mutate(`6_total_fourth_instars` = `4_early_fourth_instar` + `5_completed_lifecycle`) %>%
+  ungroup()
+```
+
+Remove separate and non-cumulative late fourth instar and exuviae columns.
+```{r remove unnessesary columns}
+flies <- flies %>%
+  dplyr::select(-`5_late_fourth_instar`, -`6_exuviea`, -fourth_exuviae)
+```
+
+Calculate the number of hatched eggs
+```{r calculate hatching}
+flies <- flies %>%
+  rowwise %>%
+  mutate(hatched = sum(across("1_first_instar":"5_completed_lifecycle"), 
+                       na.rm = TRUE)) 
+
+flies <- flies %>%
+  group_by(id) %>%
+  mutate(hatched = max(hatched))
+```
+
+Now the data can be made long again.
+```{r long}
+flies <- flies %>%
+  pivot_longer(cols = `0_egg`:`6_total_fourth_instars`, 
+               names_to = "stage", values_to = "number")
+```
+
+Add the relative number of nymphs as percentage from the number of eggs and as percentage from the number of hatched eggs
+```{r relative numbers}
+flies <- flies %>%
+  mutate(percentage_from_eggs = number / eggs_start * 100) %>%
+  mutate(percentage_from_hatched = number / hatched * 100)
+
+```
+
+
+Add a new dataframe for the total number of nymphs per day without percentage, based on "flies"
+```{r flies_wide}
+flies_wide <- flies  %>%
+  dplyr::select(-percentage_from_eggs) %>%
+  dplyr::select(-percentage_from_hatched)
+```
+
+and make the data wide.
+```{r wide2}
+flies_wide <- flies_wide %>%
+  mutate(stage = as.factor(stage)) %>%
+  pivot_wider(names_from = stage, values_from = number) 
+```
+
+Add the total number of nymphs per sample per day and the relative total as percentage from the number of eggs and as percentage from the number of hatched eggs
+```{r}
+flies_wide <- flies_wide %>%
+  mutate(hatched_from_eggs = hatched / eggs_start * 100)
+flies_wide$gen_treat <- factor(flies_wide$gen_treat, 
+                          levels= c("MM_control", "MM_riboflavin",
+                                    "LA1840_control", "LA1840_inhibitor"))
+```
+
+
+# plots
+
+
+## Egg and hatching plots
+```{r egg boxplot, fig.width = 8, fig.height = 5}
+p1 <- flies_wide %>%  
+  ggplot(., aes(x = genotype, y = `0_egg`, fill = gen_treat)) +
+  geom_boxplot()  +
+  #geom_jitter(size = 2, alpha = 0.5, width = 0.1, 
+  #            aes(fill = gen_treat, color = gen_treat)) +
+  labs(y="eggs", 
+       x= "genotype") +
+  ylim(0,150) +
+  scale_color_manual(values = palette) +
+  scale_fill_manual(values = palette) +
+  theme_simple()
+
+p2 <- flies_wide %>%  
+  mutate(day = as.factor(day)) %>%
+  dplyr::filter(day == "14" | day == "13") %>% 
+  ggplot(., aes(x = genotype, y = hatched, fill = gen_treat)) +
+  geom_boxplot()  +
+  #geom_jitter(size = 2, alpha = 0.5, width = 0.1, aes(color = gen_treat)) +
+  labs(y="number hatched",
+       x= "genotype") +
+  ylim(0,150) +
+  scale_color_manual(values = palette) +
+  scale_fill_manual(values = palette) +
+  theme_simple()
+
+p3 <-flies_wide %>%  
+  mutate(day = as.factor(day)) %>%
+  dplyr::filter(day == "14" | day == "13") %>% 
+  ggplot(., aes(x = genotype, y = hatched_from_eggs, fill = gen_treat)) +
+  geom_boxplot()  +
+  #geom_jitter(size = 2, alpha = 0.5, width = 0.1, aes(color = gen_treat)) +
+  labs(y="hatched eggs (%)",
+       x= "genotype") +
+  ylim(0,100) +
+  scale_color_manual(values = palette) +
+  scale_fill_manual(values = palette) +
+  theme_simple()
+
+(p1 + p2 + p3) / guide_area() +
+  plot_layout(guides = 'collect')
+
+```
+
+
+## Nymph development plots
+
+
+
+### LA1840 and MM untill day 17
+
+First, I'll make a new dataframe for the total number of nymphs that passed a developmental stage  for each plant
+```{r max per stage until day 17}
+# new data set from flies_wide without unnecessary columns
+flies_total <- flies_wide %>%
+  dplyr::filter(day < 18) %>%
+  dplyr::select(!c(`0_egg`, `1_first_instar`, `4_early_fourth_instar`, `5_completed_lifecycle`, hatched_from_eggs)) 
+
+# create new columns for the number of nymphs passing a developmental stage
+flies_total <- flies_total %>%
+  rowwise() %>% 
+  mutate(second_instars = sum(
+    c_across(`2_second_instar`:`6_total_fourth_instars`), na.rm = TRUE)) %>%
+  mutate(third_instars = sum(
+    c_across(`3_third_instar`:`6_total_fourth_instars`), na.rm = TRUE)) %>%
+  mutate(fourth_instars = `6_total_fourth_instars`)
+
+# remove unnecessary columns
+flies_total <- flies_total %>%
+  dplyr::select(!(`2_second_instar`:`6_total_fourth_instars`))
+
+# make data long
+flies_total <- flies_total %>%
+  pivot_longer(cols = eggs_start:fourth_instars, 
+               names_to = "stage", values_to = "number")
+ 
+# make data wide for day
+flies_total <- flies_total %>%
+  dplyr::select(-date) %>%
+  pivot_wider(names_from = day, values_from = number)  
+
+# make a column for the highest number per developmental stage per plant over time
+flies_total <- flies_total %>%
+  rowwise() %>%
+  mutate(number = max(c_across(`2`:`17`), na.rm = TRUE))
+
+
+# remove the counts per day
+flies_total <- flies_total %>%
+  dplyr::select(!c(`2`:`17`))
+
+# order the developmental stages
+flies_total$stage <- factor(flies_total$stage, 
+                          levels= c("eggs_start", "hatched", "second_instars",
+                                    "third_instars", "fourth_instars"))
+flies_total$gen_treat <- factor(flies_total$gen_treat, 
+                          levels= c("MM_control", "MM_riboflavin",
+                                    "LA1840_control", "LA1840_inhibitor"))
+
+# The first 10 rows of the data
+knitr::kable(flies_total[1:10,1:6])
+```
+
+And also for the numbers relative to eggs and hatched eggs
+```{r max per stage per eggs until day 17}
+# new  wide dataframe from flies_total for numbers relative to eggs
+flies_relative_eggs <- flies_total %>%
+  pivot_wider(names_from = stage, values_from = number)
+
+# make a column for each stage relative to eggs
+flies_relative_eggs <- flies_relative_eggs %>%
+  mutate(eggs = eggs_start/eggs_start*100) %>%
+  mutate(hatched_eggs = hatched/eggs_start*100) %>%
+  mutate(second = second_instars/eggs_start*100) %>%
+  mutate(third = third_instars/eggs_start*100) %>%
+  mutate(fourth = fourth_instars/eggs_start*100)
+
+# remove absolute numbers and make long
+flies_relative_eggs <- flies_relative_eggs %>%
+  dplyr::select(!c(eggs_start:fourth_instars)) %>%
+  pivot_longer(cols = eggs:fourth, 
+               names_to = "stage", values_to = "perc_from_eggs")
+
+# order the developmental stages
+flies_relative_eggs$stage <- factor(flies_relative_eggs$stage, 
+                          levels= c("eggs", "hatched_eggs", "second", 
+                                    "third", "fourth"))
+flies_relative_eggs$gen_treat <- factor(flies_relative_eggs$gen_treat, 
+                          levels= c("MM_control", "MM_riboflavin",
+                                    "LA1840_control", "LA1840_inhibitor"))
+
+# The first 10 rows of the data
+knitr::kable(flies_relative_eggs[1:10,1:6])
+```
+
+```{r max per stage per hatched until day 17}
+# new  wide dataframe from flies_total for numbers relative to hatched
+flies_relative_hatched <- flies_total %>%
+  pivot_wider(names_from = stage, values_from = number)
+
+# make a column for each stage relative to hatched
+flies_relative_hatched <- flies_relative_hatched %>%
+  mutate(eggs = eggs_start/hatched*100) %>%
+  mutate(hatched_eggs = hatched/hatched*100) %>%
+  mutate(second = second_instars/hatched*100) %>%
+  mutate(third = third_instars/hatched*100) %>%
+  mutate(fourth = fourth_instars/hatched*100)
+
+# remove absolute numbers and make long
+flies_relative_hatched <- flies_relative_hatched %>%
+  dplyr::select(!c(eggs_start:fourth_instars)) %>%
+  pivot_longer(cols = eggs:fourth, 
+               names_to = "stage", values_to = "perc_from_hatched")
+
+# order the developmental stages
+flies_relative_hatched$stage <- factor(flies_relative_hatched$stage, 
+                          levels= c("eggs", "hatched_eggs", "second", 
+                                    "third", "fourth"))
+flies_relative_hatched$gen_treat <- factor(flies_relative_hatched$gen_treat, 
+                          levels= c("MM_control", "MM_riboflavin",
+                                    "LA1840_control", "LA1840_inhibitor"))
+
+# The first 10 rows of the data
+knitr::kable(flies_relative_hatched[1:10,1:6])
+```
+
+What happens in the absolute numbers through the development?
+
+```{r plots until day 17, fig.width = 8, fig.height = 15}
+p_total <- flies_total %>%  
+  dplyr::filter(stage != "eggs_start" & stage != "hatched") %>%
+  mutate(number = na_if(number, 0)) %>%
+  group_by(gen_treat, stage) %>% 
+  ggplot(., aes(x = genotype, y = number, fill = gen_treat)) +
+  geom_boxplot()   +
+  #geom_jitter(size = 1, alpha = 0.5, width = 0.1, aes(color = gen_treat)) +
+  labs(y="absolute number of nymphs",
+       x= "genotype") + 
+  scale_color_manual(values = palette) +
+  scale_fill_manual(values = palette) +
+  theme_simple() + 
+  facet_rep_wrap(vars(stage), nrow = 1) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
+  theme(panel.spacing = unit(0.1, "lines"))
+
+p_eggs <- flies_relative_eggs %>%  
+  dplyr::filter(stage != "eggs" & stage != "hatched_eggs") %>%
+  mutate(perc_from_eggs = na_if(perc_from_eggs, 0)) %>%
+  group_by(gen_treat, stage) %>% 
+  ggplot(., aes(x = genotype, y = perc_from_eggs, fill = gen_treat)) +
+  geom_boxplot()   +
+  #geom_jitter(size = 1, alpha = 0.5, width = 0.1, aes(color = gen_treat)) +
+  labs(y="number of nymphs relative to eggs (%)",
+       x= "genotype") +
+  scale_color_manual(values = palette) +
+  scale_fill_manual(values = palette) +
+  theme_simple() + 
+  facet_rep_wrap(vars(stage), nrow = 1) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
+  theme(panel.spacing = unit(0.1, "lines"))
+
+
+(p_total / p_eggs ) / guide_area()  +
+  plot_layout(guides = 'collect')
+```
+
+### only LA1840 untill end
+
+First, I'll make a new dataframe for the total number of nymphs that passed a developmental stage  for each plant
+```{r max per stage LA1840}
+# new data set from flies_wide without unnecessary columns
+flies_total <- flies_wide %>%  
+  dplyr::filter(genotype == "LA1840") %>%
+  dplyr::select(!c(`0_egg`, `1_first_instar`, `4_early_fourth_instar`, `5_completed_lifecycle`, hatched_from_eggs)) 
+
+# create new columns for the number of nymphs passing a developmental stage
+flies_total <- flies_total %>%
+  rowwise() %>% 
+  mutate(second_instars = sum(
+    c_across(`2_second_instar`:`6_total_fourth_instars`), na.rm = TRUE)) %>%
+  mutate(third_instars = sum(
+    c_across(`3_third_instar`:`6_total_fourth_instars`), na.rm = TRUE)) %>%
+  mutate(fourth_instars = `6_total_fourth_instars`)
+
+# remove unnecessary columns
+flies_total <- flies_total %>%
+  dplyr::select(!(`2_second_instar`:`6_total_fourth_instars`))
+
+# make data long
+flies_total <- flies_total %>%
+  pivot_longer(cols = eggs_start:fourth_instars, 
+               names_to = "stage", values_to = "number")
+ 
+# make data wide for day
+flies_total <- flies_total %>%
+  dplyr::select(-date) %>%
+  pivot_wider(names_from = day, values_from = number)  
+
+# make a column for the highest number per developmental stage per plant over time
+flies_total <- flies_total %>%
+  rowwise() %>%
+  mutate(number = max(c_across(`2`:`22`), na.rm = TRUE))
+
+# remove the counts per day
+flies_total <- flies_total %>%
+  dplyr::select(!c(`2`:`22`))
+
+# order the developmental stages
+flies_total$stage <- factor(flies_total$stage, 
+                          levels= c("eggs_start", "hatched", "second_instars",
+                                    "third_instars", "fourth_instars"))
+flies_total$gen_treat <- factor(flies_total$gen_treat, 
+                          levels= c("LA1840_control", "LA1840_inhibitor"))
+
+# The first 10 rows of the data
+knitr::kable(flies_total[1:10,1:6])
+```
+
+And also for the numbers relative to eggs and hatched eggs
+```{r max per stage per eggs LA1840}
+# new  wide dataframe from flies_total for numbers relative to eggs
+flies_relative_eggs <- flies_total %>%
+  pivot_wider(names_from = stage, values_from = number)
+
+# make a column for each stage relative to eggs
+flies_relative_eggs <- flies_relative_eggs %>%
+  mutate(eggs = eggs_start/eggs_start*100) %>%
+  mutate(hatched_eggs = hatched/eggs_start*100) %>%
+  mutate(second = second_instars/eggs_start*100) %>%
+  mutate(third = third_instars/eggs_start*100) %>%
+  mutate(fourth = fourth_instars/eggs_start*100)
+
+# remove absolute numbers and make long
+flies_relative_eggs <- flies_relative_eggs %>%
+  dplyr::select(!c(eggs_start:fourth_instars)) %>%
+  pivot_longer(cols = eggs:fourth, 
+               names_to = "stage", values_to = "perc_from_eggs")
+
+# order the developmental stages
+flies_relative_eggs$stage <- factor(flies_relative_eggs$stage, 
+                          levels= c("eggs", "hatched_eggs", "second", 
+                                    "third", "fourth"))
+flies_relative_eggs$gen_treat <- factor(flies_relative_eggs$gen_treat, 
+                          levels= c("LA1840_control", "LA1840_inhibitor"))
+
+# The first 10 rows of the data
+knitr::kable(flies_relative_eggs[1:10,1:6])
+```
+
+```{r max per stage per hatched LA1840}
+# new  wide dataframe from flies_total for numbers relative to hatched
+flies_relative_hatched <- flies_total %>%
+  pivot_wider(names_from = stage, values_from = number)
+
+# make a column for each stage relative to hatched
+flies_relative_hatched <- flies_relative_hatched %>%
+  mutate(eggs = eggs_start/hatched*100) %>%
+  mutate(hatched_eggs = hatched/hatched*100) %>%
+  mutate(second = second_instars/hatched*100) %>%
+  mutate(third = third_instars/hatched*100) %>%
+  mutate(fourth = fourth_instars/hatched*100)
+
+# remove absolute numbers and make long
+flies_relative_hatched <- flies_relative_hatched %>%
+  dplyr::select(!c(eggs_start:fourth_instars)) %>%
+  pivot_longer(cols = eggs:fourth, 
+               names_to = "stage", values_to = "perc_from_hatched")
+
+# order the developmental stages and genotypes
+flies_relative_hatched$stage <- factor(flies_relative_hatched$stage, 
+                          levels= c("eggs", "hatched_eggs", "second", 
+                                    "third", "fourth"))
+flies_relative_hatched$genotype <- factor(flies_relative_hatched$genotype, 
+                          levels= c("MM", "LA1840"))
+
+# The first 10 rows of the data
+knitr::kable(flies_relative_hatched[1:10,1:6])
+```
+
+
+
+```{r plot LA1840, fig.width = 8, fig.height = 15}
+p_total <- flies_total %>%
+  dplyr::filter(stage != "eggs_start" & stage != "hatched") %>%
+  mutate(number = na_if(number, 0)) %>%
+  group_by(gen_treat, stage) %>% 
+  ggplot(., aes(x = gen_treat, y = number, fill = gen_treat)) +
+  geom_boxplot()   +
+  #geom_jitter(size = 1, alpha = 0.5, width = 0.1, aes(color = gen_treat)) +
+  labs(y="absolute number of nymphs",
+       x= "treatment") +
+  scale_color_manual(values = LA_palette) +
+  scale_fill_manual(values = LA_palette) +
+  theme_simple() + 
+  facet_rep_wrap(vars(stage), nrow = 1) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
+  theme(panel.spacing = unit(0.1, "lines"))
+
+p_eggs <- flies_relative_eggs %>%
+  dplyr::filter(stage != "eggs" & stage != "hatched_eggs") %>%
+  mutate(perc_from_eggs = na_if(perc_from_eggs, 0)) %>%
+  group_by(gen_treat, stage) %>% 
+  ggplot(., aes(x = gen_treat, y = perc_from_eggs, fill = gen_treat)) +
+  geom_boxplot()   +
+  #geom_jitter(size = 1, alpha = 0.5, width = 0.1, aes(color = gen_treat)) +
+  labs(y="number of nymphs relative to eggs (%)",
+       x= "treatment") +
+  scale_color_manual(values = LA_palette) +
+  scale_fill_manual(values = LA_palette) +
+  theme_simple() + 
+  facet_rep_wrap(vars(stage), nrow = 1) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
+  theme(panel.spacing = unit(0.1, "lines"))
+
+
+(p_total / p_eggs) / guide_area() +
+  plot_layout(guides = 'collect')
+```
+
