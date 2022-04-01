@@ -489,11 +489,9 @@ ggsave(filename = "graft_bioassay_boxplots.png", plot = collected, width = 10, h
 
 ```{r}
 relative_cummulative <- relative_cummulative %>%
-  dplyr::select(-eggs_start: -third_instars)
+  dplyr::filter(stage == "first" | stage == "second" | stage == "third" | stage == "fourth")
 
 relative_cummulative <- relative_cummulative %>%
-  pivot_longer(cols = first:fourth, 
-               names_to = "stage", values_to = "number") %>%
   mutate(genotype = factor(genotype, levels = c("MM", "LA1840"))) 
 
 relative_cummulative <- relative_cummulative %>%
@@ -509,11 +507,22 @@ relative_cummulative <- relative_cummulative %>%
   mutate(median_abundance = median(c_across(`1`:`12`), na.rm = TRUE)) %>%
   mutate(max_abundance = max(c_across(`1`:`12`), na.rm = TRUE)) %>%
   mutate(min_abundance = min(c_across(`1`:`12`), na.rm = TRUE)) %>%
-  mutate(sd_abundance = sd(c_across(`1`:`12`), na.rm = TRUE)) %>%
-  mutate(ymin_ribbon = (median_abundance - sd_abundance)) %>%
+  #mutate(n = list(rowSums(na.omit(c(`1`:`12`)))))
+  mutate(IQR_abundance = IQR(c_across(`1`:`12`), na.rm = TRUE)) %>%
+  mutate(se_abundance = std.error(c_across(`1`:`12`), na.rm = TRUE)) %>%
+  mutate(ymin_ribbon = (median_abundance - IQR_abundance)) %>%
   mutate(ymin_ribbon = if_else(ymin_ribbon < 0, 0, ymin_ribbon)) %>%
   mutate(day = as.numeric(as.character(day))) %>%
   dplyr::select(-`1`: -`12`) 
+relative_cummulative <- relative_cummulative %>%
+  mutate(ymin_ribbon = (median_abundance - (0.5*IQR_abundance))) %>%
+  mutate(ymin_ribbon = if_else(ymin_ribbon < 0, 0, ymin_ribbon)) %>%
+  mutate(min_whisker = (median_abundance - (1.5*IQR_abundance))) %>%
+  mutate(min_abundance = if_else(min_abundance < min_whisker, 
+                                 min_whisker, min_abundance)) %>%
+  mutate(max_whisker = (median_abundance + (1.5*IQR_abundance))) %>%
+  mutate(max_abundance = if_else(max_abundance > max_whisker, 
+                                 max_whisker, max_abundance))
 ```
 
 
@@ -522,38 +531,39 @@ p_cumulative <- relative_cummulative %>%
   mutate(stage = factor(stage, 
                         levels = c("first", "second", "third", "fourth"))) %>%
   mutate(day = as.numeric(as.character(day))) %>% 
-  dplyr::filter(day > 6) %>% 
+  dplyr::filter(stage == "fourth") %>% 
+  dplyr::filter(day > 9) %>% 
   group_by(genotype) %>% 
   ggplot() +
   theme_simple() +
-  labs(y = "cumulative count (relative to hatched)",
+  labs(y = "development to fourth instar stage (%)",
        x = "days after infection") +
   scale_color_manual(values = palette) +
   scale_fill_manual(values = palette) +
-  geom_line(aes(x = day,
-                  y = min_abundance,
-                  color = genotype),
-              linetype = "dotted") +
-  geom_line(aes(x = day,
-                  y = max_abundance,
-                  color = genotype),
-              linetype = "dotted") +
+#  geom_line(aes(x = day,
+#                  y = min_abundance,
+#                  color = genotype),
+#              linetype = "dotted") +
+#  geom_line(aes(x = day,
+#                  y = max_abundance,
+#                  color = genotype),
+#              linetype = "dotted") +
   geom_ribbon(aes(x = day,
                   ymin = ymin_ribbon,
-                  ymax = (median_abundance + sd_abundance),
+                  ymax = (median_abundance + (0.5*IQR_abundance)),
                   fill = genotype),
               alpha = 0.35) +
   geom_line(aes(x = day,
                 y = median_abundance,
                 color = genotype),
-            size = 1) +
-  facet_rep_wrap(vars(stage), nrow = 1) +
-  scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
-  theme(panel.spacing = unit(0.1, "lines"))
+            size = 1) 
+#  facet_rep_wrap(vars(stage), nrow = 1) +
+#  scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
+#  theme(panel.spacing = unit(0.1, "lines"))
 
 p_cumulative 
 
-ggsave(filename = "graft_bioassay_lineplots.png", plot = p_cumulative, width = 10, height = 5)
+ggsave(filename = "graft_bioassay_lineplots_4th.png", plot = p_cumulative, width = 10, height = 5)
 ```
 
 
