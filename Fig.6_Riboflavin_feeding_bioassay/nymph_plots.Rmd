@@ -414,7 +414,7 @@ p_second <- relative_cumulative %>%
   group_by(treatment, stage) %>% 
   ggplot() +
   theme_simple() +
-  labs(y = "development to instar stage (%)",
+  labs(y = "development to second instar stage (%)",
        x = "days after infection") +
   scale_color_manual(values = MM_palette) +
   scale_fill_manual(values = MM_palette) +
@@ -452,7 +452,7 @@ p_third <- relative_cumulative %>%
   group_by(treatment, stage) %>% 
   ggplot() +
   theme_simple() +
-  labs(y = "development to instar stage (%)",
+  labs(y = "development to third instar stage (%)",
        x = "days after infection") +
   scale_color_manual(values = MM_palette) +
   scale_fill_manual(values = MM_palette) +
