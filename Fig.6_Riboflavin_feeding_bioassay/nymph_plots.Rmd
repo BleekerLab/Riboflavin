@@ -41,8 +41,8 @@ suppressPackageStartupMessages(library("devtools"))
 
 ## Background information
 
-This is the data of the whitefly development bioassay on hydroponically grown S. chmielewskii LA1840. Control plants were grown on standard hydroponics solution, inhibitor treated plants were grown on hydroponics solution with riboflavin synthase inhibitor. 
-The raw data also contains the data of a simultaniously performed bioassay on MM. This data should be removed before analysis.
+This is the data of the whitefly development bioassay on hydroponically grown S. lycopersicum MM. Control plants were grown on standard hydroponics solution, riboflavin treated plants were grown on hydroponics solution with riboflavin added in increasing concentrations over time. The highest concentration, added on day 13, was lethal for the plants. Data after this day should therefore be removed before analysis.
+The raw data also contains the data of a simultaniously performed bioassay on S. chmielewskii. This data should be removed before analysis.
 After the fourth instar stage, whiteflies develop into adults, leaving behind the larval skin called exuviae. Nymphs in the last phase of fourth instar stage and exuviae were removed from the leaf after each count to prevent a whitefly outbreak in the greenhouse.
 
 See metadata file for more information.
@@ -54,24 +54,36 @@ flies <- read.csv("raw_data.csv",
                          sep = ",", 
                          dec = ".", 
                          check.names = FALSE)
+```
+
+```{r filter}
+flies <- flies %>%
+  dplyr::filter(genotype == "MM")  %>%
+  dplyr::filter(day < 18)  %>%
+  dplyr::filter(id != "MM_rib_4") 
 # The first 10 rows of the data
 knitr::kable(flies[1:10,1:8])
+
 ```
 
 ```{r palette}
 palette <- c("#E69F00", "#D55E00", "#56B4E9", "#0072B2")
-LA_palette <- c("#56B4E9", "#0072B2") 
+MM_palette <- c("#E69F00", "#D55E00") 
 ```
 
 ```{r functions}
-cumul_median <- function(data) {
+cumul_median <- function(data, na.rm = FALSE) {
     for(i in 1:dim(data)[1]) {
     if(data$day[i] == 2) { data$var_new[i] <- data$var_new[i]  
+    } else {
+    if(na.rm==TRUE) {
+    data$var_new[i] <- data$var_new[i] 
     } else {
       if(data$var_new[i] < data$var_new[i-1]) {
     data$var_new[i] <- data$var_new[i-1] 
       } else {
-    data$var_new[i] <- data$var_new[i]    
+    data$var_new[i] <- data$var_new[i] 
+    }
       } 
     }
     }   
@@ -91,16 +103,8 @@ cumul_fun <- function(data) {
 
 ## Preparing the data for analysis
 
-A few improvements to the data should be made before analysis.
+Next, a few improvements to the data should be made before analysis.
 
-First, the MM data must be removed.
-
-```{r filter}
-flies <- flies %>%
-  dplyr::filter(genotype != "MM") 
-```
-
-Next, I make data wide for access to separate life stages.
 ```{r wide}
 flies <- flies %>%
   mutate(stage = as.factor(stage)) %>%
@@ -145,44 +149,76 @@ cumulative_flies <- cumulative_flies %>%
 
 
   rel_cumul = tibble()
- for(i in c("LA1840_c_1", "LA1840_c_2", "LA1840_c_3", "LA1840_c_4", "LA1840_c_5", "LA1840_in_1", "LA1840_in_2", "LA1840_in_3", "LA1840_in_4", "LA1840_in_5")){
+ for(i in c("MM_c_1", "MM_c_2", "MM_c_3", "MM_c_4", "MM_c_5", "MM_rib_1", "MM_rib_2", "MM_rib_3", "MM_rib_5")){
    subdata = subset(cumulative_flies, id == i)
-   subdata[i] = cumul_median(subdata)
+   if(anyNA(subdata$var_new)==TRUE) {
+     subdata[i] = cumul_median(subdata, na.rm = TRUE)
+   } else {
+     subdata[i] = cumul_median(subdata)
+   }
    rel_cumul <- bind_rows(rel_cumul, subdata)
  }
 
 
 cumulative_flies <- rel_cumul %>%
-  unite("first_instars", LA1840_c_1:LA1840_in_5, 
+  unite("first_instars", MM_c_1:MM_rib_5, 
                                   na.rm = TRUE)  %>%
   mutate(var_new = second_instars)
 
   rel_cumul = tibble()
- for(i in c("LA1840_c_1", "LA1840_c_2", "LA1840_c_3", "LA1840_c_4", "LA1840_c_5", "LA1840_in_1", "LA1840_in_2", "LA1840_in_3", "LA1840_in_4", "LA1840_in_5")){
+ for(i in c("MM_c_1", "MM_c_2", "MM_c_3", "MM_c_4", "MM_c_5", "MM_rib_1", "MM_rib_2", "MM_rib_3", "MM_rib_5")){
    subdata = subset(cumulative_flies, id == i)
-   subdata[i] = cumul_median(subdata)
+   if(anyNA(subdata$var_new)==TRUE) {
+     subdata[i] = cumul_median(subdata, na.rm = TRUE)
+   } else {
+     subdata[i] = cumul_median(subdata)
+   }
    rel_cumul <- bind_rows(rel_cumul, subdata)
  }
 
 
 cumulative_flies <- rel_cumul %>%
-  unite("second_instars", LA1840_c_1:LA1840_in_5, 
+  unite("second_instars", MM_c_1:MM_rib_5, 
                                   na.rm = TRUE)  %>%
   mutate(var_new = third_instars)
 
 
 
   rel_cumul = tibble()
- for(i in c("LA1840_c_1", "LA1840_c_2", "LA1840_c_3", "LA1840_c_4", "LA1840_c_5", "LA1840_in_1", "LA1840_in_2", "LA1840_in_3", "LA1840_in_4", "LA1840_in_5")){
+ for(i in c("MM_c_1", "MM_c_2", "MM_c_3", "MM_c_4", "MM_c_5", "MM_rib_1", "MM_rib_2", "MM_rib_3", "MM_rib_5")){
    subdata = subset(cumulative_flies, id == i)
-   subdata[i] = cumul_median(subdata)
+   if(anyNA(subdata$var_new)==TRUE) {
+     subdata[i] = cumul_median(subdata, na.rm = TRUE)
+   } else {
+     subdata[i] = cumul_median(subdata)
+   }
    rel_cumul <- bind_rows(rel_cumul, subdata)
  }
 
 
 cumulative_flies <- rel_cumul %>%
-  unite("third_instars", LA1840_c_1:LA1840_in_5, 
+  unite("third_instars", MM_c_1:MM_rib_5, 
+                                  na.rm = TRUE)  %>%
+  mutate(var_new = fourth_instars)
+
+
+
+  rel_cumul = tibble()
+ for(i in c("MM_c_1", "MM_c_2", "MM_c_3", "MM_c_4", "MM_c_5", "MM_rib_1", "MM_rib_2", "MM_rib_3", "MM_rib_5")){
+   subdata = subset(cumulative_flies, id == i)
+   if(anyNA(subdata$var_new)==TRUE) {
+     subdata[i] = cumul_median(subdata, na.rm = TRUE)
+   } else {
+     subdata[i] = cumul_median(subdata)
+   }
+   rel_cumul <- bind_rows(rel_cumul, subdata)
+ }
+
+
+cumulative_flies <- rel_cumul %>%
+  unite("fourth_instars", MM_c_1:MM_rib_5, 
                                   na.rm = TRUE)
+cumulative_flies[cumulative_flies == ""]<-NA
 ```
 
 
@@ -191,7 +227,8 @@ cumulative_flies <- cumulative_flies %>%
   mutate(day = as.factor(day)) %>% 
   mutate(first_instars = as.numeric(as.character(first_instars))) %>% 
   mutate(second_instars = as.numeric(as.character(second_instars))) %>% 
-  mutate(third_instars = as.numeric(as.character(third_instars))) 
+  mutate(third_instars = as.numeric(as.character(third_instars)))  %>% 
+  mutate(fourth_instars = as.numeric(as.character(fourth_instars))) 
 
 
 cumulative_flies <- cumulative_flies %>%
@@ -213,7 +250,7 @@ cumulative_flies <- cumulative_flies %>%
 cumulative_flies <- cumulative_flies %>%
   pivot_longer(cols = eggs_start:fourth, 
                names_to = "stage", values_to = "number") %>%
-  mutate(treatment = factor(treatment, levels = c("control", "inhibitor"))) %>%
+  mutate(treatment = factor(treatment, levels = c("control", "riboflavin"))) %>%
   mutate(stage = factor(stage, levels = c("eggs_start", "first_instars", "second_instars", "third_instars", "fourth_instars", 
                                           "first", "second", "third", "fourth"))) 
 ```
@@ -228,75 +265,90 @@ p_eggs <- cumulative_flies %>%
   ggplot(aes(x=treatment, y=number, fill=treatment)) + 
   labs(y = "eggs (count)") +
   geom_boxplot() + 
-  ylim(0,150) +
+  ylim(0,120) +
   theme_simple() + 
-  scale_fill_manual(values = LA_palette) +
+  scale_fill_manual(values = MM_palette) +
   stat_compare_means(method = "t.test")
 
 p_first <- cumulative_flies %>% 
-  dplyr::filter(day == 22) %>%
+  dplyr::filter(day == 13) %>%
   dplyr::filter(stage == "first_instars") %>%
   ggplot(aes(x=treatment, y=number, fill=treatment)) + 
   labs(y = "hatched eggs (count)") +
   geom_boxplot() + 
-  ylim(0,150) +
+  ylim(0,120) +
   theme_simple() + 
-  scale_fill_manual(values = LA_palette) 
+  scale_fill_manual(values = MM_palette)  +
+  stat_compare_means(method = "t.test")
 
-p_fourth <- cumulative_flies %>% 
-  dplyr::filter(day == 22) %>%
-  dplyr::filter(stage == "fourth_instars") %>%
+p_second <- cumulative_flies %>% 
+  dplyr::filter(day == 13) %>%
+  dplyr::filter(stage == "second_instars") %>%
   ggplot(aes(x=treatment, y=number, fill=treatment)) + 
-  labs(y = "4th instar nymphs (count)") +
+  labs(y = "2nd instar nymphs (count)") +
   geom_boxplot() + 
-  ylim(0,150) +
+  ylim(0,120) +
   theme_simple() + 
-  scale_fill_manual(values = LA_palette) +
+  scale_fill_manual(values = MM_palette) +
   stat_compare_means(method = "t.test") 
 
-p1 <- cumulative_flies %>% 
-  dplyr::filter(day == 22) %>%
+p_third <- cumulative_flies %>% 
+  dplyr::filter(day == 13) %>%
+  dplyr::filter(stage == "third_instars") %>%
+  ggplot(aes(x=treatment, y=number, fill=treatment)) + 
+  labs(y = "3rd instar nymphs (count)") +
+  geom_boxplot() + 
+  ylim(0,120) +
+  theme_simple() + 
+  scale_fill_manual(values = MM_palette) +
+  stat_compare_means(method = "t.test") 
+
+p_1 <- cumulative_flies %>% 
+  dplyr::filter(day == 13) %>%
   dplyr::filter(stage == "first") %>%
   ggplot(aes(x=treatment, y=number, fill=treatment)) + 
   labs(y = "hatched eggs (%)") +
   geom_boxplot() + 
-  ylim(0,70) +
+  ylim(0,100) +
   theme_simple() + 
-  scale_fill_manual(values = LA_palette) 
+  scale_fill_manual(values = MM_palette)  +
+  stat_compare_means(method = "t.test")
 
 # development %
 p_2 <- cumulative_flies %>% 
-  dplyr::filter(day == 22) %>%
+  dplyr::filter(day == 13) %>%
   dplyr::filter(stage == "second") %>%
   ggplot(aes(x=treatment, y=number, fill=treatment)) + 
-  labs(y = "development to second instar stage (%)") +
+  labs(y = "development egg to 2nd instar (%)") +
   geom_boxplot() + 
-  ylim(0,70) +
+  ylim(0,100) +
   theme_simple() + 
-  scale_fill_manual(values = LA_palette) 
+  scale_fill_manual(values = MM_palette)  +
+  stat_compare_means(method = "t.test")
 
 p_3 <- cumulative_flies %>% 
-  dplyr::filter(day == 22) %>%
+  dplyr::filter(day == 13) %>%
   dplyr::filter(stage == "third") %>%
   ggplot(aes(x=treatment, y=number, fill=treatment)) + 
-  labs(y = "development to third instar stage (%)") +
+  labs(y = "development egg to 3rd instar (%)") +
   geom_boxplot() + 
-  ylim(0,70) +
+  ylim(0,100) +
   theme_simple() + 
-  scale_fill_manual(values = LA_palette) 
+  scale_fill_manual(values = MM_palette)  +
+  stat_compare_means(method = "t.test")
 
 p_4 <- cumulative_flies %>% 
-  dplyr::filter(day == 22) %>%
+  dplyr::filter(day == 13) %>%
   dplyr::filter(stage == "fourth") %>%
   ggplot(aes(x=treatment, y=number, fill=treatment)) + 
   labs(y = "development egg to 4th instar (%)") +
   geom_boxplot() + 
-  ylim(0,70) +
+  ylim(0,100) +
   theme_simple() + 
-  scale_fill_manual(values = LA_palette) +
+  scale_fill_manual(values = MM_palette) +
   stat_compare_means(method = "t.test")
 
-collected <- (p_eggs | p_fourth| p_4)  /  guide_area() +
+collected <- ((p_eggs | p_first | p_second | p_third)  / (p_1 | p_2 | p_3))  / guide_area() +
   plot_layout(guides = 'collect') +
   plot_annotation(tag_levels = 'a')
 
@@ -304,7 +356,7 @@ collected
 
 #(p_MM| p_LA1840) / (p_2 | p_3 | p_4)) / (p_M | p_L)) /
 
-ggsave(filename = "inhibitor_bioassay_boxplots.png", plot = collected, width = 10, height = 15)
+#ggsave(filename = "inhibitor_bioassay_boxplots.png", plot = collected, width = 10, height = 15)
 ```
 
 
@@ -314,7 +366,7 @@ relative_cumulative <- cumulative_flies %>%
   dplyr::filter(stage == "first" | stage == "second" | stage == "third" | stage == "fourth")
 
 relative_cumulative <- relative_cumulative %>%
-  mutate(treatment = factor(treatment, levels = c("control", "inhibitor"))) 
+  mutate(treatment = factor(treatment, levels = c("control", "riboflavin"))) 
 
 relative_cumulative <- relative_cumulative %>%
   mutate(stage = as.factor(stage)) %>%
@@ -326,17 +378,17 @@ relative_cumulative <- relative_cumulative %>%
   mutate(day = as.factor(day)) %>%
   rowwise() %>%
   mutate(median_abundance = median(
-    c_across(LA1840_c_1:LA1840_in_5), na.rm = TRUE)) %>%
+    c_across(MM_c_1:MM_rib_5), na.rm = TRUE)) %>%
   mutate(max_abundance = max(
-    c_across(LA1840_c_1:LA1840_in_5), na.rm = TRUE)) %>%
+    c_across(MM_c_1:MM_rib_5), na.rm = TRUE)) %>%
   mutate(min_abundance = min(
-    c_across(LA1840_c_1:LA1840_in_5), na.rm = TRUE)) %>%
+    c_across(MM_c_1:MM_rib_5), na.rm = TRUE)) %>%
   mutate(IQR_abundance = IQR(
-    c_across(LA1840_c_1:LA1840_in_5), na.rm = TRUE)) %>%
+    c_across(MM_c_1:MM_rib_5), na.rm = TRUE)) %>%
   mutate(ymin_ribbon = (median_abundance - IQR_abundance)) %>%
   mutate(ymin_ribbon = if_else(ymin_ribbon < 0, 0, ymin_ribbon)) %>%
   mutate(day = as.numeric(as.character(day))) %>%
-  dplyr::select(-LA1840_c_1:-LA1840_in_5) 
+  dplyr::select(-MM_c_1:-MM_rib_5) 
 
 relative_cumulative <- relative_cumulative %>%
   mutate(ymin_ribbon = (median_abundance - (0.5*IQR_abundance))) %>%
@@ -364,8 +416,8 @@ p_second <- relative_cumulative %>%
   theme_simple() +
   labs(y = "development to instar stage (%)",
        x = "days after infection") +
-  scale_color_manual(values = LA_palette) +
-  scale_fill_manual(values = LA_palette) +
+  scale_color_manual(values = MM_palette) +
+  scale_fill_manual(values = MM_palette) +
 #  geom_line(aes(x = day,
 #                  y = min_abundance,
 #                  color = genotype),
@@ -388,7 +440,7 @@ p_second <- relative_cumulative %>%
                group = treatment), 
                label.y = 65, label = "p.signif", method = "t.test") +
 #  facet_rep_wrap(vars(stage), nrow = 1) +
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 70)) 
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) 
 #  theme(panel.spacing = unit(0.1, "lines"))
 
 p_third <- relative_cumulative %>%
@@ -402,8 +454,8 @@ p_third <- relative_cumulative %>%
   theme_simple() +
   labs(y = "development to instar stage (%)",
        x = "days after infection") +
-  scale_color_manual(values = LA_palette) +
-  scale_fill_manual(values = LA_palette) +
+  scale_color_manual(values = MM_palette) +
+  scale_fill_manual(values = MM_palette) +
 #  geom_line(aes(x = day,
 #                  y = min_abundance,
 #                  color = genotype),
@@ -425,7 +477,7 @@ p_third <- relative_cumulative %>%
               y = number, 
               group = treatment), 
               label.y = 65, label = "p.signif", method = "t.test") +
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 70)) 
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) 
 
 p_fourth <- relative_cumulative %>%
   mutate(stage = factor(stage, 
@@ -461,15 +513,15 @@ p_fourth <- relative_cumulative %>%
                y = number, 
                group = treatment), 
                label.y = 65, label = "p.signif", method = "t.test") +
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 70))
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 100))
 
-p_cumulative <- (p_second | p_third | p_fourth) /  guide_area() +
+p_cumulative <- (p_second | p_third) /  guide_area() +
   plot_layout(guides = 'collect') +
   plot_annotation(tag_levels = 'a')
 
 p_cumulative 
 
-ggsave(filename = "inhibitor_bioassay_lineplots_1.png", plot = p_cumulative, width = 10, height = 5)
+ggsave(filename = "hydroponics_bioassay_lineplots_1.png", plot = p_cumulative, width = 10, height = 5)
 ```
 The development to 2nd and 3rd instars is sygnificantly increased on the inhibitor treatedplants, but not to 4th instar. From the shape of the graph it is clear that the maximum of nymphs developing to 4th instar stage was not yet reached. I will try to correct for this by calculating the hypothetical maximum number still to develop to each instar stage (nymphs in instar stage at day 22 + nymphs of earlier stages still alive at day 22).
 
