@@ -582,7 +582,41 @@ p_cumulative
 ggsave(filename = "graft_bioassay_lineplots_4th.png", plot = p_cumulative, width = 10, height = 5)
 ```
 
+# area under the curve
 
+```{r auc}
+library(DescTools)
+
+auc_fourth <- relative_cummulative %>%
+  dplyr::filter(stage == "fourth") %>% 
+  mutate(day = as.numeric(as.character(day)))  %>%
+  ungroup()
+
+  rel_cumul = tibble()
+  for(i in c("LA1840_1", "MM_2", "MM_3", "LA1840_5", "LA1840_6", "LA1840_7", "MM_8", "MM_9", "MM_10", "LA1840_11", "LA1840_12")){
+    subdata = subset(auc_fourth, id == i)
+    subdata[[i]] = AUC(subdata$day, subdata$number)
+    rel_cumul <- bind_rows(rel_cumul, subdata)
+  }
+
+  auc_fourth <- rel_cumul %>%
+    unite("auc", LA1840_1:LA1840_12, 
+          na.rm = TRUE) %>%  
+  dplyr::filter(day == 2) %>% 
+    mutate(auc = as.numeric(as.character(auc)))
+
+  
+auc_plot <- auc_fourth %>% 
+    ggplot(aes(x=genotype, y=auc, fill=genotype)) + 
+    labs(y = "area under the curve") +
+    geom_boxplot() +
+    theme_simple() + 
+    scale_fill_manual(values = palette) +
+  stat_compare_means(method = "t.test") + 
+  ylim(0,900)  
+
+p_cumulative + auc_plot
+```
 
 ## relative abundance
 
