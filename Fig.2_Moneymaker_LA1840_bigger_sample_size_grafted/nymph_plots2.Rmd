@@ -361,6 +361,21 @@ relative_cummulative <- rel_cumul %>%
 
 relative_cummulative <- rel_cumul %>%
   unite("third_instars", LA1840_1:LA1840_12, 
+                                  na.rm = TRUE)  %>%
+  mutate(var_new = fourth_instars)
+
+
+
+  rel_cumul = tibble()
+ for(i in c("LA1840_1", "MM_2", "MM_3", "LA1840_5", "LA1840_6", "LA1840_7", "MM_8", "MM_9", "MM_10", "LA1840_11", "LA1840_12")){
+   subdata = subset(relative_cummulative, id == i)
+   subdata[i] = cumul_median(subdata)
+   rel_cumul <- bind_rows(rel_cumul, subdata)
+ }
+
+
+relative_cummulative <- rel_cumul %>%
+  unite("fourth_instars", LA1840_1:LA1840_12, 
                                   na.rm = TRUE)
 ```
 
@@ -370,7 +385,8 @@ relative_cummulative <- relative_cummulative %>%
   mutate(day = as.factor(day)) %>% 
   mutate(first_instars = as.numeric(as.character(first_instars))) %>% 
   mutate(second_instars = as.numeric(as.character(second_instars))) %>% 
-  mutate(third_instars = as.numeric(as.character(third_instars))) 
+  mutate(third_instars = as.numeric(as.character(third_instars))) %>% 
+  mutate(fourth_instars = as.numeric(as.character(fourth_instars))) 
 
 
 relative_cummulative <- relative_cummulative %>%
