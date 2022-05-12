@@ -35,6 +35,7 @@ suppressPackageStartupMessages(library("egg"))
 suppressPackageStartupMessages(library("tidydrc"))
 suppressPackageStartupMessages(library("aomisc"))
 suppressPackageStartupMessages(library("devtools"))
+suppressPackageStartupMessages(library("svglite"))
 ```
 
 # data import
@@ -586,7 +587,7 @@ p_cumulative
 #ggsave(filename = "graft_bioassay_lineplots_4th.png", plot = p_cumulative, width = 10, height = 5)
 ```
 
-# area under the curve
+### area under the curve
 
 ```{r auc, fig.width = 16, fig.height = 10}
 library(DescTools)
@@ -624,12 +625,14 @@ auc_plot <- auc_fourth %>%
                      size = 6) + 
   scale_y_continuous(expand = c(0, 0), limits = c(0, 10)) 
 
-(p_cumulative + inset_element(auc_plot, 
+development_plot <- (p_cumulative + inset_element(auc_plot, 
                              left = 0.57, 
                              bottom = 0.025, 
                              right = 1, 
                              top = 0.55)) + guide_area() +
   plot_layout(guides = 'collect', widths = c(3,1))
+
+ggsave(filename = "graft_bioassay_lineplots_4th.svg", plot = development_plot, width = 15, height = 10)
 ```
 
 ## relative abundance
