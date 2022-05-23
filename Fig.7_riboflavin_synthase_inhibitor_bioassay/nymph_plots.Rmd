@@ -216,6 +216,8 @@ cumulative_flies <- cumulative_flies %>%
   mutate(treatment = factor(treatment, levels = c("control", "inhibitor"))) %>%
   mutate(stage = factor(stage, levels = c("eggs_start", "first_instars", "second_instars", "third_instars", "fourth_instars", 
                                           "first", "second", "third", "fourth"))) 
+
+auc <- cumulative_flies
 ```
 
 
@@ -304,7 +306,7 @@ collected
 
 #(p_MM| p_LA1840) / (p_2 | p_3 | p_4)) / (p_M | p_L)) /
 
-ggsave(filename = "inhibitor_bioassay_boxplots.png", plot = collected, width = 10, height = 15)
+#ggsave(filename = "inhibitor_bioassay_boxplots.png", plot = collected, width = 10, height = 15)
 ```
 
 
@@ -396,11 +398,11 @@ p_third <- relative_cumulative %>%
                         levels = c("first", "second", "third", "fourth"))) %>%
   mutate(day = as.numeric(as.character(day))) %>% 
   dplyr::filter(stage == "third") %>% 
-#  dplyr::filter(day > 9) %>% 
+  dplyr::filter(day > 10) %>% 
   group_by(treatment, stage) %>% 
   ggplot() +
-  theme_simple() +
-  labs(y = "development to instar stage (%)",
+  theme_big_simple() +
+  labs(y = "development to 3rd instar (%)",
        x = "days after infection") +
   scale_color_manual(values = LA_palette) +
   scale_fill_manual(values = LA_palette) +
@@ -421,11 +423,12 @@ p_third <- relative_cumulative %>%
                 y = median_abundance,
                 color = treatment),
             size = 1) +
-    stat_compare_means(data = cumulative_flies %>% dplyr::filter(stage == "third"), aes(x = day, 
-              y = number, 
-              group = treatment), 
-              label.y = 65, label = "p.signif", method = "t.test") +
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 70)) 
+  stat_compare_means(data = cumulative_flies %>% dplyr::filter(stage == "third") %>% dplyr::filter(day == 22), aes(x = day,
+               y = number, 
+               group = treatment), 
+               label.y = 65, label = "p.signif", method = "t.test") +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 100))   +
+  scale_x_continuous(expand = c(0, 0), limits = c(0, 25)) 
 
 p_fourth <- relative_cumulative %>%
   mutate(stage = factor(stage, 
@@ -469,8 +472,57 @@ p_cumulative <- (p_second | p_third | p_fourth) /  guide_area() +
 
 p_cumulative 
 
-ggsave(filename = "inhibitor_bioassay_lineplots_1.png", plot = p_cumulative, width = 10, height = 5)
+#ggsave(filename = "inhibitor_bioassay_lineplots_1.png", plot = p_cumulative, width = 10, height = 5)
 ```
+
+```{r auc, fig.width = 16, fig.height = 10}
+library(DescTools)
+
+auc_fourth <- auc %>%
+  dplyr::filter(stage == "third") %>% 
+  mutate(day = as.numeric(as.character(day)))  %>% 
+  dplyr::filter(day > 10) %>% 
+  mutate(number = number/100)  %>%
+  ungroup()
+
+  rel_cumul = tibble()
+  for(i in c("LA1840_c_1", "LA1840_c_2", "LA1840_c_3", "LA1840_c_4", "LA1840_c_5", "LA1840_in_1", "LA1840_in_2", "LA1840_in_3", "LA1840_in_4", "LA1840_in_5")){
+    subdata = subset(auc_fourth, id == i)
+    subdata[[i]] = AUC(subdata$day, subdata$number)
+    rel_cumul <- bind_rows(rel_cumul, subdata)
+  }
+
+  auc_fourth <- rel_cumul %>%
+    unite("auc", LA1840_c_1:LA1840_in_5, 
+          na.rm = TRUE) %>%  
+  dplyr::filter(day == 14) %>% 
+    mutate(auc = as.numeric(as.character(auc)))
+
+  
+auc_plot <- auc_fourth %>% 
+    ggplot(aes(x=treatment, y=auc, fill=treatment)) + 
+    labs(y = "area under the curve",
+         x= "treatment") +
+    geom_boxplot() +
+    geom_point() +
+    theme_big_simple() + 
+    scale_fill_manual(values = LA_palette) +
+  stat_compare_means(method = "wilcox.test", 
+                     label.y = 5,
+                     label.x.npc = 0.15,
+                     size = 6) + 
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 6)) 
+
+development_plot <- (p_third + inset_element(auc_plot, 
+                             left = 0.1, 
+                             bottom = 0.2, 
+                             right = 0.5, 
+                             top = 0.7)) + guide_area() +
+  plot_layout(guides = 'collect', widths = c(3,1))
+
+ggsave(filename = "inhibitor_lineplots_3rd.svg", plot = development_plot, width = 15, height = 10)
+```
+
 The development to 2nd and 3rd instars is sygnificantly increased on the inhibitor treatedplants, but not to 4th instar. From the shape of the graph it is clear that the maximum of nymphs developing to 4th instar stage was not yet reached. I will try to correct for this by calculating the hypothetical maximum number still to develop to each instar stage (nymphs in instar stage at day 22 + nymphs of earlier stages still alive at day 22).
 
 # use all living nymphs at last count to calculate possible future maximum
