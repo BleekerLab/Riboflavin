@@ -617,6 +617,7 @@ auc_plot <- auc_fourth %>%
     labs(y = "area under the curve",
          x= "rootstock genotype") +
     geom_boxplot() +
+    geom_point(pch = 21, position = position_jitterdodge()) +
     theme_big_simple() + 
     scale_fill_manual(values = palette) +
   stat_compare_means(method = "t.test", 
