@@ -479,9 +479,9 @@ p_third <- relative_cumulative %>%
     stat_compare_means(data = cumulative_flies %>% dplyr::filter(stage == "third") %>% dplyr::filter(day == 17), aes(x = day,
                y = number, 
                group = treatment), 
-               label.y = 65, label = "p.signif", method = "t.test") +
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 100))  +
-  scale_x_continuous(expand = c(0, 0), limits = c(0, 25)) 
+               label.y = 62, label = "p.signif", method = "t.test") +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 65)) +
+  xlim(11,23)
 
 p_cumulative <- (p_second | p_third) /  guide_area() +
   plot_layout(guides = 'collect') +
@@ -523,7 +523,7 @@ auc_plot <- auc_fourth %>%
     labs(y = "area under the curve",
          x= "treatment") +
     geom_boxplot() +
-    geom_point() +
+    geom_point(pch = 21, position = position_jitterdodge()) +
     theme_big_simple() + 
     scale_fill_manual(values = MM_palette) +
   stat_compare_means(method = "wilcox.test", 
@@ -533,10 +533,10 @@ auc_plot <- auc_fourth %>%
   scale_y_continuous(expand = c(0, 0), limits = c(0, 2)) 
 
 development_plot <- (p_third + inset_element(auc_plot, 
-                             left = 0.1, 
-                             bottom = 0.2, 
-                             right = 0.5, 
-                             top = 0.7)) + guide_area() +
+                             left = 0.57, 
+                             bottom = 0.025, 
+                             right = 1, 
+                             top = 0.55)) + guide_area() +
   plot_layout(guides = 'collect', widths = c(3,1))
 
 ggsave(filename = "hydroponics_lineplots_3rd.svg", plot = development_plot, width = 15, height = 10)
