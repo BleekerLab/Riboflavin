@@ -72,20 +72,28 @@ flies %>%
 ## plot with relative 4th instar numbers
 
 ```{r relative plot}
-flies %>% 
+plot1 <- flies %>% 
   pivot_wider(names_from = stage, values_from = number) %>%
   mutate(percentage_from_eggs = fourth_instar / egg * 100) %>%
   pivot_longer(cols = fourth_instar:percentage_from_eggs, 
                names_to = "stage", values_to = "number") %>%
   dplyr::filter(stage == "percentage_from_eggs") %>%
   ggplot(aes(x=genotype, y=number, fill=genotype)) + 
-  labs(y = "development eggs to 4th instars (%)") +
+  labs(y = "development to 4th instar (%)") +
   geom_boxplot() + 
-  geom_point(aes(fill = genotype), size = 1, shape = 21,
+  geom_point(aes(fill = genotype), size = 2, shape = 21,
              position = position_jitterdodge(jitter.width = 0.1)) +
-  theme_simple() + 
-  scale_fill_manual(values = palette) 
+  theme_big_simple() + 
+  scale_fill_manual(values = palette)  +
+  stat_compare_means(method = "wilcox.test", 
+                     label.y = 45,
+                     label.x.npc = 0.15,
+                     size = 6)
 
+plot_1 <- plot1  + guide_area() +
+  plot_layout(guides = 'collect', widths = c(3,1))
+
+ggsave(filename = "boxplot_egg_to_4th.svg", plot = plot_1, width = 12, height = 10)
 ```
 
 ## combined
