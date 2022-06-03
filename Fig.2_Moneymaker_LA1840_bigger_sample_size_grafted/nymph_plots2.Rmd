@@ -66,11 +66,11 @@ flies <- flies %>%
  
 ```{r total fourth instars}
 flies <- flies %>%
-  mutate(fourth_exuviae = `5_late_fourth_instar` + `6_exuviea`) %>%
-  group_by(place) %>%
-  mutate(`5_completed_lifecycle` = cumsum(fourth_exuviae)) %>%
-  mutate(`6_total_fourth_instars` = `4_early_fourth_instar` + `5_completed_lifecycle`) %>%
-  ungroup()
+  dplyr::mutate(fourth_exuviae = `5_late_fourth_instar` + `6_exuviea`) %>%
+  dplyr::group_by(place) %>%
+  dplyr::mutate(`5_completed_lifecycle` = cumsum(fourth_exuviae)) %>%
+  dplyr::mutate(`6_total_fourth_instars` = `4_early_fourth_instar` + `5_completed_lifecycle`) %>%
+  dplyr::ungroup()
 ```
 
 ```{r relative flies}
@@ -308,20 +308,20 @@ relative_cummulative <- flies %>%
   dplyr::select(-`4_early_fourth_instar`: -`5_completed_lifecycle`)
 
 relative_cummulative <- relative_cummulative %>%
-  mutate(first_instars = rowSums(relative_cummulative[,8:11])) %>%
-  mutate(second_instars = rowSums(relative_cummulative[,9:11])) %>%
-  mutate(third_instars = rowSums(relative_cummulative[,10:11])) %>%
-  mutate(fourth_instars = `6_total_fourth_instars`)
+  dplyr::mutate(first_instars = rowSums(relative_cummulative[,8:11])) %>%
+  dplyr::mutate(second_instars = rowSums(relative_cummulative[,9:11])) %>%
+  dplyr::mutate(third_instars = rowSums(relative_cummulative[,10:11])) %>%
+  dplyr::mutate(fourth_instars = `6_total_fourth_instars`)
 ```
 
 
 ```{r correct}
 relative_cummulative <- relative_cummulative %>%
-  mutate(var_new = first_instars) %>%
-  mutate(day = as.numeric(as.character(day))) %>%
+  dplyr::mutate(var_new = first_instars) %>%
+  dplyr::mutate(day = as.numeric(as.character(day))) %>%
   unite("id", c(genotype, place), remove = FALSE) %>%
-  mutate(id = as.factor(id)) %>%
-  group_by(id)
+  dplyr::mutate(id = as.factor(id)) %>%
+  dplyr::group_by(id)
 
 
   rel_cumul = tibble()
@@ -335,7 +335,7 @@ relative_cummulative <- relative_cummulative %>%
 relative_cummulative <- rel_cumul %>%
   unite("first_instars", LA1840_1:LA1840_12, 
                                   na.rm = TRUE)  %>%
-  mutate(var_new = second_instars)
+  dplyr::mutate(var_new = second_instars)
 
   rel_cumul = tibble()
  for(i in c("LA1840_1", "MM_2", "MM_3", "LA1840_5", "LA1840_6", "LA1840_7", "MM_8", "MM_9", "MM_10", "LA1840_11", "LA1840_12")){
@@ -348,7 +348,7 @@ relative_cummulative <- rel_cumul %>%
 relative_cummulative <- rel_cumul %>%
   unite("second_instars", LA1840_1:LA1840_12, 
                                   na.rm = TRUE)  %>%
-  mutate(var_new = third_instars)
+  dplyr::mutate(var_new = third_instars)
 
 
 
@@ -363,7 +363,7 @@ relative_cummulative <- rel_cumul %>%
 relative_cummulative <- rel_cumul %>%
   unite("third_instars", LA1840_1:LA1840_12, 
                                   na.rm = TRUE)  %>%
-  mutate(var_new = fourth_instars)
+  dplyr::mutate(var_new = fourth_instars)
 
 
 
@@ -383,11 +383,11 @@ relative_cummulative <- rel_cumul %>%
 
 ```{r}
 relative_cummulative <- relative_cummulative %>%
-  mutate(day = as.factor(day)) %>% 
-  mutate(first_instars = as.numeric(as.character(first_instars))) %>% 
-  mutate(second_instars = as.numeric(as.character(second_instars))) %>% 
-  mutate(third_instars = as.numeric(as.character(third_instars))) %>% 
-  mutate(fourth_instars = as.numeric(as.character(fourth_instars))) 
+  dplyr::mutate(day = as.factor(day)) %>% 
+  dplyr::mutate(first_instars = as.numeric(as.character(first_instars))) %>% 
+  dplyr::mutate(second_instars = as.numeric(as.character(second_instars))) %>% 
+  dplyr::mutate(third_instars = as.numeric(as.character(third_instars))) %>% 
+  dplyr::mutate(fourth_instars = as.numeric(as.character(fourth_instars))) 
 
 
 relative_cummulative <- relative_cummulative %>%
@@ -396,13 +396,13 @@ relative_cummulative <- relative_cummulative %>%
 
 ```{r}
 relative_cummulative <- relative_cummulative %>%
-  group_by(place) %>%
-  mutate(first = (first_instars / eggs_start)*100)%>%
-  mutate(second = (second_instars / max(first_instars))*100)%>%
-  mutate(third = (third_instars / max(first_instars))*100)%>%
-  mutate(fourth = (fourth_instars / max(first_instars))*100) %>%
-  ungroup() %>%
-  mutate(genotype = factor(genotype, levels = c("MM", "LA1840")))
+  dplyr::group_by(place) %>%
+  dplyr::mutate(first = (first_instars / eggs_start)*100)%>%
+  dplyr::mutate(second = (second_instars / max(first_instars))*100)%>%
+  dplyr::mutate(third = (third_instars / max(first_instars))*100)%>%
+  dplyr::mutate(fourth = (fourth_instars / max(first_instars))*100) %>%
+  dplyr::ungroup() %>%
+  dplyr::mutate(genotype = factor(genotype, levels = c("MM", "LA1840")))
 
 relative_cummulative <- relative_cummulative %>%
   dplyr::select(-var_new)
@@ -511,31 +511,31 @@ relative_cummulative <- relative_cummulative %>%
   dplyr::filter(stage == "first" | stage == "second" | stage == "third" | stage == "fourth")
 
 relative_cummulative <- relative_cummulative %>%
-  mutate(genotype = factor(genotype, levels = c("MM", "LA1840"))) 
+  dplyr::mutate(genotype = factor(genotype, levels = c("MM", "LA1840"))) 
 
 relative_cummulative <- relative_cummulative %>%
   dplyr::select(-id) %>%
-  mutate(stage = as.factor(stage)) %>%
-  mutate(place = as.factor(place)) %>%
-  group_by(stage, genotype) %>%
+  dplyr::mutate(stage = as.factor(stage)) %>%
+  dplyr::mutate(place = as.factor(place)) %>%
+  dplyr::group_by(stage, genotype) %>%
   pivot_wider(names_from = place, values_from = number)
 
 relative_cummulative <- relative_cummulative %>%
-  mutate(day = as.factor(day)) %>%
+  dplyr::mutate(day = as.factor(day)) %>%
   rowwise() %>%
-  mutate(median_abundance = median(c_across(`1`:`12`), na.rm = TRUE)) %>%
+  dplyr::mutate(median_abundance = median(c_across(`1`:`12`), na.rm = TRUE)) %>%
   #mutate(max_abundance = max(c_across(`1`:`12`), na.rm = TRUE)) %>%
   #mutate(min_abundance = min(c_across(`1`:`12`), na.rm = TRUE)) %>%
   #mutate(n = list(rowSums(na.omit(c(`1`:`12`)))))
-  mutate(IQR_abundance = IQR(c_across(`1`:`12`), na.rm = TRUE)) %>%
+  dplyr::mutate(IQR_abundance = IQR(c_across(`1`:`12`), na.rm = TRUE)) %>%
   #mutate(se_abundance = std.error(c_across(`1`:`12`), na.rm = TRUE)) %>%
   #mutate(ymin_ribbon = (median_abundance - IQR_abundance)) %>%
   #mutate(ymin_ribbon = if_else(ymin_ribbon < 0, 0, ymin_ribbon)) %>%
-  mutate(day = as.numeric(as.character(day))) %>%
+  dplyr::mutate(day = as.numeric(as.character(day))) %>%
   dplyr::select(-`1`: -`12`) 
 relative_cummulative <- relative_cummulative %>%
-  mutate(ymin_ribbon = (median_abundance - (0.5*IQR_abundance))) %>%
-  mutate(ymin_ribbon = if_else(ymin_ribbon < 0, 0, ymin_ribbon)) 
+  dplyr::mutate(ymin_ribbon = (median_abundance - (0.5*IQR_abundance))) %>%
+  dplyr::mutate(ymin_ribbon = if_else(ymin_ribbon < 0, 0, ymin_ribbon)) 
   #mutate(min_whisker = (median_abundance - (1.5*IQR_abundance))) %>%
   #mutate(min_abundance = if_else(min_abundance < min_whisker, 
   #                               min_whisker, min_abundance)) %>%
@@ -547,14 +547,14 @@ relative_cummulative <- relative_cummulative %>%
 
 ```{r relative cumulative graph, fig.width = 16, fig.height = 10}
 p_cumulative <- relative_cummulative %>%
-  mutate(stage = factor(stage, 
+  dplyr::mutate(stage = factor(stage, 
                         levels = c("first", "second", "third", "fourth"))) %>%
-  mutate(day = as.numeric(as.character(day))) %>% 
+  dplyr::mutate(day = as.numeric(as.character(day))) %>% 
   dplyr::filter(stage == "fourth") %>% 
   dplyr::filter(day > 9) %>% 
-  group_by(genotype) %>% 
+  dplyr::group_by(genotype) %>% 
   ggplot() +
-  theme_big_simple() +
+  theme_simple() +
   labs(y = "development to 4th instar (%)",
        x = "days after infection") +
   scale_color_manual(values = palette) +
@@ -594,9 +594,9 @@ library(DescTools)
 
 auc_fourth <- auc %>%
   dplyr::filter(stage == "fourth") %>% 
-  mutate(day = as.numeric(as.character(day)))  %>%
-  mutate(number = number/100)  %>%
-  ungroup()
+  dplyr::mutate(day = as.numeric(as.character(day)))  %>%
+  dplyr::mutate(number = number/100)  %>%
+  dplyr::ungroup()
 
   rel_cumul = tibble()
   for(i in c("LA1840_1", "MM_2", "MM_3", "LA1840_5", "LA1840_6", "LA1840_7", "MM_8", "MM_9", "MM_10", "LA1840_11", "LA1840_12")){
@@ -609,31 +609,38 @@ auc_fourth <- auc %>%
     unite("auc", LA1840_1:LA1840_12, 
           na.rm = TRUE) %>%  
   dplyr::filter(day == 2) %>% 
-    mutate(auc = as.numeric(as.character(auc)))
+    dplyr::mutate(auc = as.numeric(as.character(auc)))
 
   
 auc_plot <- auc_fourth %>% 
     ggplot(aes(x=genotype, y=auc, fill=genotype)) + 
     labs(y = "area under the curve",
          x= "rootstock genotype") +
-    geom_boxplot() +
-    geom_point(pch = 21, position = position_jitterdodge()) +
-    theme_big_simple() + 
+    geom_boxplot() + 
+  geom_point(aes(fill = genotype), size = 2, shape = 21,
+             position = position_jitterdodge(jitter.width = 0.4)) +
+    theme_simple() + 
     scale_fill_manual(values = palette) +
   stat_compare_means(method = "t.test", 
                      label.y = 9.5,
-                     label.x.npc = 0.15,
-                     size = 6) + 
+                     label.x = 1.5,
+                     size = 5,
+                     label = "p.format") + 
   scale_y_continuous(expand = c(0, 0), limits = c(0, 10)) 
 
 development_plot <- (p_cumulative + inset_element(auc_plot, 
-                             left = 0.57, 
+                             left = 0.6, 
                              bottom = 0.025, 
                              right = 1, 
                              top = 0.55)) + guide_area() +
-  plot_layout(guides = 'collect', widths = c(3,1))
+  plot_layout(guides = 'collect', widths = c(3,1)) +
+  plot_annotation(tag_levels = 'A')
+
+development_plot
 
 ggsave(filename = "graft_bioassay_lineplots_4th.svg", plot = development_plot, width = 15, height = 10)
+
+ggsave(filename = "graft_bioassay_lineplots_4th.png", plot = development_plot, width = 15, height = 10)
 ```
 
 ## relative abundance
