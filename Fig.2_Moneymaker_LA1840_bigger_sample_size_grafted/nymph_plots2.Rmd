@@ -622,7 +622,7 @@ auc_plot <- auc_fourth %>%
     theme_simple() + 
     scale_fill_manual(values = palette) +
   stat_compare_means(method = "t.test", 
-                     label.y = 9.5,
+                     label.y = 9.2,
                      label.x = 1.5,
                      size = 5,
                      label = "p.format") + 
@@ -638,9 +638,9 @@ development_plot <- (p_cumulative + inset_element(auc_plot,
 
 development_plot
 
-ggsave(filename = "graft_bioassay_lineplots_4th.svg", plot = development_plot, width = 15, height = 10)
+ggsave(filename = "graft_bioassay_lineplots_4th.svg", plot = development_plot, width = 10, height = 7)
 
-ggsave(filename = "graft_bioassay_lineplots_4th.png", plot = development_plot, width = 15, height = 10)
+ggsave(filename = "graft_bioassay_lineplots_4th.png", plot = development_plot, width = 10, height = 7)
 ```
 
 ## relative abundance
