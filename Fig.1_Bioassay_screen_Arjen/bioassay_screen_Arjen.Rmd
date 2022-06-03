@@ -102,19 +102,34 @@ It might be best to use both for the most complete view of the phnotype.
 p1 <- flies %>% 
   dplyr::filter(stage == "egg") %>%
   ggplot(aes(x=genotype, y=number, fill=genotype)) + 
-  labs(y = "eggs (count)") +
-  ylim(0,60) +
+  labs(y = "eggs (count)") + 
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 65)) +
   geom_boxplot() + 
+  geom_point(aes(fill = genotype), size = 2, shape = 21,
+             position = position_jitterdodge(jitter.width = 0.4)) + 
   theme_simple() + 
-  scale_fill_manual(values = palette) 
+  scale_fill_manual(values = palette)  +
+  stat_compare_means(method = "wilcox.test", 
+                     label.y = 62,
+                     label.x = 1.5,
+                     size = 5,
+                     label = "p.format") 
 
 p2 <- flies %>% 
   dplyr::filter(stage == "fourth_instar") %>%
   ggplot(aes(x=genotype, y=number, fill=genotype)) + 
   labs(y = "4th instar nymphs (count)") +
-  geom_boxplot() + 
-  theme_simple() + 
-  scale_fill_manual(values = palette) 
+  geom_boxplot() +  
+  geom_point(aes(fill = genotype), size = 2, shape = 21,
+             position = position_jitterdodge(jitter.width = 0.4)) + 
+  theme_simple() +  
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 12)) +
+  scale_fill_manual(values = palette)   +
+  stat_compare_means(method = "wilcox.test", 
+                     label.y = 11.5,
+                     label.x = 1.5,
+                     size = 5,
+                     label = "p.format") 
 
 p3 <- flies %>% 
   pivot_wider(names_from = stage, values_from = number) %>%
@@ -124,13 +139,21 @@ p3 <- flies %>%
   dplyr::filter(stage == "percentage_from_eggs") %>%
   ggplot(aes(x=genotype, y=number, fill=genotype)) + 
   labs(y = "development egg to 4th instar (%)") +
-  geom_boxplot() + 
-  theme_simple() + 
-  scale_fill_manual(values = palette) 
+  geom_boxplot() +  
+  geom_point(aes(fill = genotype), size = 2, shape = 21,
+             position = position_jitterdodge(jitter.width = 0.4)) + 
+  theme_simple() +  
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 50)) +
+  scale_fill_manual(values = palette)   +
+  stat_compare_means(method = "wilcox.test", 
+                     label.y = 48,
+                     label.x = 1.5,
+                     size = 5,
+                     label = "p.format") 
 
 collected <- (p1 + p2 + p3) / guide_area() +
   plot_layout(guides = 'collect') +
-  plot_annotation(tag_levels = 'a')
+  plot_annotation(tag_levels = 'A')
 
 collected
 
