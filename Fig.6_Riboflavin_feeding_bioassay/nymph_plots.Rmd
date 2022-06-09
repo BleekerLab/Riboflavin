@@ -60,7 +60,13 @@ flies <- read.csv("raw_data.csv",
 flies <- flies %>%
   dplyr::filter(genotype == "MM")  %>%
   dplyr::filter(day < 18)  %>%
-  dplyr::filter(id != "MM_rib_4") 
+  dplyr::filter(id != "MM_rib_4")  %>%
+  dplyr::filter(id != "MM_rib_5")  %>%
+  dplyr::filter(id != "MM_c_3") 
+
+# MM_rib_4 and MM_rib_5 are taken out, because the leaves died 
+# MM_c_3 is taken out, because it did not grow roots while all other control leaves did
+
 # The first 10 rows of the data
 knitr::kable(flies[1:10,1:8])
 
@@ -149,7 +155,7 @@ cumulative_flies <- cumulative_flies %>%
 
 
   rel_cumul = tibble()
- for(i in c("MM_c_1", "MM_c_2", "MM_c_3", "MM_c_4", "MM_c_5", "MM_rib_1", "MM_rib_2", "MM_rib_3", "MM_rib_5")){
+ for(i in c("MM_c_1", "MM_c_2", "MM_c_4", "MM_c_5", "MM_rib_1", "MM_rib_2", "MM_rib_3")){
    subdata = subset(cumulative_flies, id == i)
    if(anyNA(subdata$var_new)==TRUE) {
      subdata[i] = cumul_median(subdata, na.rm = TRUE)
@@ -161,12 +167,12 @@ cumulative_flies <- cumulative_flies %>%
 
 
 cumulative_flies <- rel_cumul %>%
-  unite("first_instars", MM_c_1:MM_rib_5, 
+  unite("first_instars", MM_c_1:MM_rib_3, 
                                   na.rm = TRUE)  %>%
   mutate(var_new = second_instars)
 
   rel_cumul = tibble()
- for(i in c("MM_c_1", "MM_c_2", "MM_c_3", "MM_c_4", "MM_c_5", "MM_rib_1", "MM_rib_2", "MM_rib_3", "MM_rib_5")){
+ for(i in c("MM_c_1", "MM_c_2", "MM_c_4", "MM_c_5", "MM_rib_1", "MM_rib_2", "MM_rib_3")){
    subdata = subset(cumulative_flies, id == i)
    if(anyNA(subdata$var_new)==TRUE) {
      subdata[i] = cumul_median(subdata, na.rm = TRUE)
@@ -178,14 +184,14 @@ cumulative_flies <- rel_cumul %>%
 
 
 cumulative_flies <- rel_cumul %>%
-  unite("second_instars", MM_c_1:MM_rib_5, 
+  unite("second_instars", MM_c_1:MM_rib_3, 
                                   na.rm = TRUE)  %>%
   mutate(var_new = third_instars)
 
 
 
   rel_cumul = tibble()
- for(i in c("MM_c_1", "MM_c_2", "MM_c_3", "MM_c_4", "MM_c_5", "MM_rib_1", "MM_rib_2", "MM_rib_3", "MM_rib_5")){
+ for(i in c("MM_c_1", "MM_c_2", "MM_c_4", "MM_c_5", "MM_rib_1", "MM_rib_2", "MM_rib_3")){
    subdata = subset(cumulative_flies, id == i)
    if(anyNA(subdata$var_new)==TRUE) {
      subdata[i] = cumul_median(subdata, na.rm = TRUE)
@@ -197,14 +203,14 @@ cumulative_flies <- rel_cumul %>%
 
 
 cumulative_flies <- rel_cumul %>%
-  unite("third_instars", MM_c_1:MM_rib_5, 
+  unite("third_instars", MM_c_1:MM_rib_3, 
                                   na.rm = TRUE)  %>%
   mutate(var_new = fourth_instars)
 
 
 
   rel_cumul = tibble()
- for(i in c("MM_c_1", "MM_c_2", "MM_c_3", "MM_c_4", "MM_c_5", "MM_rib_1", "MM_rib_2", "MM_rib_3", "MM_rib_5")){
+ for(i in c("MM_c_1", "MM_c_2", "MM_c_4", "MM_c_5", "MM_rib_1", "MM_rib_2", "MM_rib_3")){
    subdata = subset(cumulative_flies, id == i)
    if(anyNA(subdata$var_new)==TRUE) {
      subdata[i] = cumul_median(subdata, na.rm = TRUE)
@@ -216,7 +222,7 @@ cumulative_flies <- rel_cumul %>%
 
 
 cumulative_flies <- rel_cumul %>%
-  unite("fourth_instars", MM_c_1:MM_rib_5, 
+  unite("fourth_instars", MM_c_1:MM_rib_3, 
                                   na.rm = TRUE)
 cumulative_flies[cumulative_flies == ""]<-NA
 ```
@@ -267,98 +273,98 @@ p_eggs <- cumulative_flies %>%
   ggplot(aes(x=treatment, y=number, fill=treatment)) + 
   labs(y = "eggs (count)") +
   geom_boxplot() + 
-  ylim(0,120) +
-  theme_simple() + 
-  scale_fill_manual(values = MM_palette) +
-  stat_compare_means(method = "t.test")
-
-p_first <- cumulative_flies %>% 
-  dplyr::filter(day == 13) %>%
-  dplyr::filter(stage == "first_instars") %>%
-  ggplot(aes(x=treatment, y=number, fill=treatment)) + 
-  labs(y = "hatched eggs (count)") +
-  geom_boxplot() + 
-  ylim(0,120) +
+  geom_point(aes(fill = treatment), size = 2, shape = 21,
+             position = position_jitterdodge(jitter.width = 0.4)) + 
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 120)) +
   theme_simple() + 
   scale_fill_manual(values = MM_palette)  +
-  stat_compare_means(method = "t.test")
+  stat_compare_means(method = "wilcox.test", 
+                     label.y = 115,
+                     label.x = 1.5,
+                     size = 5,
+                     label = "p.format") 
+
+p_first <- cumulative_flies %>% 
+  dplyr::filter(day == 17) %>%
+  dplyr::filter(stage == "first_instars") %>%
+  ggplot(aes(x=treatment, y=number, fill=treatment)) + 
+  labs(y = "1st instar nymphs (count)") +
+  geom_boxplot() +  
+  geom_point(aes(fill = treatment), size = 2, shape = 21,
+             position = position_jitterdodge(jitter.width = 0.4)) + 
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 120)) +
+  theme_simple() + 
+  scale_fill_manual(values = MM_palette) +
+  stat_compare_means(method = "wilcox.test", 
+                     label.y = 100,
+                     label.x = 1.5,
+                     size = 5,
+                     label = "p.format") 
 
 p_second <- cumulative_flies %>% 
-  dplyr::filter(day == 13) %>%
+  dplyr::filter(day == 17) %>%
   dplyr::filter(stage == "second_instars") %>%
   ggplot(aes(x=treatment, y=number, fill=treatment)) + 
   labs(y = "2nd instar nymphs (count)") +
-  geom_boxplot() + 
-  ylim(0,120) +
+  geom_boxplot() +  
+  geom_point(aes(fill = treatment), size = 2, shape = 21,
+             position = position_jitterdodge(jitter.width = 0.4)) + 
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 120)) +
   theme_simple() + 
   scale_fill_manual(values = MM_palette) +
-  stat_compare_means(method = "t.test") 
+  stat_compare_means(method = "wilcox.test", 
+                     label.y = 100,
+                     label.x = 1.5,
+                     size = 5,
+                     label = "p.format") 
 
 p_third <- cumulative_flies %>% 
-  dplyr::filter(day == 13) %>%
+  dplyr::filter(day == 17) %>%
   dplyr::filter(stage == "third_instars") %>%
   ggplot(aes(x=treatment, y=number, fill=treatment)) + 
   labs(y = "3rd instar nymphs (count)") +
-  geom_boxplot() + 
-  ylim(0,120) +
+  geom_boxplot() +  
+  geom_point(aes(fill = treatment), size = 2, shape = 21,
+             position = position_jitterdodge(jitter.width = 0.4)) + 
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 80)) +
   theme_simple() + 
   scale_fill_manual(values = MM_palette) +
-  stat_compare_means(method = "t.test") 
+  stat_compare_means(method = "wilcox.test", 
+                     label.y = 75,
+                     label.x = 1.5,
+                     size = 5,
+                     label = "p.format") 
 
-p_1 <- cumulative_flies %>% 
-  dplyr::filter(day == 13) %>%
-  dplyr::filter(stage == "first") %>%
-  ggplot(aes(x=treatment, y=number, fill=treatment)) + 
-  labs(y = "hatched eggs (%)") +
-  geom_boxplot() + 
-  ylim(0,100) +
-  theme_simple() + 
-  scale_fill_manual(values = MM_palette)  +
-  stat_compare_means(method = "t.test")
-
-# development %
-p_2 <- cumulative_flies %>% 
-  dplyr::filter(day == 13) %>%
-  dplyr::filter(stage == "second") %>%
-  ggplot(aes(x=treatment, y=number, fill=treatment)) + 
-  labs(y = "development egg to 2nd instar (%)") +
-  geom_boxplot() + 
-  ylim(0,100) +
-  theme_simple() + 
-  scale_fill_manual(values = MM_palette)  +
-  stat_compare_means(method = "t.test")
 
 p_3 <- cumulative_flies %>% 
-  dplyr::filter(day == 13) %>%
+  dplyr::filter(day == 17) %>%
   dplyr::filter(stage == "third") %>%
   ggplot(aes(x=treatment, y=number, fill=treatment)) + 
-  labs(y = "development egg to 3rd instar (%)") +
+  labs(y = "development to 3rd instar (%)") +
   geom_boxplot() + 
-  ylim(0,100) +
+  geom_point(aes(fill = treatment), size = 2, shape = 21,
+             position = position_jitterdodge(jitter.width = 0.4)) + 
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 70)) +
   theme_simple() + 
   scale_fill_manual(values = MM_palette)  +
-  stat_compare_means(method = "t.test")
+  stat_compare_means(method = "wilcox.test", 
+                     label.y = 65,
+                     label.x = 1.5,
+                     size = 5,
+                     label = "p.format") 
 
-p_4 <- cumulative_flies %>% 
-  dplyr::filter(day == 13) %>%
-  dplyr::filter(stage == "fourth") %>%
-  ggplot(aes(x=treatment, y=number, fill=treatment)) + 
-  labs(y = "development egg to 4th instar (%)") +
-  geom_boxplot() + 
-  ylim(0,100) +
-  theme_simple() + 
-  scale_fill_manual(values = MM_palette) +
-  stat_compare_means(method = "t.test")
 
-collected <- ((p_eggs | p_first | p_second | p_third)  / (p_1 | p_2 | p_3))  / guide_area() +
+collected <- (p_eggs | p_third | p_3)  / guide_area() +
   plot_layout(guides = 'collect') +
-  plot_annotation(tag_levels = 'a')
+  plot_annotation(tag_levels = 'A')
 
 collected
 
 #(p_MM| p_LA1840) / (p_2 | p_3 | p_4)) / (p_M | p_L)) /
 
-#ggsave(filename = "inhibitor_bioassay_boxplots.png", plot = collected, width = 10, height = 15)
+ggsave(filename = "riboflavin_assay_boxplots.png", plot = collected, width = 10, height = 10)
+
+ggsave(filename = "riboflavin_assay_boxplots.svg", plot = collected, width = 10, height = 10)
 ```
 
 
