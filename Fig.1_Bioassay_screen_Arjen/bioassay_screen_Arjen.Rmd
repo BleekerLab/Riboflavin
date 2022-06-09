@@ -93,7 +93,7 @@ plot1 <- flies %>%
 plot_1 <- plot1  + guide_area() +
   plot_layout(guides = 'collect', widths = c(3,1))
 
-ggsave(filename = "boxplot_egg_to_4th.svg", plot = plot_1, width = 12, height = 10)
+# ggsave(filename = "boxplot_egg_to_4th.svg", plot = plot_1, width = 12, height = 10)
 ```
 
 ## combined
@@ -158,6 +158,8 @@ collected <- (p1 + p2 + p3) / guide_area() +
 collected
 
 ggsave(filename = "first_bioassay_screen.png", plot = collected, width = 10, height = 10)
+
+ggsave(filename = "first_bioassay_screen.svg", plot = collected, width = 10, height = 10)
 ```
 
 # statistics
