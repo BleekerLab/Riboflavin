@@ -223,90 +223,67 @@ auc <- cumulative_flies
 
 ```{r combined plot, fig.width = 16, fig.height = 10}
 
-#egg and hatching
 p_eggs <- cumulative_flies %>% 
   dplyr::filter(day == 2) %>%
   dplyr::filter(stage == "eggs_start") %>%
   ggplot(aes(x=treatment, y=number, fill=treatment)) + 
   labs(y = "eggs (count)") +
   geom_boxplot() + 
-  ylim(0,150) +
+  geom_point(aes(fill = treatment), size = 2, shape = 21,
+             position = position_jitterdodge(jitter.width = 0.4)) + 
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 160)) +
   theme_simple() + 
   scale_fill_manual(values = LA_palette) +
-  stat_compare_means(method = "t.test")
+  stat_compare_means(method = "wilcox.test", 
+                     label.y = 155,
+                     label.x = 1.3,
+                     size = 5,
+                     label = "p.format") 
 
-p_first <- cumulative_flies %>% 
+p_third <- cumulative_flies %>% 
   dplyr::filter(day == 22) %>%
-  dplyr::filter(stage == "first_instars") %>%
+  dplyr::filter(stage == "third_instars") %>%
   ggplot(aes(x=treatment, y=number, fill=treatment)) + 
-  labs(y = "hatched eggs (count)") +
+  labs(y = "3rd instar nymphs (count)") +
   geom_boxplot() + 
-  ylim(0,150) +
+  geom_point(aes(fill = treatment), size = 2, shape = 21,
+             position = position_jitterdodge(jitter.width = 0.4)) + 
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 90)) +
   theme_simple() + 
-  scale_fill_manual(values = LA_palette) 
-
-p_fourth <- cumulative_flies %>% 
-  dplyr::filter(day == 22) %>%
-  dplyr::filter(stage == "fourth_instars") %>%
-  ggplot(aes(x=treatment, y=number, fill=treatment)) + 
-  labs(y = "4th instar nymphs (count)") +
-  geom_boxplot() + 
-  ylim(0,150) +
-  theme_simple() + 
-  scale_fill_manual(values = LA_palette) +
-  stat_compare_means(method = "t.test") 
-
-p1 <- cumulative_flies %>% 
-  dplyr::filter(day == 22) %>%
-  dplyr::filter(stage == "first") %>%
-  ggplot(aes(x=treatment, y=number, fill=treatment)) + 
-  labs(y = "hatched eggs (%)") +
-  geom_boxplot() + 
-  ylim(0,70) +
-  theme_simple() + 
-  scale_fill_manual(values = LA_palette) 
-
-# development %
-p_2 <- cumulative_flies %>% 
-  dplyr::filter(day == 22) %>%
-  dplyr::filter(stage == "second") %>%
-  ggplot(aes(x=treatment, y=number, fill=treatment)) + 
-  labs(y = "development to second instar stage (%)") +
-  geom_boxplot() + 
-  ylim(0,70) +
-  theme_simple() + 
-  scale_fill_manual(values = LA_palette) 
+  scale_fill_manual(values = LA_palette)  +
+  stat_compare_means(method = "wilcox.test", 
+                     label.y = 85,
+                     label.x = 1.3,
+                     size = 5,
+                     label = "p.format") 
 
 p_3 <- cumulative_flies %>% 
   dplyr::filter(day == 22) %>%
   dplyr::filter(stage == "third") %>%
   ggplot(aes(x=treatment, y=number, fill=treatment)) + 
-  labs(y = "development to third instar stage (%)") +
+  labs(y = "development to 3rd instar (%)") +
   geom_boxplot() + 
-  ylim(0,70) +
-  theme_simple() + 
-  scale_fill_manual(values = LA_palette) 
-
-p_4 <- cumulative_flies %>% 
-  dplyr::filter(day == 22) %>%
-  dplyr::filter(stage == "fourth") %>%
-  ggplot(aes(x=treatment, y=number, fill=treatment)) + 
-  labs(y = "development egg to 4th instar (%)") +
-  geom_boxplot() + 
-  ylim(0,70) +
+  geom_point(aes(fill = treatment), size = 2, shape = 21,
+             position = position_jitterdodge(jitter.width = 0.4)) + 
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 70)) +
   theme_simple() + 
   scale_fill_manual(values = LA_palette) +
-  stat_compare_means(method = "t.test")
+  stat_compare_means(method = "wilcox.test", 
+                     label.y = 65,
+                     label.x = 1.3,
+                     size = 5,
+                     label = "p.format") 
 
-collected <- (p_eggs | p_fourth| p_4)  /  guide_area() +
+
+collected <- (p_eggs | p_third| p_3)  /  guide_area() +
   plot_layout(guides = 'collect') +
-  plot_annotation(tag_levels = 'a')
+  plot_annotation(tag_levels = 'A')
 
 collected
 
-#(p_MM| p_LA1840) / (p_2 | p_3 | p_4)) / (p_M | p_L)) /
+ggsave(filename = "inhibitor_bioassay_boxplots.png", plot = collected, width = 10, height = 10)
 
-#ggsave(filename = "inhibitor_bioassay_boxplots.png", plot = collected, width = 10, height = 15)
+ggsave(filename = "inhibitor_bioassay_boxplots.svg", plot = collected, width = 10, height = 10)
 ```
 
 
