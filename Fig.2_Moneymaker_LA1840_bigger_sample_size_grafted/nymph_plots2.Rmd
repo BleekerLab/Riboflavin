@@ -415,6 +415,7 @@ relative_cummulative <- relative_cummulative %>%
                                           "first", "second", "third", "fourth"))) 
 
 auc <- relative_cummulative
+ED <- relative_cummulative
 ```
 
 ```{r combined plot, fig.width = 16, fig.height = 10}
@@ -524,26 +525,180 @@ relative_cummulative <- relative_cummulative %>%
   dplyr::mutate(day = as.factor(day)) %>%
   rowwise() %>%
   dplyr::mutate(median_abundance = median(c_across(`1`:`12`), na.rm = TRUE)) %>%
-  #mutate(max_abundance = max(c_across(`1`:`12`), na.rm = TRUE)) %>%
-  #mutate(min_abundance = min(c_across(`1`:`12`), na.rm = TRUE)) %>%
+  dplyr::mutate(max_abundance = max(c_across(`1`:`12`), na.rm = TRUE)) %>%
+  dplyr::mutate(min_abundance = min(c_across(`1`:`12`), na.rm = TRUE)) %>%
   #mutate(n = list(rowSums(na.omit(c(`1`:`12`)))))
   dplyr::mutate(IQR_abundance = IQR(c_across(`1`:`12`), na.rm = TRUE)) %>%
-  #mutate(se_abundance = std.error(c_across(`1`:`12`), na.rm = TRUE)) %>%
-  #mutate(ymin_ribbon = (median_abundance - IQR_abundance)) %>%
-  #mutate(ymin_ribbon = if_else(ymin_ribbon < 0, 0, ymin_ribbon)) %>%
   dplyr::mutate(day = as.numeric(as.character(day))) %>%
   dplyr::select(-`1`: -`12`) 
+
 relative_cummulative <- relative_cummulative %>%
   dplyr::mutate(ymin_ribbon = (median_abundance - (0.5*IQR_abundance))) %>%
-  dplyr::mutate(ymin_ribbon = if_else(ymin_ribbon < 0, 0, ymin_ribbon)) 
-  #mutate(min_whisker = (median_abundance - (1.5*IQR_abundance))) %>%
-  #mutate(min_abundance = if_else(min_abundance < min_whisker, 
-  #                               min_whisker, min_abundance)) %>%
-  #mutate(max_whisker = (median_abundance + (1.5*IQR_abundance))) %>%
-  #mutate(max_abundance = if_else(max_abundance > max_whisker, 
-  #                               max_whisker, max_abundance))
+  dplyr::mutate(ymin_ribbon = if_else(ymin_ribbon < 0, 0, ymin_ribbon)) %>% 
+  dplyr::mutate(ymin_ribbon = if_else(min_abundance < ymin_ribbon, 
+                                 ymin_ribbon, min_abundance)) %>%
+  dplyr::mutate(min_whisker = (ymin_ribbon - (1.5*IQR_abundance))) %>%
+  dplyr::mutate(min_whisker = if_else(min_abundance < min_whisker, 
+                                 min_whisker, min_abundance)) %>%
+  dplyr::mutate(min_whisker = if_else(min_whisker < 0, 0, min_whisker)) %>%
+  dplyr::mutate(ymax_ribbon = (median_abundance + (0.5*IQR_abundance))) %>%
+  dplyr::mutate(ymax_ribbon = if_else(max_abundance > ymax_ribbon, 
+                                 ymax_ribbon, max_abundance)) %>%
+  dplyr::mutate(max_whisker = (ymax_ribbon + (1.5*IQR_abundance))) %>%
+  dplyr::mutate(max_whisker = if_else(max_abundance > max_whisker, 
+                                 max_whisker, max_abundance))
 ```
 
+
+## ED
+
+```{r ED data}
+library(lmtest)
+library(sandwich)
+
+ED <- ED %>%
+  dplyr::filter(stage == "fourth")
+
+ED <- ED  %>%
+  dplyr::mutate(day = as.numeric(as.character(day)))
+
+ED_MM <- ED %>%
+  dplyr::filter(genotype  == "MM")
+
+ED_LA <- ED %>%
+  dplyr::filter(genotype  == "LA1840")
+
+```
+
+```{r calculate EmT50}
+model_MM <- drm(number ~ day,
+                data = ED_MM, 
+                fct = LL.3(names = c("Slope", 
+                                     "Upper Limit", 
+                                     "ED50")))
+
+coeftest(model_MM)
+
+MM_ED <- ED(model_MM,
+            c(10, 25, 50, 75),
+            interval = "delta",
+            type = "absolute")
+
+
+model_LA <- drm(number ~ day,
+                data = ED_LA, 
+                fct = LL.3(names = c("Slope", 
+                                     "Upper Limit", 
+                                     "ED50")))
+coeftest(model_LA)
+
+LA_ED <- ED(model_LA,
+            c(10, 25, 50, 75),
+            interval = "delta",
+            type = "absolute")
+```
+
+```{r cumulative plot}
+p_cumulative <- relative_cummulative %>%
+  dplyr::mutate(day = as.numeric(as.character(day))) %>% 
+  dplyr::filter(stage == "fourth") %>% 
+  dplyr::filter(day > 9) %>% 
+  dplyr::group_by(genotype) %>% 
+  ggplot() +
+  theme_simple() +
+  labs(y = "development to 4th instar (%)",
+       x = "days after infection") +
+  scale_color_manual(values = palette) +
+  scale_fill_manual(values = palette) +
+  geom_crossbar(aes(x = day,
+                y = median_abundance,
+                ymin = ymin_ribbon,
+                ymax = ymax_ribbon,
+                fill = genotype,
+                color = genotype),
+                alpha = 0.3,
+                width = 0.5) +
+  geom_errorbar(aes(x = day,
+                  ymin = ymax_ribbon,
+                  ymax = max_whisker,
+                  color = genotype),
+                width = 0,
+                size = 0.5) +
+  geom_errorbar(aes(x = day,
+                  ymin = min_whisker,
+                  ymax = ymin_ribbon,
+                  color = genotype),
+                width = 0,
+                size = 0.5) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) +
+  xlim(13,NA)
+
+p_cumulative <- p_cumulative +
+  stat_smooth(data = ED %>%
+  dplyr::group_by(id) %>% 
+  dplyr::mutate(day = as.numeric(as.character(day))),
+              aes(x=day, y=number, color = genotype),
+              method = drm, 
+              method.args = list(fct = LL.3()), 
+              se = FALSE) 
+```
+
+
+### area under the curve
+
+```{r auc, fig.width = 16, fig.height = 20}
+library(DescTools)
+
+auc_fourth <- auc %>%
+  dplyr::filter(stage == "fourth") %>% 
+  dplyr::mutate(day = as.numeric(as.character(day)))  %>%
+  dplyr::mutate(number = number/100)  %>%
+  dplyr::ungroup()
+
+  rel_cumul = tibble()
+  for(i in c("LA1840_1", "MM_2", "MM_3", "LA1840_5", "LA1840_6", "LA1840_7", "MM_8", "MM_9", "MM_10", "LA1840_11", "LA1840_12")){
+    subdata = subset(auc_fourth, id == i)
+    subdata[[i]] = AUC(subdata$day, subdata$number)
+    rel_cumul <- bind_rows(rel_cumul, subdata)
+  }
+
+  auc_fourth <- rel_cumul %>%
+    unite("auc", LA1840_1:LA1840_12, 
+          na.rm = TRUE) %>%  
+  dplyr::filter(day == 2) %>% 
+    dplyr::mutate(auc = as.numeric(as.character(auc)))
+
+  
+auc_plot <- auc_fourth %>% 
+    ggplot(aes(x=genotype, y=auc, fill=genotype)) + 
+    labs(y = "area under the curve",
+         x= "rootstock genotype") +
+    geom_boxplot() + 
+  geom_point(aes(fill = genotype), size = 2, shape = 21,
+             position = position_jitterdodge(jitter.width = 0.4)) +
+    theme_simple() + 
+    scale_fill_manual(values = palette) +
+  stat_compare_means(method = "t.test", 
+                     label.y = 9.2,
+                     label.x = 1.5,
+                     size = 5,
+                     label = "p.format") + 
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 10)) 
+
+development_plot <- ((p_eggs | p_first | p1) / (p_cumulative + inset_element(auc_plot, 
+                             left = 0.65, 
+                             bottom = 0.025, 
+                             right = 1, 
+                             top = 0.55))) + guide_area() +
+  plot_layout(guides = 'collect') +
+  plot_annotation(tag_levels = 'A')
+
+development_plot
+
+#ggsave(filename = "graft_bioassay_lineplots_4th.svg", plot = development_plot, width = 10, height = 7)
+
+#ggsave(filename = "graft_bioassay_lineplots_4th.png", plot = development_plot, width = 10, height = 7)
+```
 
 ```{r relative cumulative graph, fig.width = 16, fig.height = 10}
 p_cumulative <- relative_cummulative %>%
@@ -587,61 +742,7 @@ p_cumulative
 #ggsave(filename = "graft_bioassay_lineplots_4th.png", plot = p_cumulative, width = 10, height = 5)
 ```
 
-### area under the curve
 
-```{r auc, fig.width = 16, fig.height = 10}
-library(DescTools)
-
-auc_fourth <- auc %>%
-  dplyr::filter(stage == "fourth") %>% 
-  dplyr::mutate(day = as.numeric(as.character(day)))  %>%
-  dplyr::mutate(number = number/100)  %>%
-  dplyr::ungroup()
-
-  rel_cumul = tibble()
-  for(i in c("LA1840_1", "MM_2", "MM_3", "LA1840_5", "LA1840_6", "LA1840_7", "MM_8", "MM_9", "MM_10", "LA1840_11", "LA1840_12")){
-    subdata = subset(auc_fourth, id == i)
-    subdata[[i]] = AUC(subdata$day, subdata$number)
-    rel_cumul <- bind_rows(rel_cumul, subdata)
-  }
-
-  auc_fourth <- rel_cumul %>%
-    unite("auc", LA1840_1:LA1840_12, 
-          na.rm = TRUE) %>%  
-  dplyr::filter(day == 2) %>% 
-    dplyr::mutate(auc = as.numeric(as.character(auc)))
-
-  
-auc_plot <- auc_fourth %>% 
-    ggplot(aes(x=genotype, y=auc, fill=genotype)) + 
-    labs(y = "area under the curve",
-         x= "rootstock genotype") +
-    geom_boxplot() + 
-  geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) +
-    theme_simple() + 
-    scale_fill_manual(values = palette) +
-  stat_compare_means(method = "t.test", 
-                     label.y = 9.2,
-                     label.x = 1.5,
-                     size = 5,
-                     label = "p.format") + 
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 10)) 
-
-development_plot <- (p_cumulative + inset_element(auc_plot, 
-                             left = 0.6, 
-                             bottom = 0.025, 
-                             right = 1, 
-                             top = 0.55)) + guide_area() +
-  plot_layout(guides = 'collect', widths = c(3,1)) +
-  plot_annotation(tag_levels = 'A')
-
-development_plot
-
-ggsave(filename = "graft_bioassay_lineplots_4th.svg", plot = development_plot, width = 10, height = 7)
-
-ggsave(filename = "graft_bioassay_lineplots_4th.png", plot = development_plot, width = 10, height = 7)
-```
 
 ## relative abundance
 
