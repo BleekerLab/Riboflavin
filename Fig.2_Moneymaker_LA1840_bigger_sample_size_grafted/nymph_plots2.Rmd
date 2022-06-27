@@ -752,6 +752,7 @@ layout2 <- "
   DDDDDDEEE
   DDDDDDEEE
   DDDDDDFFF
+  GGGGGGGGG
 "
 
 development_plot <- ((p_eggs | p_first | p1) / (((p_cumulative + inset_element(auc_plot, 
@@ -773,7 +774,7 @@ development_plot2 <- (p_eggs + p_first + p1 + p_cumulative + auc_plot + ed_table
               design = layout2) +
   plot_annotation(tag_levels = 'A')
 
-development_plot
+development_plot2
 
 ggsave(filename = "graft_bioassay.svg", plot = development_plot2, width = 10, height = 12)
 
