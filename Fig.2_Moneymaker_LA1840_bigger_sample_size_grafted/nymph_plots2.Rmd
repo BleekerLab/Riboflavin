@@ -597,6 +597,54 @@ LA_ED <- ED(model_LA,
             interval = "delta",
             type = "absolute")
 ```
+```{r}
+ed_values <- tibble::tribble(
+  ~genotype, ~ed,   ~stat,   ~value,
+    "MM",   "EmT10", "mean (±SE)",  "16.81 (±0.26)",
+    "MM",   "EmT25", "mean (±SE)",  "18.60 (±0.18)",
+    "MM",   "EmT50", "mean (±SE)",  "20.67 (±0.21)",
+    "MM",   "EmT75", "mean (±SE)",  "23.33 (±0.40)",
+    "LA1840",   "EmT10", "mean (±SE)",  "18.10 (±0.23)",
+    "LA1840",   "EmT25", "mean (±SE)",  "19.67 (±0.15)",
+    "LA1840",   "EmT50", "mean (±SE)",  "21.54 (±0.20)",
+    "LA1840",   "EmT75", "mean (±SE)",  "24.45 (±0.47)"
+  )
+```
+
+```{r}
+suppressPackageStartupMessages(library("gapminder"))
+suppressPackageStartupMessages(library("dplyr"))
+suppressPackageStartupMessages(library("tidyr"))
+suppressPackageStartupMessages(library("stringr"))
+suppressPackageStartupMessages(library("purrr"))
+suppressPackageStartupMessages(library("gt"))
+suppressPackageStartupMessages(library("mmtable2"))
+suppressPackageStartupMessages(library("webshot"))
+#webshot::install_phantomjs()
+```
+
+```{r EmT table}
+ed_table <- ed_values %>%
+  dplyr::mutate(genotype = factor(genotype, 
+                                  levels = c("MM", "LA1840"))) %>%
+  mmtable(cells = value) +
+  header_left(ed) +
+  header_top(stat) +
+  header_top_left(genotype) +
+  header_format(stat, 
+                style = list(cell_text(align = "center"),
+                             cell_borders(sides = c("bottom", "top"), 
+                                          color = "lightgrey",
+                                          weight = px(2))))
+
+print(ed_table)
+
+ed_table %>% gtsave("EmT_table.png")
+```
+
+```{r}
+ed_tableplot <- png::readPNG("EmT_table.png", native = TRUE)
+```
 
 ```{r cumulative plot}
 p_cumulative <- relative_cummulative %>%
@@ -685,19 +733,51 @@ auc_plot <- auc_fourth %>%
                      label = "p.format") + 
   scale_y_continuous(expand = c(0, 0), limits = c(0, 10)) 
 
-development_plot <- ((p_eggs | p_first | p1) / (p_cumulative + inset_element(auc_plot, 
+p_line <- p_cumulative + inset_element(auc_plot, 
                              left = 0.65, 
                              bottom = 0.025, 
                              right = 1, 
-                             top = 0.55))) + guide_area() +
-  plot_layout(guides = 'collect') +
+                             top = 0.55)
+
+layout <- "
+  AABBCC
+  AABBCC
+  DDDD##
+  DDDDEE
+  DDDDEE
+"
+layout2 <- "
+  AAABBBCCC
+  AAABBBCCC
+  DDDDDDEEE
+  DDDDDDEEE
+  DDDDDDFFF
+"
+
+development_plot <- ((p_eggs | p_first | p1) / (((p_cumulative + inset_element(auc_plot, 
+                             left = 0.65, 
+                             bottom = 0.025, 
+                             right = 1, 
+                             top = 0.55))) | ed_tableplot)) + guide_area() +
+  plot_layout(guides = 'collect',
+              design = layout) +
+  plot_annotation(tag_levels = 'A')
+
+development_plot1 <- (p_eggs + p_first + p1 + p_line + ed_tableplot) + guide_area() +
+  plot_layout(guides = 'collect',
+              design = layout) +
+  plot_annotation(tag_levels = 'A')
+
+development_plot2 <- (p_eggs + p_first + p1 + p_cumulative + auc_plot + ed_tableplot) + guide_area() +
+  plot_layout(guides = 'collect',
+              design = layout2) +
   plot_annotation(tag_levels = 'A')
 
 development_plot
 
-#ggsave(filename = "graft_bioassay_lineplots_4th.svg", plot = development_plot, width = 10, height = 7)
+ggsave(filename = "graft_bioassay_option1.png", plot = development_plot1, width = 10, height = 12)
 
-#ggsave(filename = "graft_bioassay_lineplots_4th.png", plot = development_plot, width = 10, height = 7)
+ggsave(filename = "graft_bioassay_option2.png", plot = development_plot2, width = 10, height = 12)
 ```
 
 ```{r relative cumulative graph, fig.width = 16, fig.height = 10}
