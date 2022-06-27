@@ -775,9 +775,9 @@ development_plot2 <- (p_eggs + p_first + p1 + p_cumulative + auc_plot + ed_table
 
 development_plot
 
-ggsave(filename = "graft_bioassay_option1.png", plot = development_plot1, width = 10, height = 12)
+ggsave(filename = "graft_bioassay.svg", plot = development_plot2, width = 10, height = 12)
 
-ggsave(filename = "graft_bioassay_option2.png", plot = development_plot2, width = 10, height = 12)
+ggsave(filename = "graft_bioassay.png", plot = development_plot2, width = 10, height = 12)
 ```
 
 ```{r relative cumulative graph, fig.width = 16, fig.height = 10}
