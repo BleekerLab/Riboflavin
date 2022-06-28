@@ -426,30 +426,51 @@ p_eggs <- relative_cummulative %>%
   dplyr::filter(stage == "eggs_start") %>%
   ggplot(aes(x=genotype, y=number, fill=genotype)) + 
   labs(y = "eggs (count)") +
-  geom_boxplot() + 
-  ylim(0,90) +
+  geom_boxplot() +    
+  geom_point(aes(fill = genotype), size = 2, shape = 21,
+             position = position_jitterdodge(jitter.width = 0.4)) +  
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 90)) +
   theme_simple() + 
-  scale_fill_manual(values = palette) 
+  scale_fill_manual(values = palette)  +
+  stat_compare_means(method = "t.test", 
+                     label.y = 85,
+                     label.x = 1.5,
+                     size = 5,
+                     label = "p.format")
 
 p_first <- relative_cummulative %>% 
   dplyr::filter(day == 29) %>%
   dplyr::filter(stage == "first_instars") %>%
   ggplot(aes(x=genotype, y=number, fill=genotype)) + 
   labs(y = "hatched eggs (count)") +
-  geom_boxplot() + 
-  ylim(0,90) +
+  geom_boxplot() +    
+  geom_point(aes(fill = genotype), size = 2, shape = 21,
+             position = position_jitterdodge(jitter.width = 0.4)) +  
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 90)) +
   theme_simple() + 
-  scale_fill_manual(values = palette) 
+  scale_fill_manual(values = palette)  +
+  stat_compare_means(method = "t.test", 
+                     label.y = 85,
+                     label.x = 1.5,
+                     size = 5,
+                     label = "p.format")
 
 p1 <- relative_cummulative %>% 
   dplyr::filter(day == 29) %>%
   dplyr::filter(stage == "first") %>%
   ggplot(aes(x=genotype, y=number, fill=genotype)) + 
   labs(y = "hatched eggs (%)") +
-  geom_boxplot() + 
-  ylim(0,100) +
+  geom_boxplot() +     
+  geom_point(aes(fill = genotype), size = 2, shape = 21,
+             position = position_jitterdodge(jitter.width = 0.4)) +  
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) +
   theme_simple() + 
-  scale_fill_manual(values = palette) 
+  scale_fill_manual(values = palette)  +
+  stat_compare_means(method = "t.test", 
+                     label.y = 95,
+                     label.x = 1.5,
+                     size = 5,
+                     label = "p.format")
 
 #nymph counts
 p_MM <- relative_cummulative %>% 
