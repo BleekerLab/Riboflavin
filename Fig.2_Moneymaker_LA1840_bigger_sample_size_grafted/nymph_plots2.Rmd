@@ -213,6 +213,62 @@ ED <- relative_cummulative
 ```
 
 ## Eggs and hatching
+
+### Eggs stats
+Shapiro-Wilk test:
+```{r warning = FALSE}
+relative_cummulative %>% 
+  dplyr::filter(day == 29) %>%
+  dplyr::filter(stage=="eggs_start") %>%
+  group_by(genotype) %>%
+  shapiro_test(number)
+```
+
+Levene's test
+```{r warning = FALSE}
+relative_cummulative %>% 
+  dplyr::filter(day == 29) %>%
+  dplyr::filter(stage=="eggs_start") %>%
+  levene_test(number~genotype)
+```
+
+### Hatched stats
+Shapiro-Wilk test:
+```{r warning = FALSE}
+relative_cummulative %>% 
+  dplyr::filter(day == 29) %>%
+  dplyr::filter(stage=="first_instars") %>%
+  group_by(genotype) %>%
+  shapiro_test(number)
+```
+
+Levene's test
+```{r warning = FALSE}
+relative_cummulative %>% 
+  dplyr::filter(day == 29) %>%
+  dplyr::filter(stage=="first_instars") %>%
+  levene_test(number~genotype)
+```
+
+### Hatching rate stats
+Shapiro-Wilk test:
+```{r warning = FALSE}
+relative_cummulative %>% 
+  dplyr::filter(day == 29) %>%
+  dplyr::filter(stage=="first") %>%
+  group_by(genotype) %>%
+  shapiro_test(number)
+```
+
+Levene's test
+```{r warning = FALSE}
+relative_cummulative %>% 
+  dplyr::filter(day == 29) %>%
+  dplyr::filter(stage=="first") %>%
+  levene_test(number~genotype)
+```
+
+### Egg boxplots
 ```{r egg plots, fig.width = 16, fig.height = 10}
 
 #egg and hatching
@@ -229,7 +285,7 @@ p_eggs <- relative_cummulative %>%
   scale_fill_manual(values = palette)  +
   stat_compare_means(method = "t.test", 
                      label.y = 85,
-                     label.x = 1.5,
+                     label.x = 1.35,
                      size = 5,
                      label = "p.format")
 
@@ -246,7 +302,7 @@ p_first <- relative_cummulative %>%
   scale_fill_manual(values = palette)  +
   stat_compare_means(method = "t.test", 
                      label.y = 85,
-                     label.x = 1.5,
+                     label.x = 1.35,
                      size = 5,
                      label = "p.format")
 
@@ -263,7 +319,7 @@ p1 <- relative_cummulative %>%
   scale_fill_manual(values = palette)  +
   stat_compare_means(method = "t.test", 
                      label.y = 95,
-                     label.x = 1.5,
+                     label.x = 1.35,
                      size = 5,
                      label = "p.format")
 
@@ -498,7 +554,7 @@ auc_plot <- auc_fourth %>%
     scale_fill_manual(values = palette) +
   stat_compare_means(method = "t.test", 
                      label.y = 9.2,
-                     label.x = 1.5,
+                     label.x = 1.35,
                      size = 5,
                      label = "p.format") + 
   scale_y_continuous(expand = c(0, 0), limits = c(0, 10)) 
