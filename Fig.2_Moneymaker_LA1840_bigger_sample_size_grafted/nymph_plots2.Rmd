@@ -276,7 +276,8 @@ p_eggs <- relative_cummulative %>%
   dplyr::filter(day == 29) %>%
   dplyr::filter(stage == "eggs_start") %>%
   ggplot(aes(x=genotype, y=number, fill=genotype)) + 
-  labs(y = "eggs (count)") +
+  labs(y = "eggs (count)",
+       x = "rootstock genotype") +
   geom_boxplot() +    
   geom_point(aes(fill = genotype), size = 2, shape = 21,
              position = position_jitterdodge(jitter.width = 0.4)) +  
@@ -293,7 +294,8 @@ p_first <- relative_cummulative %>%
   dplyr::filter(day == 29) %>%
   dplyr::filter(stage == "first_instars") %>%
   ggplot(aes(x=genotype, y=number, fill=genotype)) + 
-  labs(y = "hatched eggs (count)") +
+  labs(y = "hatched eggs (count)",
+       x = "rootstock genotype") +
   geom_boxplot() +    
   geom_point(aes(fill = genotype), size = 2, shape = 21,
              position = position_jitterdodge(jitter.width = 0.4)) +  
@@ -310,7 +312,8 @@ p1 <- relative_cummulative %>%
   dplyr::filter(day == 29) %>%
   dplyr::filter(stage == "first") %>%
   ggplot(aes(x=genotype, y=number, fill=genotype)) + 
-  labs(y = "hatched eggs (%)") +
+  labs(y = "hatched eggs (%)",
+       x = "rootstock genotype") +
   geom_boxplot() +     
   geom_point(aes(fill = genotype), size = 2, shape = 21,
              position = position_jitterdodge(jitter.width = 0.4)) +  
