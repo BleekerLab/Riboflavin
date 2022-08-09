@@ -281,11 +281,11 @@ p_eggs <- relative_cummulative %>%
   geom_boxplot() +    
   geom_point(aes(fill = genotype), size = 2, shape = 21,
              position = position_jitterdodge(jitter.width = 0.4)) +  
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 90)) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) +
   theme_simple() + 
   scale_fill_manual(values = palette)  +
   stat_compare_means(method = "t.test", 
-                     label.y = 85,
+                     label.y = 95,
                      label.x = 1.35,
                      size = 5,
                      label = "p.format")
@@ -299,11 +299,11 @@ p_first <- relative_cummulative %>%
   geom_boxplot() +    
   geom_point(aes(fill = genotype), size = 2, shape = 21,
              position = position_jitterdodge(jitter.width = 0.4)) +  
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 90)) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) +
   theme_simple() + 
   scale_fill_manual(values = palette)  +
   stat_compare_means(method = "t.test", 
-                     label.y = 85,
+                     label.y = 95,
                      label.x = 1.35,
                      size = 5,
                      label = "p.format")
@@ -355,21 +355,37 @@ ED_LA <- ED %>%
 
 ```
 
-```{r calculate EmT50}
+```{r fit model}
+model_stats <- drm(number ~ day,
+                data = ED, 
+                curveid = genotype,
+                fct = LL.3(names = c("Slope", 
+                                     "Upper Limit", 
+                                     "ED50")),
+                pmodels = list(~genotype,
+                               ~genotype,
+                               ~genotype))
+coeftest(model_stats)
+```
+
+```{r calculate EmT50 MM}
 model_MM <- drm(number ~ day,
                 data = ED_MM, 
                 fct = LL.3(names = c("Slope", 
                                      "Upper Limit", 
                                      "ED50")))
-
 coeftest(model_MM)
+
+## coeftest() gives the relative ED50. To get the absolute ED50:
 
 MM_ED <- ED(model_MM,
             c(10, 25, 50, 75),
             interval = "delta",
             type = "absolute")
+```
 
 
+```{r calculate EmT50 LA}
 model_LA <- drm(number ~ day,
                 data = ED_LA, 
                 fct = LL.3(names = c("Slope", 
@@ -385,14 +401,18 @@ LA_ED <- ED(model_LA,
 ```{r make EmT df}
 ed_values <- tibble::tribble(
   ~genotype, ~ed,   ~stat,   ~value,
-    "MM",   "EmT10", "mean (±SE)",  "16.81 (±0.26)",
-    "MM",   "EmT25", "mean (±SE)",  "18.60 (±0.18)",
+    "MM",   "upper limit  ", "mean (±SE)",  "91.18 (±2.29)",
+    "MM",   "slope", "mean (±SE)",  "11.06 (±0.93)",
     "MM",   "EmT50", "mean (±SE)",  "20.67 (±0.21)",
-    "MM",   "EmT75", "mean (±SE)",  "23.33 (±0.40)",
-    "LA1840",   "EmT10", "mean (±SE)",  "18.10 (±0.23)",
-    "LA1840",   "EmT25", "mean (±SE)",  "19.67 (±0.15)",
+    "LA1840",   "upper limit  ", "mean (±SE)",  "83.98 (±2.06)",
+    "LA1840",   "slope", "mean (±SE)",  "13.71 (±1.30)",
     "LA1840",   "EmT50", "mean (±SE)",  "21.54 (±0.20)",
-    "LA1840",   "EmT75", "mean (±SE)",  "24.45 (±0.47)"
+    "MM",   "upper limit  ", "x",  " ",
+    "MM",   "slope", "x",  " ",
+    "MM",   "EmT50", "x",  " ",
+    "LA1840",   "upper limit  ", "x",  " ",
+    "LA1840",   "slope", "x",  " ",
+    "LA1840",   "EmT50", "x",  " "
   )
 ```
 
@@ -412,6 +432,11 @@ suppressPackageStartupMessages(library("webshot"))
 ed_table <- ed_values %>%
   dplyr::mutate(genotype = factor(genotype, 
                                   levels = c("MM", "LA1840"))) %>%
+  dplyr::mutate(ed = factor(ed,
+                            levels = c(
+                              "slope", "upper limit  ", "EmT50"))) %>%
+  dplyr::mutate(stat = factor(stat,
+                            levels = c("mean (±SE)", "x"))) %>%
   mmtable(cells = value) +
   header_left(ed) +
   header_top(stat) +
@@ -420,7 +445,9 @@ ed_table <- ed_values %>%
                 style = list(cell_text(align = "center"),
                              cell_borders(sides = c("bottom", "top"), 
                                           color = "lightgrey",
-                                          weight = px(2))))
+                                          weight = px(2)))) +
+  header_format(header = genotype, 
+                style = list(cell_text(align = "center")))
 
 print(ed_table)
 
@@ -575,9 +602,20 @@ layout2 <- "
   DDDDDDFFF
   GGGGGGGGG
 "
+layout <- c(
+  patchwork::area(t = 1, l = 1, b = 9, r = 2),    #p_eggs
+  patchwork::area(t = 1, l = 3, b = 9, r = 4),    #p_first
+  patchwork::area(t = 1, l = 5, b = 9, r = 6),    #p1
+  patchwork::area(t = 10, l = 1, b = 27, r = 4),   #p_cumulative
+  patchwork::area(t = 19, l = 4, b = 26, r = 6),  #ed_tableplot
+  patchwork::area(t = 10, l = 5, b = 18, r = 6),   #auc_plot
+  patchwork::area(t = 28, l = 4, b = 31, r = 6)   #guide_area
+)
+plot(layout)
+
 development_plot <- (p_eggs + p_first + p1 + p_cumulative + ed_tableplot + auc_plot) + guide_area() +
   plot_layout(guides = 'collect',
-              design = layout2) +
+              design = layout) +
   plot_annotation(tag_levels = 'A')
 
 development_plot
