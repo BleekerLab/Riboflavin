@@ -223,7 +223,7 @@ auc <- cumulative_flies
 
 ```{r combined plot, fig.width = 16, fig.height = 10}
 
-p_eggs <- cumulative_flies %>% 
+p_eggs_i <- cumulative_flies %>% 
   dplyr::filter(day == 2) %>%
   dplyr::filter(stage == "eggs_start") %>%
   ggplot(aes(x=treatment, y=number, fill=treatment)) + 
@@ -235,12 +235,12 @@ p_eggs <- cumulative_flies %>%
   theme_simple() + 
   scale_fill_manual(values = LA_palette) +
   stat_compare_means(method = "wilcox.test", 
-                     label.y = 155,
+                     label.y = 150,
                      label.x = 1.3,
                      size = 5,
                      label = "p.format") 
 
-p_third <- cumulative_flies %>% 
+p_third_i <- cumulative_flies %>% 
   dplyr::filter(day == 22) %>%
   dplyr::filter(stage == "third_instars") %>%
   ggplot(aes(x=treatment, y=number, fill=treatment)) + 
@@ -257,7 +257,7 @@ p_third <- cumulative_flies %>%
                      size = 5,
                      label = "p.format") 
 
-p_3 <- cumulative_flies %>% 
+p_3_i <- cumulative_flies %>% 
   dplyr::filter(day == 22) %>%
   dplyr::filter(stage == "third") %>%
   ggplot(aes(x=treatment, y=number, fill=treatment)) + 
@@ -275,15 +275,15 @@ p_3 <- cumulative_flies %>%
                      label = "p.format") 
 
 
-collected <- (p_eggs | p_third| p_3)  /  guide_area() +
+collected <- ((p_eggs | p_third| p_3) / (p_eggs_i | p_third_i | p_3_i))  /  guide_area() +
   plot_layout(guides = 'collect') +
   plot_annotation(tag_levels = 'A')
 
 collected
 
-ggsave(filename = "inhibitor_bioassay_boxplots.png", plot = collected, width = 10, height = 10)
+ggsave(filename = "hydroponics_bioassays_boxplots.png", plot = collected, width = 10, height = 10)
 
-ggsave(filename = "inhibitor_bioassay_boxplots.svg", plot = collected, width = 10, height = 10)
+ggsave(filename = "hydroponics_bioassays_boxplots.svg", plot = collected, width = 10, height = 10)
 ```
 
 

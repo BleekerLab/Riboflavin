@@ -275,48 +275,15 @@ p_eggs <- cumulative_flies %>%
   geom_boxplot() + 
   geom_point(aes(fill = treatment), size = 2, shape = 21,
              position = position_jitterdodge(jitter.width = 0.4)) + 
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 120)) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 160)) +
   theme_simple() + 
   scale_fill_manual(values = MM_palette)  +
   stat_compare_means(method = "wilcox.test", 
-                     label.y = 115,
+                     label.y = 150,
                      label.x = 1.5,
                      size = 5,
                      label = "p.format") 
 
-p_first <- cumulative_flies %>% 
-  dplyr::filter(day == 17) %>%
-  dplyr::filter(stage == "first_instars") %>%
-  ggplot(aes(x=treatment, y=number, fill=treatment)) + 
-  labs(y = "1st instar nymphs (count)") +
-  geom_boxplot() +  
-  geom_point(aes(fill = treatment), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 120)) +
-  theme_simple() + 
-  scale_fill_manual(values = MM_palette) +
-  stat_compare_means(method = "wilcox.test", 
-                     label.y = 100,
-                     label.x = 1.5,
-                     size = 5,
-                     label = "p.format") 
-
-p_second <- cumulative_flies %>% 
-  dplyr::filter(day == 17) %>%
-  dplyr::filter(stage == "second_instars") %>%
-  ggplot(aes(x=treatment, y=number, fill=treatment)) + 
-  labs(y = "2nd instar nymphs (count)") +
-  geom_boxplot() +  
-  geom_point(aes(fill = treatment), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 120)) +
-  theme_simple() + 
-  scale_fill_manual(values = MM_palette) +
-  stat_compare_means(method = "wilcox.test", 
-                     label.y = 100,
-                     label.x = 1.5,
-                     size = 5,
-                     label = "p.format") 
 
 p_third <- cumulative_flies %>% 
   dplyr::filter(day == 17) %>%
@@ -326,11 +293,11 @@ p_third <- cumulative_flies %>%
   geom_boxplot() +  
   geom_point(aes(fill = treatment), size = 2, shape = 21,
              position = position_jitterdodge(jitter.width = 0.4)) + 
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 80)) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 90)) +
   theme_simple() + 
   scale_fill_manual(values = MM_palette) +
   stat_compare_means(method = "wilcox.test", 
-                     label.y = 75,
+                     label.y = 85,
                      label.x = 1.5,
                      size = 5,
                      label = "p.format") 
