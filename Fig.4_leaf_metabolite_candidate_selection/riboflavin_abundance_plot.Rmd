@@ -93,16 +93,33 @@ p_ribo <- riboflavin %>%
   geom_boxplot() +    
   geom_point(aes(fill = genotype), size = 2, shape = 21,
              position = position_jitterdodge(jitter.width = 0.4)) +  
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 0.00100)) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 0.001),
+                     labels=function(n){format(n, scientific = TRUE)}) +
   theme_simple() + 
   scale_fill_manual(values = palette)  
 
 p_ribo
 ```
 
-```{r save plot}
-ggsave(filename = "riboflavin_abundance.svg", plot = p_ribo, width = 5, height = 7)
+```{r pca and abundance}
+layout <- c(
+  patchwork::area(t = 1, l = 1, b = 1, r = 2),    #pca
+  patchwork::area(t = 1, l = 3, b = 1, r = 3),    #p_ribo
+  patchwork::area(t = 2, l = 1, b = 3, r = 3)   #guide_area
+)
+plot(layout)
 
-ggsave(filename = "riboflavin_abundance.png", plot = p_ribo, width = 5, height = 7)
+collected <- (pc1_vs_pc2 | p_ribo)  /  guide_area() +
+  plot_layout(guides = 'collect') +
+  plot_annotation(tag_levels = 'A')
+
+collected
+```
+
+
+```{r save plot}
+ggsave(filename = "pca+riboflavin_abundance.svg", plot = collected, width = 10, height = 10)
+
+ggsave(filename = "pca+riboflavin_abundance.png", plot = collected, width = 10, height = 10)
 ```
 
