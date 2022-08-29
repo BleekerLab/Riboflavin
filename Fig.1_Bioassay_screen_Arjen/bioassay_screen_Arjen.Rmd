@@ -173,7 +173,7 @@ flies %>%
 ```{r wilcoxon effectsize}
 flies %>%
   group_by(stage) %>%
-  wilcox_effsize(formula = number ~ genotype)
+  cohens_d(formula = number ~ genotype)
   
 ```
 
