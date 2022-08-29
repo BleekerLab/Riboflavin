@@ -232,6 +232,28 @@ relative_cummulative %>%
   levene_test(number~genotype)
 ```
 
+```{r t-test}
+relative_cummulative %>% 
+  dplyr::filter(day == 29) %>%
+  dplyr::filter(stage=="eggs_start") %>%
+  t_test(number ~ genotype)
+```
+
+```{r cohens d for effect size}
+relative_cummulative %>% 
+  dplyr::filter(day == 29) %>%
+  dplyr::filter(stage=="eggs_start") %>%
+  cohens_d(number ~ genotype)
+```
+
+```{r calculate mean and SD}
+relative_cummulative %>% 
+  dplyr::filter(day == 29) %>%
+  dplyr::filter(stage=="eggs_start") %>%
+  group_by(genotype) %>%
+  summarise(mean = mean(number), SD = sd(number))
+```
+
 ### Hatched stats
 Shapiro-Wilk test:
 ```{r warning = FALSE}
@@ -590,6 +612,22 @@ auc_plot <- auc_fourth %>%
   scale_y_continuous(expand = c(0, 0), limits = c(0, 10)) 
 
 auc_plot
+```
+
+```{r t-test}
+auc_fourth %>% 
+  t_test(auc ~ genotype)
+```
+
+```{r cohens d for effect size}
+auc_fourth %>%
+  cohens_d(auc ~ genotype)
+```
+
+```{r calculate mean and SD}
+auc_fourth %>%
+  group_by(genotype) %>%
+  summarise(mean = mean(auc), SD = sd(auc))
 ```
 
 # The complete figure
