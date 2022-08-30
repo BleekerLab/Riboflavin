@@ -152,6 +152,42 @@ ggsave(filename = "IL_bioassay.svg", plot = collected, width = 10, height = 10)
 
 
 # statistics
+
+```{r calculate mean and SD eggs}
+flies %>%
+  dplyr::filter(stage == "egg") %>%
+  group_by(genotype) %>%
+  summarise(mean = mean(number), SD = sd(number))
+```
+
+```{r calculate mean and SD 4th}
+flies %>%
+  dplyr::filter(stage == "fourth_instar") %>%
+  group_by(genotype) %>%
+  summarise(mean = mean(number), SD = sd(number))
+```
+
+```{r calculate mean and SD % eggs to 4th}
+flies %>%
+  pivot_wider(names_from = "stage", values_from = "number") %>%
+  dplyr::mutate(percentage = fourth_instar / egg * 100) %>%
+  group_by(genotype) %>%
+  summarise(mean = mean(percentage), SD = sd(percentage))
+```
+
+```{r cohens d effectsize}
+flies %>%
+  group_by(stage) %>%
+  cohens_d(formula = number ~ genotype)
+```
+
+```{r cohens d effectsize for %}
+flies %>%
+  pivot_wider(names_from = "stage", values_from = "number") %>%
+  dplyr::mutate(percentage = fourth_instar / egg * 100) %>%
+  cohens_d(formula = percentage ~ genotype)
+```
+
 Are the number of 4th instars lower than the number of eggs per genotype?
 ```{r paired t-test}
 flies %>%
