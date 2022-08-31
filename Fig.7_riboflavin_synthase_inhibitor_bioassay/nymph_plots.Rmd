@@ -286,7 +286,47 @@ ggsave(filename = "hydroponics_bioassays_boxplots.png", plot = collected, width 
 ggsave(filename = "hydroponics_bioassays_boxplots.svg", plot = collected, width = 10, height = 10)
 ```
 
+# statistics
+```{r wilcoxon}
+cumulative_flies %>%
+  dplyr::filter(day == 22) %>%
+  dplyr::filter(stage == "eggs_start" | stage == "third_instars" | stage == "third") %>%
+  group_by(stage) %>%
+  wilcox_test(formula = number ~ treatment)
+```
 
+```{r wilcoxon effectsize}
+cumulative_flies %>%
+  dplyr::filter(day == 22) %>%
+  dplyr::filter(stage == "eggs_start" | stage == "third_instars" | stage == "third") %>%
+  group_by(stage) %>%
+  cohens_d(formula = number ~ treatment)
+  
+```
+
+```{r calculate median eggs}
+cumulative_flies %>%
+  dplyr::filter(day == 22) %>%
+  dplyr::filter(stage == "eggs_start") %>%
+  group_by(treatment) %>%
+  summarise(median = median(number))
+```
+
+```{r calculate median 3rd}
+cumulative_flies %>%
+  dplyr::filter(day == 22) %>%
+  dplyr::filter(stage == "third_instars") %>%
+  group_by(treatment) %>%
+  summarise(median = median(number))
+```
+
+```{r calculate median eggs to 3rd (%)}
+cumulative_flies %>%
+  dplyr::filter(day == 22) %>%
+  dplyr::filter(stage == "third") %>%
+  group_by(treatment) %>%
+  summarise(median = median(number))
+```
 
 ```{r median and IQR}
 relative_cumulative <- cumulative_flies %>%
