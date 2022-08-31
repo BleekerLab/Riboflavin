@@ -54,7 +54,7 @@ knitr::kable(flies[1:10,1:4])
 palette <- c("#E69F00", "#D55E00", "#0072B2")
 ```
 
-These statistics must still be added to the plots:
+These statistics are added to the plots:
 ```{r dunnett}
 flies_wide <- flies %>%
   pivot_wider(names_from = "stage", values_from = "number") %>%
@@ -178,14 +178,14 @@ flies %>%
 ```{r cohens d effectsize}
 flies %>%
   group_by(stage) %>%
-  cohens_d(formula = number ~ genotype)
+  anova_test(formula = number ~ genotype)
 ```
 
 ```{r cohens d effectsize for %}
 flies %>%
   pivot_wider(names_from = "stage", values_from = "number") %>%
   dplyr::mutate(percentage = fourth_instar / egg * 100) %>%
-  cohens_d(formula = percentage ~ genotype)
+  anova_test(formula = percentage ~ genotype)
 ```
 
 Are the number of 4th instars lower than the number of eggs per genotype?
