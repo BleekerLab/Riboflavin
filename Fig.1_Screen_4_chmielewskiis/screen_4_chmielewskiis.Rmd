@@ -92,7 +92,7 @@ print(flies)
 
 # plots
 ```{r color palette}
-palette <- c("#E69F00", "#D55E00", "#0072B2")
+palette <- c("#E69F00", "#CCCCCC", "#CCCCCC", "#56B4E9", "#CCCCCC")
 ```
 
 These statistics are added to the plots:
@@ -145,7 +145,7 @@ p1 <- flies %>%
   geom_point(aes(fill = genotype), size = 2, shape = 21,
              position = position_jitterdodge(jitter.width = 0.4)) + 
   theme_simple() + 
- # scale_fill_manual(values = palette)  +  
+  scale_fill_manual(values = palette)  +  
   scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) +
   stat_pvalue_manual(test.1,
                      size = 5,
@@ -158,7 +158,7 @@ p2 <- flies %>%
   geom_point(aes(fill = genotype), size = 2, shape = 21,
              position = position_jitterdodge(jitter.width = 0.4)) + 
   theme_simple() + 
-#  scale_fill_manual(values = palette)   +  
+  scale_fill_manual(values = palette)   +  
   scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) +
   stat_pvalue_manual(test.2,
                      size = 5,
@@ -171,20 +171,20 @@ p3 <- flies %>%
   geom_point(aes(fill = genotype), size = 2, shape = 21,
              position = position_jitterdodge(jitter.width = 0.4)) + 
   theme_simple() + 
-#  scale_fill_manual(values = palette)   +  
+  scale_fill_manual(values = palette)   +  
   scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) +
   stat_pvalue_manual(test.3,
                      size = 5,
                      label = "p = {p.adj}") 
 
-collected <- (p1 + p2 + p3) / guide_area() +
+collected <- ((p1 + p2) / (p3 + plot_spacer())) / guide_area() +
   plot_layout(guides = 'collect') +
   plot_annotation(tag_levels = 'A')
 
 collected
 
-ggsave(filename = "IL_bioassay.png", plot = collected, width = 10, height = 10)
-ggsave(filename = "IL_bioassay.svg", plot = collected, width = 10, height = 10)
+ggsave(filename = "IL_bioassay.png", plot = collected, width = 10, height = 15)
+ggsave(filename = "IL_bioassay.svg", plot = collected, width = 10, height = 15)
 ```
 
 
