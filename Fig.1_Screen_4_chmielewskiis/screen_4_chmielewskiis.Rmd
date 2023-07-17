@@ -1,0 +1,367 @@
+---
+title: "IL bioassay"
+author: "Lissy Denkers"
+date: "`r Sys.Date()`"
+output: 
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = FALSE, 
+                      warning = FALSE, 
+                      message = FALSE, 
+                      fig.width = 8, 
+                      fig.height = 5, 
+                      fig.align = "center")
+suppressPackageStartupMessages(library("ggplot2"))
+suppressPackageStartupMessages(library("ggpubr"))
+suppressPackageStartupMessages(library("ggpubfigs"))
+suppressPackageStartupMessages(library("patchwork"))
+suppressPackageStartupMessages(library("multcomp"))
+suppressPackageStartupMessages(library("car"))
+suppressPackageStartupMessages(library("tidyverse"))
+suppressPackageStartupMessages(library("rstatix"))
+suppressPackageStartupMessages(library("broom"))
+```
+
+# Data import 
+
+## Background information
+
+This is the  the whitefly development bioassay on the ILs performed by Arjen van Doorn. Only the cultivated parent (MB) is included, not LA1840. IL29 will be excluded from the data, because it is not part of the metabolomics data.
+
+## The raw data
+```{r flies}
+flies <- read.csv("IL_screen.csv", 
+                         header = T, 
+                         sep = ",", 
+                         dec = ".", 
+                         check.names = FALSE)%>%     
+  dplyr::filter(genotype != "IL29") %>%
+  mutate_if(is.character, str_replace_all, 
+            pattern = "KG1955", replacement = "MB") %>%
+  mutate_if(is.character, str_replace_all, 
+            pattern = "eggs", replacement = "egg") %>%
+  mutate(genotype = factor(genotype, levels = c("MB", "IL28", "IL27"))) %>%
+  mutate(stage = factor(stage, levels = c("egg", "fourth_instar")))
+# The first 10 rows of the data
+knitr::kable(flies[1:10,1:4])
+```
+
+# plots
+```{r color palette}
+palette <- c("#E69F00", "#D55E00", "#0072B2")
+```
+
+These statistics are added to the plots:
+```{r dunnett}
+flies_wide <- flies %>%
+  pivot_wider(names_from = "stage", values_from = "number") %>%
+  dplyr::mutate(percentage = fourth_instar / egg * 100)
+  test1 <- DunnettTest(x=flies_wide$egg, g=flies_wide$genotype)
+  test2 <- DunnettTest(x=flies_wide$fourth_instar, g=flies_wide$genotype)
+  test3 <- DunnettTest(x=flies_wide$percentage, g=flies_wide$genotype)
+  test1
+  test2
+  test3
+```
+
+```{r}
+test.1 <- tibble::tribble(
+  ~group1, ~group2,   ~p.adj,
+    "MB",     "IL28", 0.679,
+    "MB",     "IL27", 0.445
+  )
+test.1 <- test.1 %>%
+  dplyr::mutate(y.position = c(130, 143))
+
+test.2 <- tibble::tribble(
+  ~group1, ~group2,   ~p.adj,
+    "MB",     "IL28", 0.861,
+    "MB",     "IL27", 0.003
+  )
+test.2 <- test.2 %>%
+  dplyr::mutate(y.position = c(21.5, 24))
+
+test.3 <- tibble::tribble(
+  ~group1, ~group2,   ~p.adj,
+    "MB",     "IL28", 0.820,
+    "MB",     "IL27", 0.009
+  )
+test.3 <- test.3 %>%
+  dplyr::mutate(y.position = c(43, 48))
+```
+
+```{r combined plot, fig.width = 16, fig.height = 10}
+p1 <- flies %>% 
+  pivot_wider(names_from = stage, values_from = number)  %>% 
+  ggplot(aes(x=genotype, y=egg)) + 
+  labs(y = "eggs (count)") +
+  geom_boxplot(aes(fill = genotype)) +   
+  geom_point(aes(fill = genotype), size = 2, shape = 21,
+             position = position_jitterdodge(jitter.width = 0.4)) + 
+  theme_simple() + 
+  scale_fill_manual(values = palette)  +  
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 150)) +
+  stat_pvalue_manual(test.1,
+                     size = 5,
+                     label = "p = {p.adj}") 
+
+p2 <- flies %>% 
+  dplyr::filter(stage == "fourth_instar") %>%
+  ggplot(aes(x=genotype, y=number)) + 
+  labs(y = "4th instar nymphs (count)") +
+  geom_boxplot(aes(fill=genotype)) +   
+  geom_point(aes(fill = genotype), size = 2, shape = 21,
+             position = position_jitterdodge(jitter.width = 0.4)) + 
+  theme_simple() + 
+  scale_fill_manual(values = palette)   +  
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 25)) +
+  stat_pvalue_manual(test.2,
+                     size = 5,
+                     label = "p = {p.adj}") 
+
+p3 <- flies %>% 
+  pivot_wider(names_from = stage, values_from = number) %>%
+  mutate(percentage_from_eggs = fourth_instar / egg * 100) %>%
+  pivot_longer(cols = fourth_instar:percentage_from_eggs, 
+               names_to = "stage", values_to = "number") %>%
+  dplyr::filter(stage == "percentage_from_eggs") %>%
+  ggplot(aes(x=genotype, y=number)) + 
+  labs(y = "development to 4th instar (%)") +
+  geom_boxplot(aes(fill=genotype)) +   
+  geom_point(aes(fill = genotype), size = 2, shape = 21,
+             position = position_jitterdodge(jitter.width = 0.4)) + 
+  theme_simple() + 
+  scale_fill_manual(values = palette)   +  
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 50)) +
+  stat_pvalue_manual(test.3,
+                     size = 5,
+                     label = "p = {p.adj}") 
+
+collected <- (p1 + p2 + p3) / guide_area() +
+  plot_layout(guides = 'collect') +
+  plot_annotation(tag_levels = 'A')
+
+collected
+
+ggsave(filename = "IL_bioassay.png", plot = collected, width = 10, height = 10)
+ggsave(filename = "IL_bioassay.svg", plot = collected, width = 10, height = 10)
+```
+
+
+# statistics
+
+```{r calculate mean and SD eggs}
+flies %>%
+  dplyr::filter(stage == "egg") %>%
+  group_by(genotype) %>%
+  summarise(mean = mean(number), SD = sd(number))
+```
+
+```{r calculate mean and SD 4th}
+flies %>%
+  dplyr::filter(stage == "fourth_instar") %>%
+  group_by(genotype) %>%
+  summarise(mean = mean(number), SD = sd(number))
+```
+
+```{r calculate mean and SD % eggs to 4th}
+flies %>%
+  pivot_wider(names_from = "stage", values_from = "number") %>%
+  dplyr::mutate(percentage = fourth_instar / egg * 100) %>%
+  group_by(genotype) %>%
+  summarise(mean = mean(percentage), SD = sd(percentage))
+```
+
+```{r cohens d effectsize}
+flies %>%
+  group_by(stage) %>%
+  anova_test(formula = number ~ genotype)
+```
+
+```{r cohens d effectsize for %}
+flies %>%
+  pivot_wider(names_from = "stage", values_from = "number") %>%
+  dplyr::mutate(percentage = fourth_instar / egg * 100) %>%
+  anova_test(formula = percentage ~ genotype)
+```
+
+Are the number of 4th instars lower than the number of eggs per genotype?
+```{r paired t-test}
+flies %>%
+  group_by(genotype) %>%
+  pairwise_t_test(
+    number ~ stage, paired = TRUE, 
+    p.adjust.method = "bonferroni"
+  )
+```
+
+For comparing the genotypes: dunnett's
+```{r Kruskal-wallis}
+flies %>%
+  group_by(stage) %>%
+  kruskal_test(number ~ genotype)
+```
+
+```{r dunnett}
+flies_wide <- flies %>%
+  pivot_wider(names_from = "stage", values_from = "number") %>%
+  dplyr::mutate(percentage = fourth_instar / egg * 100)
+  DunnettTest(x=flies_wide$egg, g=flies_wide$genotype)
+  DunnettTest(x=flies_wide$fourth_instar, g=flies_wide$genotype)
+  DunnettTest(x=flies_wide$percentage, g=flies_wide$genotype)
+```
+
+The number of eggs is simmilar for all genotypes. The number of fourth instars is lower on IL27 than on MB, but equal on IL28 and MB.
+
+
+# Linear model for comparison of regression
+note: for 'stage' on the x-axis: 1 is eggs and 4 is 4th instars
+(the '4' became '2' in the graphs, I don't know why)
+```{r lineplot}
+p4 <- flies %>% 
+  mutate_if(is.character, str_replace_all, 
+            pattern = "egg", replacement = "1") %>% 
+  mutate_if(is.character, str_replace_all, 
+            pattern = "fourth_instar", replacement = "4") %>%
+  mutate(stage = as.numeric(stage)) %>%
+  ggscatter(x = "stage", y = "number", color = "genotype", add = "reg.line") +
+  stat_regline_equation(aes( label = paste(..eq.label.., ..rr.label.., 
+                                           sep = "~~~~"), color = genotype)) +
+  scale_y_continuous(trans = 'log2') +  
+  scale_color_manual(values = palette) 
+
+p5 <- flies %>% 
+  mutate_if(is.character, str_replace_all, 
+            pattern = "egg", replacement = "1") %>% 
+  mutate_if(is.character, str_replace_all, 
+            pattern = "fourth_instar", replacement = "4") %>%
+  mutate(stage = as.numeric(stage)) %>%
+  ggscatter(x = "stage", y = "number",  add = "reg.line") +
+  stat_regline_equation(aes( label = paste(..eq.label.., ..rr.label.., 
+                                           sep = "~~~~"))) +
+  scale_y_continuous(trans = 'log2')
+
+p4 + p5
+```
+
+## comparing MB and IL28
+
+```{r lineplot MB IL28}
+p4 <- flies %>% 
+  dplyr::filter(genotype != "IL27") %>%
+  mutate_if(is.character, str_replace_all, 
+            pattern = "egg", replacement = "1") %>% 
+  mutate_if(is.character, str_replace_all, 
+            pattern = "fourth_instar", replacement = "4") %>%
+  mutate(stage = as.numeric(stage)) %>%
+  ggscatter(x = "stage", y = "number", color = "genotype", add = "reg.line") +
+  stat_regline_equation(aes( label = paste(..eq.label.., ..rr.label.., 
+                                           sep = "~~~~"), color = genotype)) +
+  scale_y_continuous(trans = 'log2') + 
+  scale_color_manual(values = palette) 
+
+p5 <- flies %>% 
+  dplyr::filter(genotype != "IL27") %>%
+  mutate_if(is.character, str_replace_all, 
+            pattern = "egg", replacement = "1") %>% 
+  mutate_if(is.character, str_replace_all, 
+            pattern = "fourth_instar", replacement = "4") %>%
+  mutate(stage = as.numeric(stage)) %>%
+  ggscatter(x = "stage", y = "number",  add = "reg.line") +
+  stat_regline_equation(aes( label = paste(..eq.label.., ..rr.label.., 
+                                           sep = "~~~~"))) +
+  scale_y_continuous(trans = 'log2')
+p4 + p5
+```
+
+First fit a model with interaction an interaction term for genotype:
+```{r interaction model IL28}
+mod <- flies %>% 
+  dplyr::filter(genotype != "IL27") %>%
+  mutate_if(is.character, str_replace_all, 
+            pattern = "egg", replacement = "1") %>% 
+  mutate_if(is.character, str_replace_all, 
+            pattern = "fourth_instar", replacement = "4") %>%
+  mutate(stage = as.numeric(stage)) 
+
+mod1 <- lm(number ~ stage + genotype + stage:genotype, data = mod)
+
+glance(mod1)%>%
+  dplyr::select(adj.r.squared, sigma, AIC, BIC, p.value)
+```
+
+Now a model without the genotype effect
+```{r combined model IL28}
+mod2 <- lm(number ~ stage, data = mod)
+
+glance(mod2)%>%
+  dplyr::select(adj.r.squared, sigma, AIC, BIC, p.value)
+```
+
+The second model (without the genotype interaction) fits better. The survival/development from egg to 4th instar is simmilar for IL28 and MB.
+
+## comparing MB and IL27
+
+```{r lineplot MB IL27}
+p4 <- flies %>% 
+  dplyr::filter(genotype != "IL28") %>%
+  mutate_if(is.character, str_replace_all, 
+            pattern = "egg", replacement = "1") %>% 
+  mutate_if(is.character, str_replace_all, 
+            pattern = "fourth_instar", replacement = "4") %>%
+  mutate(stage = as.numeric(stage)) %>%
+  ggscatter(x = "stage", y = "number", color = "genotype", add = "reg.line") +
+  stat_regline_equation(aes( label = paste(..eq.label.., ..rr.label.., 
+                                           sep = "~~~~"), color = genotype)) +
+  scale_y_continuous(trans = 'log2') +  
+  scale_color_manual(values = c("#E69F00", "#0072B2")) 
+
+p5 <- flies %>% 
+  dplyr::filter(genotype != "IL28") %>%
+  mutate_if(is.character, str_replace_all, 
+            pattern = "egg", replacement = "1") %>% 
+  mutate_if(is.character, str_replace_all, 
+            pattern = "fourth_instar", replacement = "4") %>%
+  mutate(stage = as.numeric(stage)) %>%
+  ggscatter(x = "stage", y = "number",  add = "reg.line") +
+  stat_regline_equation(aes( label = paste(..eq.label.., ..rr.label.., 
+                                           sep = "~~~~"))) +
+  scale_y_continuous(trans = 'log2')
+
+p4 + p5
+```
+
+Again, fit a model with interaction an interaction term for genotype:
+```{r interaction model IL27}
+mod <- flies %>% 
+  dplyr::filter(genotype != "IL28") %>%
+  mutate_if(is.character, str_replace_all, 
+            pattern = "egg", replacement = "1") %>% 
+  mutate_if(is.character, str_replace_all, 
+            pattern = "fourth_instar", replacement = "4") %>%
+  mutate(stage = as.numeric(stage)) 
+
+mod1 <- lm(number ~ stage + genotype + stage:genotype, data = mod)
+
+glance(mod1)%>%
+  dplyr::select(adj.r.squared, sigma, AIC, BIC, p.value)
+```
+
+And a model without the genotype effect
+```{r combined model IL27}
+mod2 <- lm(number ~ stage, data = mod)
+
+glance(mod2)%>%
+  dplyr::select(adj.r.squared, sigma, AIC, BIC, p.value)
+```
+
+The first model (with genotype effect) fits better. The survival/development from egg to 4th instar is hampered on IL28 compared to MB.
+
+note:
+I used a log2 y axis for the graphs, but not for the models I compared.
+
+# conclusion
+IL27 has the nymph development phenotype of LA1840. IL28 has the MM/MB phenotype.
