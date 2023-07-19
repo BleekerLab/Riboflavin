@@ -54,6 +54,8 @@ flies <- read.csv("raw_data.csv",
             pattern = "4_fourth_instar", replacement = "fourth_instar") %>%
   mutate_if(is.character, str_replace_all, 
             pattern = "5_exuviea", replacement = "exuviea") %>%
+  mutate_if(is.character, str_replace_all, 
+            pattern = "MM", replacement = "cv") %>%
 #  mutate(genotype = factor(genotype, levels = c("MB", "IL28", "IL27"))) %>%
   mutate(stage = factor(stage, levels = c("egg", "first_instar", "second_instar", "third_instar", "fourth_instar", "exuviea")))
 # The first 10 rows of the data
@@ -84,7 +86,7 @@ flies <- flies %>%
   dplyr::mutate(fourth_per_eggs = (max(fourth_instar)/max(egg))*100) %>%
   dplyr::ungroup() %>%
   dplyr::filter(day == 3) %>%
-  mutate(genotype = factor(genotype, levels = c("MM", "LA1028", "LA1330", "LA1840", "LA2663"))) 
+  mutate(genotype = factor(genotype, levels = c("cv", "LA1028", "LA1330", "LA1840", "LA2663"))) 
 #  mutate(stage = factor(stage, levels = c("egg", "first_instar", #"second_instar", "third_instar", "fourth_instar", "exuviea")))
 print(flies)
 ```
@@ -92,7 +94,12 @@ print(flies)
 
 # plots
 ```{r color palette}
-palette <- c("#E69F00", "#CCCCCC", "#CCCCCC", "#56B4E9", "#CCCCCC")
+palette <- c("#E69F00", "#bbe1f6", "#88caef", "#56B4E9", "#4490ba")
+```
+
+```{r check color palette}
+library(colorblindcheck)
+palette_check(palette, plot=TRUE)
 ```
 
 These statistics are added to the plots:
@@ -146,10 +153,10 @@ p1 <- flies %>%
              position = position_jitterdodge(jitter.width = 0.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette)  +  
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) +
-  stat_pvalue_manual(test.1,
-                     size = 5,
-                     label = "p = {p.adj}") 
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) 
+#  stat_pvalue_manual(test.1,
+#                     size = 5,
+#                     label = "p = {p.adj}") 
 
 p2 <- flies %>% 
   ggplot(aes(x=genotype, y=fourth_instar)) + 
@@ -172,19 +179,19 @@ p3 <- flies %>%
              position = position_jitterdodge(jitter.width = 0.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette)   +  
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) +
-  stat_pvalue_manual(test.3,
-                     size = 5,
-                     label = "p = {p.adj}") 
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) 
+#  stat_pvalue_manual(test.3,
+#                     size = 5,
+#                     label = "p = {p.adj}") 
 
-collected <- ((p1 + p2) / (p3 + plot_spacer())) / guide_area() +
+collected <- (p1 + p3) / guide_area() +
   plot_layout(guides = 'collect') +
   plot_annotation(tag_levels = 'A')
 
 collected
 
-ggsave(filename = "IL_bioassay.png", plot = collected, width = 10, height = 15)
-ggsave(filename = "IL_bioassay.svg", plot = collected, width = 10, height = 15)
+ggsave(filename = "IL_bioassay.png", plot = collected, width = 10, height = 10)
+ggsave(filename = "IL_bioassay.svg", plot = collected, width = 10, height = 10)
 ```
 
 
