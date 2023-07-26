@@ -201,15 +201,15 @@ relative_cummulative <- relative_cummulative %>%
   dplyr::mutate(second = (second_instars / max(first_instars))*100)%>%
   dplyr::mutate(third = (third_instars / max(first_instars))*100)%>%
   dplyr::mutate(fourth = (fourth_instars / max(first_instars))*100) %>%
-  dplyr::ungroup() %>%
-  dplyr::mutate(genotype = factor(genotype, levels = c("cv", "LA1840")))
+  dplyr::ungroup() # %>%
+#  dplyr::mutate(genotype = factor(genotype, levels = c("cv", "LA1840")))
 
 relative_cummulative <- relative_cummulative %>%
   dplyr::select(-var_new)%>%
   dplyr::select(-`0_egg`)
 
 relative_cummulative <- relative_cummulative %>%
-  pivot_longer(cols = eggs_start:fourth, 
+  pivot_longer(cols = first_instars:fourth, 
                names_to = "stage", values_to = "number") %>%
   mutate(genotype = factor(genotype, levels = c("cv", "LA1840")))  %>%
   mutate(stage = factor(stage, levels = c("eggs_start", "first_instars", "second_instars", "third_instars", "fourth_instars", 
@@ -430,12 +430,12 @@ LA_ED <- ED(model_LA,
 ```{r make EmT df}
 ed_values <- tibble::tribble(
   ~genotype, ~ed,   ~stat,   ~value,
-    "cv",   "upper limit  ", "mean (±SE)",  "91.18 (±2.29)",
-    "cv",   "slope", "mean (±SE)",  "11.06 (±0.93)",
-    "cv",   "EmT50", "mean (±SE)",  "20.67 (±0.21)",
-    "LA1840",   "upper limit  ", "mean (±SE)",  "83.98 (±2.06)",
-    "LA1840",   "slope", "mean (±SE)",  "13.71 (±1.30)",
-    "LA1840",   "EmT50", "mean (±SE)",  "21.54 (±0.20)",
+    "cv",   "upper limit  ", "mean (±SE)",  "85.29 (±2.92)",
+    "cv",   "slope", "mean (±SE)",  "14.75 (±4.73)",
+    "cv",   "EmT50", "mean (±SE)",  "21.00 (±0.32)",
+    "LA1840",   "upper limit  ", "mean (±SE)",  "85.82 (±3.80)",
+    "LA1840",   "slope", "mean (±SE)",  "12.02 (±3.12)",
+    "LA1840",   "EmT50", "mean (±SE)",  "21.93 (±0.40)",
     "cv",   "upper limit  ", "x",  " ",
     "cv",   "slope", "x",  " ",
     "cv",   "EmT50", "x",  " ",
@@ -466,7 +466,7 @@ ed_table <- ed_values %>%
                               "slope", "upper limit  ", "EmT50"))) %>%
   dplyr::mutate(stat = factor(stat,
                             levels = c("mean (±SE)", "x"))) %>%
-  cvtable(cells = value) +
+  mmtable(cells = value) +
   header_left(ed) +
   header_top(stat) +
   header_top_left(genotype) +
@@ -589,16 +589,16 @@ auc_fourth <- auc %>%
   dplyr::ungroup()
 
   rel_cumul = tibble()
-  for(i in c("LA1840_1", "cv_2", "cv_3", "LA1840_5", "LA1840_6", "LA1840_7", "cv_8", "cv_9", "cv_10", "LA1840_11", "LA1840_12")){
+  for(i in c("LA1840_2", "LA1840_3", "LA1840_4", "LA1840_5", "cv_1", "cv_2", "cv_3", "cv_4", "cv_5")){
     subdata = subset(auc_fourth, id == i)
     subdata[[i]] = AUC(subdata$day, subdata$number)
     rel_cumul <- bind_rows(rel_cumul, subdata)
   }
 
   auc_fourth <- rel_cumul %>%
-    unite("auc", LA1840_1:LA1840_12, 
+    unite("auc", LA1840_2:cv_5, 
           na.rm = TRUE) %>%  
-  dplyr::filter(day == 2) %>% 
+  dplyr::filter(day == 6) %>% 
     dplyr::mutate(auc = as.numeric(as.character(auc)))
 
   
@@ -612,11 +612,11 @@ auc_plot <- auc_fourth %>%
     theme_simple() + 
     scale_fill_manual(values = palette) +
   stat_compare_means(method = "t.test", 
-                     label.y = 9.2,
+                     label.y = 18.5,
                      label.x = 1.35,
                      size = 5,
-                     label = "p.format") + 
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 10)) 
+                     label = "p.format")  +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 20)) 
 
 auc_plot
 ```
