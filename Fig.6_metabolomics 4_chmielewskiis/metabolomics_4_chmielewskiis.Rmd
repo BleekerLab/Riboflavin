@@ -1,5 +1,5 @@
 ---
-title: "Bioassay screen on 4 chmielewskii genotypes"
+title: "targeted riboflavin analysis of 4 chmielewskii genotypes"
 author: "Lissy Denkers"
 date: "`r Sys.Date()`"
 output: 
@@ -30,64 +30,32 @@ suppressPackageStartupMessages(library("DescTools"))
 
 ## Background information
 
-This is the  the whitefly development bioassay on S. chmielewskii accesions LA1840, LA1028, LA1330 and LA2663 and S. lycopersicum cv MM. Only two counts were performed: the number of eggs and an end point nymph count (of all developmental stages).
+This is the targeted analysis of riboflavin in the leaves and phloem of the plants used in the whitefly development bioassay on S. chmielewskii accesions LA1840, LA1028, LA1330 and LA2663 and S. lycopersicum cv MM. The data is normalised to an internal standard (a stable isotope of riboflavin) and displayed in nM (based on a riboflavin standard calibration curve).
 
 ## The raw data
 ```{r flies}
-flies <- read.csv("raw_data.csv", 
+flies <- read.csv("riboflavin_leaf_phloem_cleaned.csv", 
                          header = T, 
                          sep = ",", 
                          dec = ".", 
-                         check.names = FALSE) %>%    
-  dplyr::filter(place != "13") %>%
-  dplyr::filter(place != "21") %>%
-  dplyr::filter(place != "22") %>%
+                         check.names = FALSE) %>%  
   mutate_if(is.character, str_replace_all, 
-            pattern = "0_egg", replacement = "egg") %>%
-  mutate_if(is.character, str_replace_all, 
-            pattern = "1_first_instar", replacement = "first_instar") %>%
-  mutate_if(is.character, str_replace_all, 
-            pattern = "2_second_instar", replacement = "second_instar") %>%
-  mutate_if(is.character, str_replace_all, 
-            pattern = "3_third_instar", replacement = "third_instar") %>%
-  mutate_if(is.character, str_replace_all, 
-            pattern = "4_fourth_instar", replacement = "fourth_instar") %>%
-  mutate_if(is.character, str_replace_all, 
-            pattern = "5_exuviea", replacement = "exuviea") %>%
-  mutate_if(is.character, str_replace_all, 
-            pattern = "MM", replacement = "cv") %>%
-#  mutate(genotype = factor(genotype, levels = c("MB", "IL28", "IL27"))) %>%
-  mutate(stage = factor(stage, levels = c("egg", "first_instar", "second_instar", "third_instar", "fourth_instar", "exuviea")))
+            pattern = "MM", replacement = "cv") 
+
 # The first 10 rows of the data
-knitr::kable(flies[1:10,1:7])
+knitr::kable(flies[1:10,1:4])
 ```
 
 ```{r wide}
 flies <- flies %>%
-  mutate(stage = as.factor(stage)) %>%
-  pivot_wider(names_from = stage, values_from = number) 
+  mutate(tissue = as.factor(tissue)) %>%
+  pivot_wider(names_from = tissue, values_from = riboflavin_nM) 
 ```
  
-```{r total fourth instars}
-flies <- flies %>%
-  dplyr::mutate(fourth_instar = fourth_instar + exuviea) %>%
-  dplyr::select(-exuviea)
-print(flies)
-```
 
-```{r}
+```{r genotype order}
 flies <- flies %>%
-  dplyr::group_by(place) %>%
-  dplyr::mutate(egg = max(egg, na.rm = TRUE))%>%
-  dplyr::mutate(first_instar = max(first_instar))%>%
-  dplyr::mutate(second_instar = max(second_instar))%>%
-  dplyr::mutate(third_instar = max(third_instar))%>%
-  dplyr::mutate(fourth_instar = max(fourth_instar)) %>%
-  dplyr::mutate(fourth_per_eggs = (max(fourth_instar)/max(egg))*100) %>%
-  dplyr::ungroup() %>%
-  dplyr::filter(day == 3) %>%
   mutate(genotype = factor(genotype, levels = c("cv", "LA1028", "LA1330", "LA1840", "LA2663"))) 
-#  mutate(stage = factor(stage, levels = c("egg", "first_instar", #"second_instar", "third_instar", "fourth_instar", "exuviea")))
 print(flies)
 ```
 
@@ -103,13 +71,22 @@ palette_check(palette, plot=TRUE)
 ```
 
 These statistics are added to the plots:
-```{r dunnett}
-  test1 <- DunnettTest(x=flies$egg, g=flies$genotype)
-  test2 <- DunnettTest(x=flies$fourth_instar, g=flies$genotype)
-  test3 <- DunnettTest(x=flies$fourth_per_eggs, g=flies$genotype)
-  test1
-  test2
-  test3
+```{r leaf anova}
+  leaf_ribo <- aov(flies$leaf ~ flies$genotype)
+  summary(leaf_ribo)
+  
+  EtaSq(leaf_ribo)
+  
+  TukeyHSD(leaf_ribo, conf.level=.95) 
+```
+
+```{r phloem anova}
+  phloem_ribo <- aov(flies$phloem ~ flies$genotype)
+  summary(phloem_ribo)
+  
+  EtaSq(phloem_ribo)
+  
+  TukeyHSD(phloem_ribo, conf.level=.95) 
 ```
 
 ```{r}
@@ -146,52 +123,41 @@ test.3 <- test.3 %>%
 
 ```{r combined plot, fig.width = 16, fig.height = 10}
 p1 <- flies %>% 
-  ggplot(aes(x=genotype, y=egg)) + 
-  labs(y = "eggs (count)") +
+  ggplot(aes(x=genotype, y=leaf)) + 
+  labs(y = "Riboflavin in leaf (nM)") +
   geom_boxplot(aes(fill = genotype)) +   
   geom_point(aes(fill = genotype), size = 2, shape = 21,
              position = position_jitterdodge(jitter.width = 0.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette)  +  
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) 
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 1400)) 
 #  stat_pvalue_manual(test.1,
 #                     size = 5,
 #                     label = "p = {p.adj}") 
 
 p2 <- flies %>% 
-  ggplot(aes(x=genotype, y=fourth_instar)) + 
-  labs(y = "4th instar nymphs (count)") +
+  ggplot(aes(x=genotype, y=phloem)) + 
+  labs(y = "Riboflavin in phloem (nM)") +
   geom_boxplot(aes(fill=genotype)) +   
   geom_point(aes(fill = genotype), size = 2, shape = 21,
              position = position_jitterdodge(jitter.width = 0.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette)   +  
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) +
-  stat_pvalue_manual(test.2,
-                     size = 5,
-                     label = "p = {p.adj}") 
-
-p3 <- flies %>% 
-  ggplot(aes(x=genotype, y=fourth_per_eggs)) + 
-  labs(y = "development to 4th instar (%)") +
-  geom_boxplot(aes(fill=genotype)) +   
-  geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
-  theme_simple() + 
-  scale_fill_manual(values = palette)   +  
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) 
-#  stat_pvalue_manual(test.3,
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 55)) 
+#  stat_pvalue_manual(test.2,
 #                     size = 5,
 #                     label = "p = {p.adj}") 
 
-collected <- (p1 + p3) / guide_area() +
+ 
+
+collected <- (p1 + p2) / guide_area() +
   plot_layout(guides = 'collect') +
   plot_annotation(tag_levels = 'A')
 
 collected
 
-ggsave(filename = "IL_bioassay.png", plot = collected, width = 10, height = 10)
-ggsave(filename = "IL_bioassay.svg", plot = collected, width = 10, height = 10)
+ggsave(filename = "4_chmielewskii_riboflavin.png", plot = collected, width = 10, height = 10)
+ggsave(filename = "4_chmielewskii_riboflavin.svg", plot = collected, width = 10, height = 10)
 ```
 
 
