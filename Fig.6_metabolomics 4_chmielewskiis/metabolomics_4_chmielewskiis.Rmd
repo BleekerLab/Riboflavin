@@ -40,7 +40,9 @@ flies <- read.csv("riboflavin_leaf_phloem_cleaned.csv",
                          dec = ".", 
                          check.names = FALSE) %>%  
   mutate_if(is.character, str_replace_all, 
-            pattern = "MM", replacement = "cv") 
+            pattern = "MM", replacement = "cv")  %>%
+  dplyr::filter(genotype != "cv") 
+  
 
 # The first 10 rows of the data
 knitr::kable(flies[1:10,1:4])
@@ -55,14 +57,16 @@ flies <- flies %>%
 
 ```{r genotype order}
 flies <- flies %>%
-  mutate(genotype = factor(genotype, levels = c("cv", "LA1028", "LA1330", "LA1840", "LA2663"))) 
+  mutate(genotype = factor(genotype, levels = c("LA1028", "LA1330", "LA1840", "LA2663"))) 
 print(flies)
 ```
 
 
 # plots
 ```{r color palette}
-palette <- c("#E69F00", "#bbe1f6", "#88caef", "#56B4E9", "#4490ba")
+palette <- c("#bbe1f6", "#88caef", "#56B4E9", "#4490ba")
+
+# "#E69F00", for cv
 ```
 
 ```{r check color palette}
@@ -143,7 +147,7 @@ p2 <- flies %>%
              position = position_jitterdodge(jitter.width = 0.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette)   +  
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 55)) 
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 25)) 
 #  stat_pvalue_manual(test.2,
 #                     size = 5,
 #                     label = "p = {p.adj}") 
@@ -156,8 +160,8 @@ collected <- (p1 + p2) / guide_area() +
 
 collected
 
-ggsave(filename = "4_chmielewskii_riboflavin.png", plot = collected, width = 10, height = 10)
-ggsave(filename = "4_chmielewskii_riboflavin.svg", plot = collected, width = 10, height = 10)
+ggsave(filename = "4_chmielewskii_only_riboflavin.png", plot = collected, width = 10, height = 10)
+ggsave(filename = "4_chmielewskii_ony_riboflavin.svg", plot = collected, width = 10, height = 10)
 ```
 
 
