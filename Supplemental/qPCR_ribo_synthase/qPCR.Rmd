@@ -1,5 +1,5 @@
 ---
-title: "Bioassay screen on 4 chmielewskii genotypes"
+title: "qPCR on root and shoot - riboflavin synthase"
 author: "Lissy Denkers"
 date: "`r Sys.Date()`"
 output: 
@@ -30,71 +30,43 @@ suppressPackageStartupMessages(library("DescTools"))
 
 ## Background information
 
-This is the  the whitefly development bioassay on S. chmielewskii accesions LA1840, LA1028, LA1330 and LA2663 and S. lycopersicum cv MM. Only two counts were performed: the number of eggs and an end point nymph count (of all developmental stages).
+The expression of riboflavin synthase in root and shoot of LA1840, MB, IL27 and IL28 normalised to actin. Normalisation by Petra Bleeker, data from Julia Zwaan. 
 
 ## The raw data
 ```{r flies}
-flies <- read.csv("raw_data.csv", 
+flies <- read.csv("leaf_root_cleaned_Petra.csv", 
                          header = T, 
                          sep = ",", 
                          dec = ".", 
                          check.names = FALSE) %>%    
-  dplyr::filter(place != "13") %>%
-  dplyr::filter(place != "21") %>%
-  dplyr::filter(place != "22") %>%
   mutate_if(is.character, str_replace_all, 
-            pattern = "0_egg", replacement = "egg") %>%
+            pattern = "MB", replacement = "cv") %>%    
   mutate_if(is.character, str_replace_all, 
-            pattern = "1_first_instar", replacement = "first_instar") %>%
+            pattern = "IL1927", replacement = "IL27") %>%    
   mutate_if(is.character, str_replace_all, 
-            pattern = "2_second_instar", replacement = "second_instar") %>%
-  mutate_if(is.character, str_replace_all, 
-            pattern = "3_third_instar", replacement = "third_instar") %>%
-  mutate_if(is.character, str_replace_all, 
-            pattern = "4_fourth_instar", replacement = "fourth_instar") %>%
-  mutate_if(is.character, str_replace_all, 
-            pattern = "5_exuviea", replacement = "exuviea") %>%
-  mutate_if(is.character, str_replace_all, 
-            pattern = "MM", replacement = "cv") %>%
-#  mutate(genotype = factor(genotype, levels = c("MB", "IL28", "IL27"))) %>%
-  mutate(stage = factor(stage, levels = c("egg", "first_instar", "second_instar", "third_instar", "fourth_instar", "exuviea")))
+            pattern = "IL1928", replacement = "IL28")
 # The first 10 rows of the data
-knitr::kable(flies[1:10,1:7])
+knitr::kable(flies[1:10,1:4])
 ```
 
 ```{r wide}
 flies <- flies %>%
-  mutate(stage = as.factor(stage)) %>%
-  pivot_wider(names_from = stage, values_from = number) 
+  mutate(tissue = as.factor(tissue)) %>%
+  pivot_wider(names_from = tissue, values_from = normalised_ribo_synth_expr) 
 ```
  
-```{r total fourth instars}
-flies <- flies %>%
-  dplyr::mutate(fourth_instar = fourth_instar + exuviea) %>%
-  dplyr::select(-exuviea)
-print(flies)
-```
 
 ```{r}
 flies <- flies %>%
-  dplyr::group_by(place) %>%
-  dplyr::mutate(egg = max(egg, na.rm = TRUE))%>%
-  dplyr::mutate(first_instar = max(first_instar))%>%
-  dplyr::mutate(second_instar = max(second_instar))%>%
-  dplyr::mutate(third_instar = max(third_instar))%>%
-  dplyr::mutate(fourth_instar = max(fourth_instar)) %>%
-  dplyr::mutate(fourth_per_eggs = (max(fourth_instar)/max(egg))*100) %>%
-  dplyr::ungroup() %>%
-  dplyr::filter(day == 3) %>%
-  mutate(genotype = factor(genotype, levels = c("cv", "LA1028", "LA1330", "LA1840", "LA2663"))) 
-#  mutate(stage = factor(stage, levels = c("egg", "first_instar", #"second_instar", "third_instar", "fourth_instar", "exuviea")))
+  mutate(genotype = factor(genotype, levels = c("cv", "IL28", "IL27", "LA1840"))) 
 print(flies)
 ```
 
 
 # plots
 ```{r color palette}
-palette <- c("#E69F00", "#bbe1f6", "#88caef", "#56B4E9", "#4490ba")
+palette <- c("#E69F00", "#D55E00", "#0072B2", "#56B4E9")
+palette2 <- c("#E69F00", "#0072B2", "#56B4E9")
 ```
 
 ```{r check color palette}
@@ -146,52 +118,41 @@ test.3 <- test.3 %>%
 
 ```{r combined plot, fig.width = 16, fig.height = 10}
 p1 <- flies %>% 
-  ggplot(aes(x=genotype, y=egg)) + 
-  labs(y = "eggs (count)") +
+  ggplot(aes(x=genotype, y=leaf)) + 
+  labs(y = "normalised riboflavin synthase expression (leaves)") +
   geom_boxplot(aes(fill = genotype)) +   
   geom_point(aes(fill = genotype), size = 2, shape = 21,
              position = position_jitterdodge(jitter.width = 0.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette)  +  
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) 
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 0.35)) 
 #  stat_pvalue_manual(test.1,
 #                     size = 5,
 #                     label = "p = {p.adj}") 
 
-p2 <- flies %>% 
-  ggplot(aes(x=genotype, y=fourth_instar)) + 
-  labs(y = "4th instar nymphs (count)") +
+p2 <- flies  %>%
+  dplyr::filter(genotype != "IL28")  %>% 
+  ggplot(aes(x=genotype, y=root)) + 
+  labs(y = "normalised riboflavin synthase expression (root)") +
   geom_boxplot(aes(fill=genotype)) +   
   geom_point(aes(fill = genotype), size = 2, shape = 21,
              position = position_jitterdodge(jitter.width = 0.4)) + 
   theme_simple() + 
-  scale_fill_manual(values = palette)   +  
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) +
-  stat_pvalue_manual(test.2,
-                     size = 5,
-                     label = "p = {p.adj}") 
-
-p3 <- flies %>% 
-  ggplot(aes(x=genotype, y=fourth_per_eggs)) + 
-  labs(y = "development to 4th instar (%)") +
-  geom_boxplot(aes(fill=genotype)) +   
-  geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
-  theme_simple() + 
-  scale_fill_manual(values = palette)   +  
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) 
-#  stat_pvalue_manual(test.3,
+  scale_fill_manual(values = palette2)   +  
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 0.35)) 
+#  stat_pvalue_manual(test.2,
 #                     size = 5,
 #                     label = "p = {p.adj}") 
 
-collected <- (p1 + p3) / guide_area() +
+
+collected <- (p1 + p2) / guide_area() +
   plot_layout(guides = 'collect') +
   plot_annotation(tag_levels = 'A')
 
 collected
 
-ggsave(filename = "IL_bioassay.png", plot = collected, width = 10, height = 10)
-ggsave(filename = "IL_bioassay.svg", plot = collected, width = 10, height = 10)
+ggsave(filename = "ribo_synth_expression.png", plot = collected, width = 10, height = 10)
+ggsave(filename = "ribo_synth_expression.svg", plot = collected, width = 10, height = 10)
 ```
 
 
