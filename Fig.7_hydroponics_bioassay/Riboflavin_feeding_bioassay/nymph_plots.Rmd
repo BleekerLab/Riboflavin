@@ -41,7 +41,7 @@ suppressPackageStartupMessages(library("devtools"))
 
 ## Background information
 
-This is the data of the whitefly development bioassay on hydroponically grown S. lycopersicum MM. Control plants were grown on standard hydroponics solution, riboflavin treated plants were grown on hydroponics solution with riboflavin added in increasing concentrations over time. The highest concentration, added on day 13, was lethal for the plants. Data after this day should therefore be removed before analysis.
+This is the data of the whitefly development bioassay on hydroponically grown S. lycopersicum cv. Control plants were grown on standard hydroponics solution, riboflavin treated plants were grown on hydroponics solution with riboflavin added in increasing concentrations over time. The highest concentration, added on day 13, was lethal for the plants. Data after this day should therefore be removed before analysis.
 The raw data also contains the data of a simultaniously performed bioassay on S. chmielewskii. This data should be removed before analysis.
 After the fourth instar stage, whiteflies develop into adults, leaving behind the larval skin called exuviae. Nymphs in the last phase of fourth instar stage and exuviae were removed from the leaf after each count to prevent a whitefly outbreak in the greenhouse.
 
@@ -53,28 +53,30 @@ flies <- read.csv("raw_data.csv",
                          header = T, 
                          sep = ",", 
                          dec = ".", 
-                         check.names = FALSE)
+                         check.names = FALSE) %>%
+  mutate_if(is.character, str_replace_all, 
+            pattern = "MM", replacement = "cv")
 ```
 
 ```{r filter}
-flies <- flies %>%
-  dplyr::filter(genotype == "MM")  %>%
+flies_cv <- flies_cv %>%
+  dplyr::filter(genotype == "cv")  %>%
   dplyr::filter(day < 18)  %>%
-  dplyr::filter(id != "MM_rib_4")  %>%
-  dplyr::filter(id != "MM_rib_5")  %>%
-  dplyr::filter(id != "MM_c_3") 
+  dplyr::filter(id != "cv_rib_4")  %>%
+  dplyr::filter(id != "cv_rib_5")  %>%
+  dplyr::filter(id != "cv_c_3") 
 
-# MM_rib_4 and MM_rib_5 are taken out, because the leaves died 
-# MM_c_3 is taken out, because it did not grow roots while all other control leaves did
+# cv_rib_4 and cv_rib_5 are taken out, because the leaves died 
+# cv_c_3 is taken out, because it did not grow roots while all other control leaves did
 
 # The first 10 rows of the data
-knitr::kable(flies[1:10,1:8])
+knitr::kable(flies_cv[1:10,1:8])
 
 ```
 
 ```{r palette}
 palette <- c("#E69F00", "#D55E00", "#56B4E9", "#0072B2")
-MM_palette <- c("#E69F00", "#D55E00") 
+cv_palette <- c("#E69F00", "#D55E00") 
 ```
 
 ```{r functions}
@@ -96,15 +98,6 @@ cumul_median <- function(data, na.rm = FALSE) {
     data$var_new
   } 
   
-cumul_fun <- function(data) {
-  rel_cumul = tibble()
- for(i in c("LA1840_1", "MM_2", "MM_3", "LA1840_5", "LA1840_6", "LA1840_7", "MM_8", "MM_9", "MM_10", "LA1840_11", "LA1840_12")){
-   subdata = subset(data, id == i)
-   subdata[[i]] = cumul_median(subdata)
-   rel_cumul <- bind_rows(rel_cumul, subdata)
- }
-  }
-  
 ```
 
 ## Preparing the data for analysis
@@ -112,14 +105,14 @@ cumul_fun <- function(data) {
 Next, a few improvements to the data should be made before analysis.
 
 ```{r wide}
-flies <- flies %>%
+flies_cv <- flies_cv %>%
   mutate(stage = as.factor(stage)) %>%
   pivot_wider(names_from = stage, values_from = number) 
 ```
 
 Because the fourth instars are the end point and taken of after counting, combine fourth instars and exuviae and make their numbers cumulative over time. 
 ```{r total fourth instars}
-flies <- flies %>%
+flies_cv <- flies_cv %>%
   mutate(fourth_exuviae = `5_late_fourth_instar` + `6_exuviea`) %>%
   group_by(id) %>%
   mutate(`5_completed_lifecycle` = cumsum(fourth_exuviae)) %>%
@@ -129,25 +122,25 @@ flies <- flies %>%
 
 Remove separate and non-cumulative late fourth instar and exuviae columns.
 ```{r remove unnessesary columns}
-flies <- flies %>%
+flies_cv <- flies_cv %>%
   dplyr::select(-`4_early_fourth_instar`: -`5_completed_lifecycle`)
 ```
 
 
 
 ```{r cumulative data}
-cumulative_flies <- flies 
+cumulative_flies_cv <- flies_cv 
 
-cumulative_flies <- cumulative_flies %>%
-  mutate(first_instars = rowSums(cumulative_flies[,8:11])) %>%
-  mutate(second_instars = rowSums(cumulative_flies[,9:11])) %>%
-  mutate(third_instars = rowSums(cumulative_flies[,10:11])) %>%
+cumulative_flies_cv <- cumulative_flies_cv %>%
+  mutate(first_instars = rowSums(cumulative_flies_cv[,8:11])) %>%
+  mutate(second_instars = rowSums(cumulative_flies_cv[,9:11])) %>%
+  mutate(third_instars = rowSums(cumulative_flies_cv[,10:11])) %>%
   mutate(fourth_instars = `4_fourth_instar`)
 ```
 
 
 ```{r correct}
-cumulative_flies <- cumulative_flies %>%
+cumulative_flies_cv <- cumulative_flies_cv %>%
   mutate(var_new = first_instars) %>%
   mutate(day = as.numeric(as.character(day))) %>%
   mutate(id = as.factor(id)) %>%
@@ -155,8 +148,8 @@ cumulative_flies <- cumulative_flies %>%
 
 
   rel_cumul = tibble()
- for(i in c("MM_c_1", "MM_c_2", "MM_c_4", "MM_c_5", "MM_rib_1", "MM_rib_2", "MM_rib_3")){
-   subdata = subset(cumulative_flies, id == i)
+ for(i in c("cv_c_1", "cv_c_2", "cv_c_4", "cv_c_5", "cv_rib_1", "cv_rib_2", "cv_rib_3")){
+   subdata = subset(cumulative_flies_cv, id == i)
    if(anyNA(subdata$var_new)==TRUE) {
      subdata[i] = cumul_median(subdata, na.rm = TRUE)
    } else {
@@ -166,14 +159,14 @@ cumulative_flies <- cumulative_flies %>%
  }
 
 
-cumulative_flies <- rel_cumul %>%
-  unite("first_instars", MM_c_1:MM_rib_3, 
+cumulative_flies_cv <- rel_cumul %>%
+  unite("first_instars", cv_c_1:cv_rib_3, 
                                   na.rm = TRUE)  %>%
   mutate(var_new = second_instars)
 
   rel_cumul = tibble()
- for(i in c("MM_c_1", "MM_c_2", "MM_c_4", "MM_c_5", "MM_rib_1", "MM_rib_2", "MM_rib_3")){
-   subdata = subset(cumulative_flies, id == i)
+ for(i in c("cv_c_1", "cv_c_2", "cv_c_4", "cv_c_5", "cv_rib_1", "cv_rib_2", "cv_rib_3")){
+   subdata = subset(cumulative_flies_cv, id == i)
    if(anyNA(subdata$var_new)==TRUE) {
      subdata[i] = cumul_median(subdata, na.rm = TRUE)
    } else {
@@ -183,16 +176,16 @@ cumulative_flies <- rel_cumul %>%
  }
 
 
-cumulative_flies <- rel_cumul %>%
-  unite("second_instars", MM_c_1:MM_rib_3, 
+cumulative_flies_cv <- rel_cumul %>%
+  unite("second_instars", cv_c_1:cv_rib_3, 
                                   na.rm = TRUE)  %>%
   mutate(var_new = third_instars)
 
 
 
   rel_cumul = tibble()
- for(i in c("MM_c_1", "MM_c_2", "MM_c_4", "MM_c_5", "MM_rib_1", "MM_rib_2", "MM_rib_3")){
-   subdata = subset(cumulative_flies, id == i)
+ for(i in c("cv_c_1", "cv_c_2", "cv_c_4", "cv_c_5", "cv_rib_1", "cv_rib_2", "cv_rib_3")){
+   subdata = subset(cumulative_flies_cv, id == i)
    if(anyNA(subdata$var_new)==TRUE) {
      subdata[i] = cumul_median(subdata, na.rm = TRUE)
    } else {
@@ -202,16 +195,16 @@ cumulative_flies <- rel_cumul %>%
  }
 
 
-cumulative_flies <- rel_cumul %>%
-  unite("third_instars", MM_c_1:MM_rib_3, 
+cumulative_flies_cv <- rel_cumul %>%
+  unite("third_instars", cv_c_1:cv_rib_3, 
                                   na.rm = TRUE)  %>%
   mutate(var_new = fourth_instars)
 
 
 
   rel_cumul = tibble()
- for(i in c("MM_c_1", "MM_c_2", "MM_c_4", "MM_c_5", "MM_rib_1", "MM_rib_2", "MM_rib_3")){
-   subdata = subset(cumulative_flies, id == i)
+ for(i in c("cv_c_1", "cv_c_2", "cv_c_4", "cv_c_5", "cv_rib_1", "cv_rib_2", "cv_rib_3")){
+   subdata = subset(cumulative_flies_cv, id == i)
    if(anyNA(subdata$var_new)==TRUE) {
      subdata[i] = cumul_median(subdata, na.rm = TRUE)
    } else {
@@ -221,15 +214,15 @@ cumulative_flies <- rel_cumul %>%
  }
 
 
-cumulative_flies <- rel_cumul %>%
-  unite("fourth_instars", MM_c_1:MM_rib_3, 
+cumulative_flies_cv <- rel_cumul %>%
+  unite("fourth_instars", cv_c_1:cv_rib_3, 
                                   na.rm = TRUE)
-cumulative_flies[cumulative_flies == ""]<-NA
+cumulative_flies_cv[cumulative_flies_cv == ""]<-NA
 ```
 
 
 ```{r numeric}
-cumulative_flies <- cumulative_flies %>%
+cumulative_flies_cv <- cumulative_flies_cv %>%
   mutate(day = as.factor(day)) %>% 
   mutate(first_instars = as.numeric(as.character(first_instars))) %>% 
   mutate(second_instars = as.numeric(as.character(second_instars))) %>% 
@@ -237,12 +230,12 @@ cumulative_flies <- cumulative_flies %>%
   mutate(fourth_instars = as.numeric(as.character(fourth_instars))) 
 
 
-cumulative_flies <- cumulative_flies %>%
+cumulative_flies_cv <- cumulative_flies_cv %>%
   dplyr::select(-`0_egg`: -`4_fourth_instar`) 
 ```
 
 ```{r relative to eggs}
-cumulative_flies <- cumulative_flies %>%
+cumulative_flies_cv <- cumulative_flies_cv %>%
   group_by(id) %>%
   mutate(first = (first_instars / eggs_start)*100)%>%
   mutate(second = (second_instars / eggs_start)*100)%>%
@@ -250,24 +243,24 @@ cumulative_flies <- cumulative_flies %>%
   mutate(fourth = (fourth_instars / eggs_start)*100) %>%
   ungroup() 
 
-cumulative_flies <- cumulative_flies %>%
+cumulative_flies_cv <- cumulative_flies_cv %>%
   dplyr::select(-var_new)
 
-cumulative_flies <- cumulative_flies %>%
+cumulative_flies_cv <- cumulative_flies_cv %>%
   pivot_longer(cols = eggs_start:fourth, 
                names_to = "stage", values_to = "number") %>%
   mutate(treatment = factor(treatment, levels = c("control", "riboflavin"))) %>%
   mutate(stage = factor(stage, levels = c("eggs_start", "first_instars", "second_instars", "third_instars", "fourth_instars", 
                                           "first", "second", "third", "fourth"))) 
 
-auc <- cumulative_flies
+auc <- cumulative_flies_cv
 ```
 
 
 ```{r combined plot, fig.width = 16, fig.height = 10}
 
 #egg and hatching
-p_eggs <- cumulative_flies %>% 
+p_eggs <- cumulative_flies_cv %>% 
   dplyr::filter(day == 2) %>%
   dplyr::filter(stage == "eggs_start") %>%
   ggplot(aes(x=treatment, y=number, fill=treatment)) + 
@@ -277,7 +270,7 @@ p_eggs <- cumulative_flies %>%
              position = position_jitterdodge(jitter.width = 0.4)) + 
   scale_y_continuous(expand = c(0, 0), limits = c(0, 160)) +
   theme_simple() + 
-  scale_fill_manual(values = MM_palette)  +
+  scale_fill_manual(values = cv_palette)  +
   stat_compare_means(method = "wilcox.test", 
                      label.y = 150,
                      label.x = 1.5,
@@ -285,7 +278,7 @@ p_eggs <- cumulative_flies %>%
                      label = "p.format") 
 
 
-p_third <- cumulative_flies %>% 
+p_third <- cumulative_flies_cv %>% 
   dplyr::filter(day == 17) %>%
   dplyr::filter(stage == "third_instars") %>%
   ggplot(aes(x=treatment, y=number, fill=treatment)) + 
@@ -295,7 +288,7 @@ p_third <- cumulative_flies %>%
              position = position_jitterdodge(jitter.width = 0.4)) + 
   scale_y_continuous(expand = c(0, 0), limits = c(0, 90)) +
   theme_simple() + 
-  scale_fill_manual(values = MM_palette) +
+  scale_fill_manual(values = cv_palette) +
   stat_compare_means(method = "wilcox.test", 
                      label.y = 85,
                      label.x = 1.5,
@@ -303,7 +296,7 @@ p_third <- cumulative_flies %>%
                      label = "p.format") 
 
 
-p_3 <- cumulative_flies %>% 
+p_3 <- cumulative_flies_cv %>% 
   dplyr::filter(day == 17) %>%
   dplyr::filter(stage == "third") %>%
   ggplot(aes(x=treatment, y=number, fill=treatment)) + 
@@ -313,7 +306,7 @@ p_3 <- cumulative_flies %>%
              position = position_jitterdodge(jitter.width = 0.4)) + 
   scale_y_continuous(expand = c(0, 0), limits = c(0, 70)) +
   theme_simple() + 
-  scale_fill_manual(values = MM_palette)  +
+  scale_fill_manual(values = cv_palette)  +
   stat_compare_means(method = "wilcox.test", 
                      label.y = 65,
                      label.x = 1.5,
@@ -327,7 +320,7 @@ collected <- (p_eggs | p_third | p_3)  / guide_area() +
 
 collected
 
-#(p_MM| p_LA1840) / (p_2 | p_3 | p_4)) / (p_M | p_L)) /
+#(p_cv| p_LA1840) / (p_2 | p_3 | p_4)) / (p_M | p_L)) /
 
 ggsave(filename = "riboflavin_assay_boxplots.png", plot = collected, width = 10, height = 10)
 
@@ -336,7 +329,7 @@ ggsave(filename = "riboflavin_assay_boxplots.svg", plot = collected, width = 10,
 
 # statistics
 ```{r wilcoxon}
-cumulative_flies %>%
+cumulative_flies_cv %>%
   dplyr::filter(day == 17) %>%
   dplyr::filter(stage == "eggs_start" | stage == "third_instars" | stage == "third") %>%
   group_by(stage) %>%
@@ -344,7 +337,7 @@ cumulative_flies %>%
 ```
 
 ```{r wilcoxon effectsize}
-cumulative_flies %>%
+cumulative_flies_cv %>%
   dplyr::filter(day == 17) %>%
   dplyr::filter(stage == "eggs_start" | stage == "third_instars" | stage == "third") %>%
   group_by(stage) %>%
@@ -353,7 +346,7 @@ cumulative_flies %>%
 ```
 
 ```{r calculate median eggs}
-cumulative_flies %>%
+cumulative_flies_cv %>%
   dplyr::filter(day == 17) %>%
   dplyr::filter(stage == "eggs_start") %>%
   group_by(treatment) %>%
@@ -361,7 +354,7 @@ cumulative_flies %>%
 ```
 
 ```{r calculate median 3rd}
-cumulative_flies %>%
+cumulative_flies_cv %>%
   dplyr::filter(day == 17) %>%
   dplyr::filter(stage == "third_instars") %>%
   group_by(treatment) %>%
@@ -387,17 +380,17 @@ relative_cumulative <- relative_cumulative %>%
   mutate(day = as.factor(day)) %>%
   rowwise() %>%
   mutate(median_abundance = median(
-    c_across(MM_c_1:MM_rib_5), na.rm = TRUE)) %>%
+    c_across(cv_c_1:cv_rib_5), na.rm = TRUE)) %>%
   mutate(max_abundance = max(
-    c_across(MM_c_1:MM_rib_5), na.rm = TRUE)) %>%
+    c_across(cv_c_1:cv_rib_5), na.rm = TRUE)) %>%
   mutate(min_abundance = min(
-    c_across(MM_c_1:MM_rib_5), na.rm = TRUE)) %>%
+    c_across(cv_c_1:cv_rib_5), na.rm = TRUE)) %>%
   mutate(IQR_abundance = IQR(
-    c_across(MM_c_1:MM_rib_5), na.rm = TRUE)) %>%
+    c_across(cv_c_1:cv_rib_5), na.rm = TRUE)) %>%
   mutate(ymin_ribbon = (median_abundance - IQR_abundance)) %>%
   mutate(ymin_ribbon = if_else(ymin_ribbon < 0, 0, ymin_ribbon)) %>%
   mutate(day = as.numeric(as.character(day))) %>%
-  dplyr::select(-MM_c_1:-MM_rib_5) 
+  dplyr::select(-cv_c_1:-cv_rib_5) 
 
 relative_cumulative <- relative_cumulative %>%
   mutate(ymin_ribbon = (median_abundance - (0.5*IQR_abundance))) %>%
@@ -425,8 +418,8 @@ p_second <- relative_cumulative %>%
   theme_simple() +
   labs(y = "development to second instar stage (%)",
        x = "days after infection") +
-  scale_color_manual(values = MM_palette) +
-  scale_fill_manual(values = MM_palette) +
+  scale_color_manual(values = cv_palette) +
+  scale_fill_manual(values = cv_palette) +
 #  geom_line(aes(x = day,
 #                  y = min_abundance,
 #                  color = genotype),
@@ -464,8 +457,8 @@ p_third <- relative_cumulative %>%
   theme_big_simple() +
   labs(y = "development to 3rd instar instar (%)",
        x = "days after infection") +
-  scale_color_manual(values = MM_palette) +
-  scale_fill_manual(values = MM_palette) +
+  scale_color_manual(values = cv_palette) +
+  scale_fill_manual(values = cv_palette) +
 #  geom_line(aes(x = day,
 #                  y = min_abundance,
 #                  color = genotype),
@@ -505,21 +498,21 @@ library(DescTools)
 
 auc_fourth <- auc %>%
   dplyr::filter(stage == "third") %>% 
-  dplyr::filter(id != "MM_rib_5") %>% 
+  dplyr::filter(id != "cv_rib_5") %>% 
   mutate(day = as.numeric(as.character(day)))  %>%
   dplyr::filter(day > 10)  %>%
   mutate(number = number/100)  %>%
   ungroup()
 
   rel_cumul = tibble()
-  for(i in c("MM_c_1", "MM_c_2", "MM_c_3", "MM_c_4", "MM_c_5", "MM_rib_1", "MM_rib_2", "MM_rib_3")){
+  for(i in c("cv_c_1", "cv_c_2", "cv_c_3", "cv_c_4", "cv_c_5", "cv_rib_1", "cv_rib_2", "cv_rib_3")){
     subdata = subset(auc_fourth, id == i)
     subdata[[i]] = AUC(subdata$day, subdata$number)
     rel_cumul <- bind_rows(rel_cumul, subdata)
   }
 
   auc_fourth <- rel_cumul %>%
-    unite("auc", MM_c_1:MM_rib_3, 
+    unite("auc", cv_c_1:cv_rib_3, 
           na.rm = TRUE) %>%  
   dplyr::filter(day == 13) %>% 
     mutate(auc = as.numeric(as.character(auc)))
@@ -532,7 +525,7 @@ auc_plot <- auc_fourth %>%
     geom_boxplot() +
     geom_point(pch = 21, position = position_jitterdodge()) +
     theme_big_simple() + 
-    scale_fill_manual(values = MM_palette) +
+    scale_fill_manual(values = cv_palette) +
   stat_compare_means(method = "wilcox.test", 
                      label.y = 1.75,
                      label.x.npc = 0.15,
@@ -763,7 +756,7 @@ collected <- (p_eggs | p_fourth| p_4)  /  guide_area() +
 
 collected
 
-#(p_MM| p_LA1840) / (p_2 | p_3 | p_4)) / (p_M | p_L)) /
+#(p_cv| p_LA1840) / (p_2 | p_3 | p_4)) / (p_M | p_L)) /
 
 ggsave(filename = "inhibitor_bioassay_boxplots_2.png", plot = collected, width = 10, height = 15)
 ```
