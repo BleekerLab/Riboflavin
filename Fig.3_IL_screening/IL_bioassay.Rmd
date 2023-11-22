@@ -17,6 +17,7 @@ knitr::opts_chunk$set(echo = FALSE,
 suppressPackageStartupMessages(library("ggplot2"))
 suppressPackageStartupMessages(library("ggpubr"))
 suppressPackageStartupMessages(library("ggpubfigs"))
+suppressPackageStartupMessages(library("ggsignif"))
 suppressPackageStartupMessages(library("patchwork"))
 suppressPackageStartupMessages(library("multcomp"))
 suppressPackageStartupMessages(library("car"))
@@ -29,7 +30,7 @@ suppressPackageStartupMessages(library("broom"))
 
 ## Background information
 
-This is the  the whitefly development bioassay on the ILs performed by Arjen van Doorn. Only the cultivated parent (MB) is included, not LA1840. IL29 will be excluded from the data, because it is not part of the metabolomics data.
+This is the  the whitefly development bioassay on the ILs performed by Arjen van Doorn. Only the cultivated parent (MB, cv in data) is included, not LA1840. IL29 will be excluded from the data, because it is not part of the metabolomics data.
 
 ## The raw data
 ```{r flies}
@@ -40,10 +41,10 @@ flies <- read.csv("IL_screen.csv",
                          check.names = FALSE)%>%     
   dplyr::filter(genotype != "IL29") %>%
   mutate_if(is.character, str_replace_all, 
-            pattern = "KG1955", replacement = "MB") %>%
+            pattern = "KG1955", replacement = "cv") %>%
   mutate_if(is.character, str_replace_all, 
             pattern = "eggs", replacement = "egg") %>%
-  mutate(genotype = factor(genotype, levels = c("MB", "IL28", "IL27"))) %>%
+  mutate(genotype = factor(genotype, levels = c("cv", "IL28", "IL27"))) %>%
   mutate(stage = factor(stage, levels = c("egg", "fourth_instar")))
 # The first 10 rows of the data
 knitr::kable(flies[1:10,1:4])
@@ -70,24 +71,24 @@ flies_wide <- flies %>%
 ```{r}
 test.1 <- tibble::tribble(
   ~group1, ~group2,   ~p.adj,
-    "MB",     "IL28", 0.679,
-    "MB",     "IL27", 0.445
+    "cv",     "IL28", 0.679,
+    "cv",     "IL27", 0.445
   )
 test.1 <- test.1 %>%
   dplyr::mutate(y.position = c(130, 143))
 
 test.2 <- tibble::tribble(
   ~group1, ~group2,   ~p.adj,
-    "MB",     "IL28", 0.861,
-    "MB",     "IL27", 0.003
+    "cv",     "IL28", 0.861,
+    "cv",     "IL27", 0.003
   )
 test.2 <- test.2 %>%
   dplyr::mutate(y.position = c(21.5, 24))
 
 test.3 <- tibble::tribble(
   ~group1, ~group2,   ~p.adj,
-    "MB",     "IL28", 0.820,
-    "MB",     "IL27", 0.009
+    "cv",     "IL28", 0.820,
+    "cv",     "IL27", 0.009
   )
 test.3 <- test.3 %>%
   dplyr::mutate(y.position = c(43, 48))
@@ -103,10 +104,10 @@ p1 <- flies %>%
              position = position_jitterdodge(jitter.width = 0.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette)  +  
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 150)) +
-  stat_pvalue_manual(test.1,
-                     size = 5,
-                     label = "p = {p.adj}") 
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 150))  +
+  geom_signif(comparison = list(c("cv","IL28"), c("cv", "IL27")), 
+              map_signif_level = TRUE, annotations = c("ns", "ns"),
+              y_position = c(126, 140))
 
 p2 <- flies %>% 
   dplyr::filter(stage == "fourth_instar") %>%
@@ -116,11 +117,11 @@ p2 <- flies %>%
   geom_point(aes(fill = genotype), size = 2, shape = 21,
              position = position_jitterdodge(jitter.width = 0.4)) + 
   theme_simple() + 
-  scale_fill_manual(values = palette)   +  
+  scale_fill_manual(values = palette)  +
   scale_y_continuous(expand = c(0, 0), limits = c(0, 25)) +
-  stat_pvalue_manual(test.2,
-                     size = 5,
-                     label = "p = {p.adj}") 
+  geom_signif(comparison = list(c("cv","IL28"), c("cv", "IL27")), 
+              map_signif_level = TRUE, annotations = c("ns", "**"),
+              y_position = c(21, 23))
 
 p3 <- flies %>% 
   pivot_wider(names_from = stage, values_from = number) %>%
@@ -136,9 +137,9 @@ p3 <- flies %>%
   theme_simple() + 
   scale_fill_manual(values = palette)   +  
   scale_y_continuous(expand = c(0, 0), limits = c(0, 50)) +
-  stat_pvalue_manual(test.3,
-                     size = 5,
-                     label = "p = {p.adj}") 
+  geom_signif(comparison = list(c("cv","IL28"), c("cv", "IL27")), 
+              map_signif_level = TRUE, annotations = c("ns", "**"),
+              y_position = c(42, 46))
 
 collected <- (p1 + p2 + p3) / guide_area() +
   plot_layout(guides = 'collect') +
@@ -214,7 +215,7 @@ flies_wide <- flies %>%
   DunnettTest(x=flies_wide$percentage, g=flies_wide$genotype)
 ```
 
-The number of eggs is simmilar for all genotypes. The number of fourth instars is lower on IL27 than on MB, but equal on IL28 and MB.
+The number of eggs is simmilar for all genotypes. The number of fourth instars is lower on IL27 than on cv, but equal on IL28 and cv.
 
 
 # Linear model for comparison of regression
@@ -247,9 +248,9 @@ p5 <- flies %>%
 p4 + p5
 ```
 
-## comparing MB and IL28
+## comparing cv and IL28
 
-```{r lineplot MB IL28}
+```{r lineplot cv IL28}
 p4 <- flies %>% 
   dplyr::filter(genotype != "IL27") %>%
   mutate_if(is.character, str_replace_all, 
@@ -301,11 +302,11 @@ glance(mod2)%>%
   dplyr::select(adj.r.squared, sigma, AIC, BIC, p.value)
 ```
 
-The second model (without the genotype interaction) fits better. The survival/development from egg to 4th instar is simmilar for IL28 and MB.
+The second model (without the genotype interaction) fits better. The survival/development from egg to 4th instar is simmilar for IL28 and cv.
 
-## comparing MB and IL27
+## comparing cv and IL27
 
-```{r lineplot MB IL27}
+```{r lineplot cv IL27}
 p4 <- flies %>% 
   dplyr::filter(genotype != "IL28") %>%
   mutate_if(is.character, str_replace_all, 
@@ -358,10 +359,10 @@ glance(mod2)%>%
   dplyr::select(adj.r.squared, sigma, AIC, BIC, p.value)
 ```
 
-The first model (with genotype effect) fits better. The survival/development from egg to 4th instar is hampered on IL28 compared to MB.
+The first model (with genotype effect) fits better. The survival/development from egg to 4th instar is hampered on IL28 compared to cv.
 
 note:
 I used a log2 y axis for the graphs, but not for the models I compared.
 
 # conclusion
-IL27 has the nymph development phenotype of LA1840. IL28 has the MM/MB phenotype.
+IL27 has the nymph development phenotype of LA1840. IL28 has the MM/cv phenotype.
