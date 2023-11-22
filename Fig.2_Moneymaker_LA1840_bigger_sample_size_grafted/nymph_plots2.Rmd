@@ -18,6 +18,7 @@ suppressPackageStartupMessages(library("ggplot2"))
 suppressPackageStartupMessages(library("ggrepel"))
 suppressPackageStartupMessages(library("ggpubr"))
 suppressPackageStartupMessages(library("ggpubfigs"))
+suppressPackageStartupMessages(library("ggsignif"))
 suppressPackageStartupMessages(library("patchwork"))
 suppressPackageStartupMessages(library("lemon"))
 suppressPackageStartupMessages(library("plyr"))
@@ -42,7 +43,7 @@ suppressPackageStartupMessages(library("svglite"))
 ```{r palette}
 palette <- c("#E69F00", "#56B4E9")
 LApalette <- c("#aad9f4", "#56B4E9", "#2b5a74")
-MMpalette <- c("#f2cf7f", "#E69F00", "#734f00")
+cvpalette <- c("#f2cf7f", "#E69F00", "#734f00")
 ```
 
 ```{r function}
@@ -69,7 +70,9 @@ flies <- read.csv("raw_data.csv",
                          header = T, 
                          sep = ",", 
                          dec = ".", 
-                         check.names = FALSE)
+                         check.names = FALSE)  %>%
+  mutate_if(is.character, str_replace_all, 
+            pattern = "MM", replacement = "cv")
 # The first 10 rows of the data
 knitr::kable(flies[1:10,1:8])
 ```
@@ -119,7 +122,7 @@ relative_cummulative <- relative_cummulative %>%
 
 
   rel_cumul = tibble()
- for(i in c("LA1840_1", "MM_2", "MM_3", "LA1840_5", "LA1840_6", "LA1840_7", "MM_8", "MM_9", "MM_10", "LA1840_11", "LA1840_12")){
+ for(i in c("LA1840_1", "cv_2", "cv_3", "LA1840_5", "LA1840_6", "LA1840_7", "cv_8", "cv_9", "cv_10", "LA1840_11", "LA1840_12")){
    subdata = subset(relative_cummulative, id == i)
    subdata[i] = cumul_median(subdata)
    rel_cumul <- bind_rows(rel_cumul, subdata)
@@ -132,7 +135,7 @@ relative_cummulative <- rel_cumul %>%
   dplyr::mutate(var_new = second_instars)
 
   rel_cumul = tibble()
- for(i in c("LA1840_1", "MM_2", "MM_3", "LA1840_5", "LA1840_6", "LA1840_7", "MM_8", "MM_9", "MM_10", "LA1840_11", "LA1840_12")){
+ for(i in c("LA1840_1", "cv_2", "cv_3", "LA1840_5", "LA1840_6", "LA1840_7", "cv_8", "cv_9", "cv_10", "LA1840_11", "LA1840_12")){
    subdata = subset(relative_cummulative, id == i)
    subdata[i] = cumul_median(subdata)
    rel_cumul <- bind_rows(rel_cumul, subdata)
@@ -147,7 +150,7 @@ relative_cummulative <- rel_cumul %>%
 
 
   rel_cumul = tibble()
- for(i in c("LA1840_1", "MM_2", "MM_3", "LA1840_5", "LA1840_6", "LA1840_7", "MM_8", "MM_9", "MM_10", "LA1840_11", "LA1840_12")){
+ for(i in c("LA1840_1", "cv_2", "cv_3", "LA1840_5", "LA1840_6", "LA1840_7", "cv_8", "cv_9", "cv_10", "LA1840_11", "LA1840_12")){
    subdata = subset(relative_cummulative, id == i)
    subdata[i] = cumul_median(subdata)
    rel_cumul <- bind_rows(rel_cumul, subdata)
@@ -162,7 +165,7 @@ relative_cummulative <- rel_cumul %>%
 
 
   rel_cumul = tibble()
- for(i in c("LA1840_1", "MM_2", "MM_3", "LA1840_5", "LA1840_6", "LA1840_7", "MM_8", "MM_9", "MM_10", "LA1840_11", "LA1840_12")){
+ for(i in c("LA1840_1", "cv_2", "cv_3", "LA1840_5", "LA1840_6", "LA1840_7", "cv_8", "cv_9", "cv_10", "LA1840_11", "LA1840_12")){
    subdata = subset(relative_cummulative, id == i)
    subdata[i] = cumul_median(subdata)
    rel_cumul <- bind_rows(rel_cumul, subdata)
@@ -196,7 +199,7 @@ relative_cummulative <- relative_cummulative %>%
   dplyr::mutate(third = (third_instars / max(first_instars))*100)%>%
   dplyr::mutate(fourth = (fourth_instars / max(first_instars))*100) %>%
   dplyr::ungroup() %>%
-  dplyr::mutate(genotype = factor(genotype, levels = c("MM", "LA1840")))
+  dplyr::mutate(genotype = factor(genotype, levels = c("cv", "LA1840")))
 
 relative_cummulative <- relative_cummulative %>%
   dplyr::select(-var_new)
@@ -204,7 +207,7 @@ relative_cummulative <- relative_cummulative %>%
 relative_cummulative <- relative_cummulative %>%
   pivot_longer(cols = eggs_start:fourth, 
                names_to = "stage", values_to = "number") %>%
-  mutate(genotype = factor(genotype, levels = c("MM", "LA1840")))  %>%
+  mutate(genotype = factor(genotype, levels = c("cv", "LA1840")))  %>%
   mutate(stage = factor(stage, levels = c("eggs_start", "first_instars", "second_instars", "third_instars", "fourth_instars", 
                                           "first", "second", "third", "fourth"))) 
 
@@ -293,6 +296,7 @@ relative_cummulative %>%
 ### Egg boxplots
 ```{r egg plots, fig.width = 16, fig.height = 10}
 
+
 #egg and hatching
 p_eggs <- relative_cummulative %>% 
   dplyr::filter(day == 29) %>%
@@ -306,11 +310,9 @@ p_eggs <- relative_cummulative %>%
   scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) +
   theme_simple() + 
   scale_fill_manual(values = palette)  +
-  stat_compare_means(method = "t.test", 
-                     label.y = 95,
-                     label.x = 1.35,
-                     size = 5,
-                     label = "p.format")
+  geom_signif(comparison = list(c("cv","LA1840")), 
+              map_signif_level = TRUE, annotations = c("*"),
+              y_position = 92)
 
 p_first <- relative_cummulative %>% 
   dplyr::filter(day == 29) %>%
@@ -324,11 +326,10 @@ p_first <- relative_cummulative %>%
   scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) +
   theme_simple() + 
   scale_fill_manual(values = palette)  +
-  stat_compare_means(method = "t.test", 
-                     label.y = 95,
-                     label.x = 1.35,
-                     size = 5,
-                     label = "p.format")
+  geom_signif(comparison = list(c("cv","LA1840")), 
+              map_signif_level = TRUE, annotations = c("."),
+              vjust = -0.5, y_position = 92)
+  
 
 p1 <- relative_cummulative %>% 
   dplyr::filter(day == 29) %>%
@@ -342,11 +343,9 @@ p1 <- relative_cummulative %>%
   scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) +
   theme_simple() + 
   scale_fill_manual(values = palette)  +
-  stat_compare_means(method = "t.test", 
-                     label.y = 95,
-                     label.x = 1.35,
-                     size = 5,
-                     label = "p.format")
+  geom_signif(comparison = list(c("cv","LA1840")), 
+              map_signif_level = TRUE, annotations = c("ns"),
+              y_position = 92)
 
 collected <- (p_eggs | p_first | p1) / guide_area() +
   plot_layout(guides = 'collect') +
@@ -369,8 +368,8 @@ ED <- ED %>%
 ED <- ED  %>%
   dplyr::mutate(day = as.numeric(as.character(day)))
 
-ED_MM <- ED %>%
-  dplyr::filter(genotype  == "MM")
+ED_cv <- ED %>%
+  dplyr::filter(genotype  == "cv")
 
 ED_LA <- ED %>%
   dplyr::filter(genotype  == "LA1840")
@@ -390,17 +389,17 @@ model_stats <- drm(number ~ day,
 coeftest(model_stats)
 ```
 
-```{r calculate EmT50 MM}
-model_MM <- drm(number ~ day,
-                data = ED_MM, 
+```{r calculate EmT50 cv}
+model_cv <- drm(number ~ day,
+                data = ED_cv, 
                 fct = LL.3(names = c("Slope", 
                                      "Upper Limit", 
                                      "ED50")))
-coeftest(model_MM)
+coeftest(model_cv)
 
 ## coeftest() gives the relative ED50. To get the absolute ED50:
 
-MM_ED <- ED(model_MM,
+cv_ED <- ED(model_cv,
             c(10, 25, 50, 75),
             interval = "delta",
             type = "absolute")
@@ -423,15 +422,15 @@ LA_ED <- ED(model_LA,
 ```{r make EmT df}
 ed_values <- tibble::tribble(
   ~genotype, ~ed,   ~stat,   ~value,
-    "MM",   "upper limit  ", "mean (±SE)",  "91.18 (±2.29)",
-    "MM",   "slope", "mean (±SE)",  "11.06 (±0.93)",
-    "MM",   "EmT50", "mean (±SE)",  "20.67 (±0.21)",
+    "cv",   "upper limit  ", "mean (±SE)",  "91.18 (±2.29)",
+    "cv",   "slope", "mean (±SE)",  "11.06 (±0.93)",
+    "cv",   "EmT50", "mean (±SE)",  "20.67 (±0.21)",
     "LA1840",   "upper limit  ", "mean (±SE)",  "83.98 (±2.06)",
     "LA1840",   "slope", "mean (±SE)",  "13.71 (±1.30)",
     "LA1840",   "EmT50", "mean (±SE)",  "21.54 (±0.20)",
-    "MM",   "upper limit  ", "x",  " ",
-    "MM",   "slope", "x",  " ",
-    "MM",   "EmT50", "x",  " ",
+    "cv",   "upper limit  ", "x",  " ",
+    "cv",   "slope", "x",  " ",
+    "cv",   "EmT50", "x",  " ",
     "LA1840",   "upper limit  ", "x",  " ",
     "LA1840",   "slope", "x",  " ",
     "LA1840",   "EmT50", "x",  " "
@@ -453,7 +452,7 @@ suppressPackageStartupMessages(library("webshot"))
 ```{r layout EmT table}
 ed_table <- ed_values %>%
   dplyr::mutate(genotype = factor(genotype, 
-                                  levels = c("MM", "LA1840"))) %>%
+                                  levels = c("cv", "LA1840"))) %>%
   dplyr::mutate(ed = factor(ed,
                             levels = c(
                               "slope", "upper limit  ", "EmT50"))) %>%
@@ -486,7 +485,7 @@ relative_cummulative <- relative_cummulative %>%
   dplyr::filter(stage == "first" | stage == "second" | stage == "third" | stage == "fourth")
 
 relative_cummulative <- relative_cummulative %>%
-  dplyr::mutate(genotype = factor(genotype, levels = c("MM", "LA1840"))) 
+  dplyr::mutate(genotype = factor(genotype, levels = c("cv", "LA1840"))) 
 
 relative_cummulative <- relative_cummulative %>%
   dplyr::select(-id) %>%
@@ -582,7 +581,7 @@ auc_fourth <- auc %>%
   dplyr::ungroup()
 
   rel_cumul = tibble()
-  for(i in c("LA1840_1", "MM_2", "MM_3", "LA1840_5", "LA1840_6", "LA1840_7", "MM_8", "MM_9", "MM_10", "LA1840_11", "LA1840_12")){
+  for(i in c("LA1840_1", "cv_2", "cv_3", "LA1840_5", "LA1840_6", "LA1840_7", "cv_8", "cv_9", "cv_10", "LA1840_11", "LA1840_12")){
     subdata = subset(auc_fourth, id == i)
     subdata[[i]] = AUC(subdata$day, subdata$number)
     rel_cumul <- bind_rows(rel_cumul, subdata)
@@ -603,12 +602,11 @@ auc_plot <- auc_fourth %>%
   geom_point(aes(fill = genotype), size = 2, shape = 21,
              position = position_jitterdodge(jitter.width = 0.4)) +
     theme_simple() + 
-    scale_fill_manual(values = palette) +
-  stat_compare_means(method = "t.test", 
-                     label.y = 9.2,
-                     label.x = 1.35,
-                     size = 5,
-                     label = "p.format") + 
+    scale_fill_manual(values = palette) + 
+  scale_fill_manual(values = palette)  +
+  geom_signif(comparison = list(c("cv","LA1840")), 
+              map_signif_level = TRUE, annotations = c("*"),
+              y_position = 9.2) + 
   scale_y_continuous(expand = c(0, 0), limits = c(0, 10)) 
 
 auc_plot
@@ -743,7 +741,7 @@ relative_abundance <- relative_abundance %>%
   dplyr::select(-total) %>%
   pivot_longer(cols = first:fourth, 
                names_to = "stage", values_to = "relat_abund") %>%
-  mutate(genotype = factor(genotype, levels = c("MM", "LA1840")))
+  mutate(genotype = factor(genotype, levels = c("cv", "LA1840")))
 
 # 10 rows of middle of the data
 #knitr::kable(relative_abundance[41:51,1:6])
@@ -776,21 +774,21 @@ relative_abundance <- relative_abundance %>%
 knitr::kable(relative_abundance[41:51,1:9])
 ```
 
-```{r relative abundance on MM, eval=FALSE, include=FALSE}
-MMpalette <- c("#E69F00")
-#MMpalette <- c("#FF8900", "#FFB300", "#FFCD00", "#FFE280")
-pMM <- relative_abundance %>%
+```{r relative abundance on cv, eval=FALSE, include=FALSE}
+cvpalette <- c("#E69F00")
+#cvpalette <- c("#FF8900", "#FFB300", "#FFCD00", "#FFE280")
+pcv <- relative_abundance %>%
   mutate(stage = factor(stage, 
                         levels = c("first", "second", "third", "fourth"))) %>%
-  dplyr::filter(genotype == "MM") %>% 
+  dplyr::filter(genotype == "cv") %>% 
   mutate(day = as.numeric(as.character(day))) %>% 
   group_by(stage) %>% 
   ggplot() +
   theme_simple() +
   labs(y = "relative abundance",
        x = "days after infection") +
-  scale_color_manual(values = MMpalette) +
-  scale_fill_manual(values = MMpalette) +
+  scale_color_manual(values = cvpalette) +
+  scale_fill_manual(values = cvpalette) +
   geom_line(aes(x = day,
                   y = min_abundance,
                   color = genotype),
