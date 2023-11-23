@@ -361,6 +361,7 @@ collected
 ```{r ED data}
 library(lmtest)
 library(sandwich)
+library(zoo)
 
 ED <- ED %>%
   dplyr::filter(stage == "fourth")
@@ -445,7 +446,8 @@ suppressPackageStartupMessages(library("stringr"))
 suppressPackageStartupMessages(library("purrr"))
 suppressPackageStartupMessages(library("gt"))
 suppressPackageStartupMessages(library("mmtable2"))
-suppressPackageStartupMessages(library("webshot"))
+suppressPackageStartupMessages(library("webshot2"))
+suppressPackageStartupMessages(library("htmlwidgets"))
 #webshot::install_phantomjs()
 ```
 
@@ -472,7 +474,8 @@ ed_table <- ed_values %>%
 
 print(ed_table)
 
-ed_table %>% gtsave("EmT_table.png")
+
+gtsave(apply_formats(ed_table), "EmT_table.png", zoom = 4)
 ```
 
 ```{r read EmT png}
