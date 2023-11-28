@@ -98,6 +98,14 @@ post_ribo <- TukeyHSD(anova_ribo)
 post_ribo
 ```
 
+```{r calculate median and SD}
+medians <- riboflavin %>%
+#  dplyr::filter(genotype == "IL27") %>%
+              dplyr::group_by(genotype) %>%
+              dplyr::summarise(median = median(abundance), SD = sd(abundance))
+medians
+```
+
 # The boxplot
 ```{r egg plots, fig.width = 16, fig.height = 10}
 
