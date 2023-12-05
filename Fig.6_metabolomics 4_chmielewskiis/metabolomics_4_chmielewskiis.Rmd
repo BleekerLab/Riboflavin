@@ -85,6 +85,14 @@ These statistics are added to the plots:
   TukeyHSD(leaf_ribo, conf.level=.95) 
 ```
 
+```{r calculate median, SD and SE leaf}
+flies %>%
+  group_by(genotype) %>%
+  dplyr::summarise(mean = mean(leaf), SD = sd(leaf), 
+            SE = sd(leaf)/sqrt(n()))
+```
+
+
 ```{r phloem anova}
   phloem_ribo <- aov(flies$phloem ~ flies$genotype)
   summary(phloem_ribo)
@@ -94,6 +102,12 @@ These statistics are added to the plots:
   TukeyHSD(phloem_ribo, conf.level=.95) 
 ```
 
+```{r calculate median, SD and SE phloem}
+flies %>%
+  group_by(genotype) %>%
+  dplyr::summarise(mean = mean(phloem), SD = sd(phloem), 
+            SE = sd(phloem)/sqrt(n()))
+```
 
 
 ```{r combined plot, fig.width = 16, fig.height = 10}

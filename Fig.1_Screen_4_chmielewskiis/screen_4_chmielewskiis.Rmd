@@ -103,6 +103,13 @@ anova1
 
 ```
 
+```{r calculate median and SD eggs}
+flies %>%
+  group_by(genotype) %>%
+  dplyr::summarise(mean = mean(egg), SD = sd(egg), 
+            SE = sd(egg)/sqrt(n()))
+```
+
 ```{r anova fourth}
 
 anova2 <- flies %>%
@@ -132,7 +139,8 @@ anova3
 ```{r calculate median and SD % eggs to 4th}
 flies %>%
   group_by(genotype) %>%
-  summarise(median = median(fourth_per_eggs), SD = sd(fourth_per_eggs))
+  dplyr::summarise(mean = mean(fourth_per_eggs), SD = sd(fourth_per_eggs), 
+            SE = sd(fourth_per_eggs)/sqrt(n()))
 ```
 
 

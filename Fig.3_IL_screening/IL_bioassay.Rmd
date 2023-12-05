@@ -158,14 +158,16 @@ ggsave(filename = "IL_bioassay.svg", plot = collected, width = 10, height = 10)
 flies %>%
   dplyr::filter(stage == "egg") %>%
   group_by(genotype) %>%
-  summarise(mean = mean(number), SD = sd(number))
+  dplyr::summarise(mean = mean(number), SD = sd(number), 
+            SE = sd(number)/sqrt(n()))
 ```
 
 ```{r calculate mean and SD 4th}
 flies %>%
   dplyr::filter(stage == "fourth_instar") %>%
   group_by(genotype) %>%
-  summarise(mean = mean(number), SD = sd(number))
+  dplyr::summarise(mean = mean(number), SD = sd(number), 
+            SE = sd(number)/sqrt(n()))
 ```
 
 ```{r calculate mean and SD % eggs to 4th}
@@ -173,7 +175,8 @@ flies %>%
   pivot_wider(names_from = "stage", values_from = "number") %>%
   dplyr::mutate(percentage = fourth_instar / egg * 100) %>%
   group_by(genotype) %>%
-  summarise(mean = mean(percentage), SD = sd(percentage))
+  dplyr::summarise(mean = mean(percentage), SD = sd(percentage), 
+            SE = sd(percentage)/sqrt(n()))
 ```
 
 ```{r cohens d effectsize}

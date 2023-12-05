@@ -254,7 +254,8 @@ relative_cummulative %>%
   dplyr::filter(day == 29) %>%
   dplyr::filter(stage=="eggs_start") %>%
   group_by(genotype) %>%
-  summarise(mean = mean(number), SD = sd(number))
+  dplyr::summarise(mean = mean(number), SD = sd(number), 
+            SE = sd(number)/sqrt(n()))
 ```
 
 ### Hatched stats
@@ -291,6 +292,15 @@ relative_cummulative %>%
   dplyr::filter(day == 29) %>%
   dplyr::filter(stage=="first") %>%
   levene_test(number~genotype)
+```
+
+```{r calculate mean and SD}
+relative_cummulative %>% 
+  dplyr::filter(day == 29) %>%
+  dplyr::filter(stage=="first") %>%
+  group_by(genotype) %>%
+  dplyr::summarise(mean = mean(number), SD = sd(number), 
+            SE = sd(number)/sqrt(n()))
 ```
 
 ### Egg boxplots
@@ -628,7 +638,8 @@ auc_fourth %>%
 ```{r calculate mean and SD}
 auc_fourth %>%
   group_by(genotype) %>%
-  summarise(mean = mean(auc), SD = sd(auc))
+  dplyr::summarise(mean = mean(auc), SD = sd(auc),
+            SE = sd(auc)/sqrt(n()))
 ```
 
 # The complete figure

@@ -282,7 +282,8 @@ cumulative_flies_cv %>%
   dplyr::filter(day == 17) %>%
   dplyr::filter(stage == "eggs_start") %>%
   group_by(treatment) %>%
-  summarise(median = median(number))
+  dplyr::summarise(mean = mean(number), SD = sd(number), 
+            SE = sd(number)/sqrt(n()))
 ```
 
 ```{r calculate median 3rd}
@@ -290,7 +291,17 @@ cumulative_flies_cv %>%
   dplyr::filter(day == 17) %>%
   dplyr::filter(stage == "third_instars") %>%
   group_by(treatment) %>%
-  summarise(median = median(number))
+  dplyr::summarise(mean = mean(number), SD = sd(number), 
+            SE = sd(number)/sqrt(n()))
+```
+
+```{r calculate median % to 3rd}
+cumulative_flies_cv %>%
+  dplyr::filter(day == 17) %>%
+  dplyr::filter(stage == "third") %>%
+  group_by(treatment) %>%
+  dplyr::summarise(mean = mean(number), SD = sd(number), 
+            SE = sd(number)/sqrt(n()))
 ```
 
 ##cv boxplots
@@ -391,11 +402,11 @@ flies_LA <- flies_LA %>%
 Because the fourth instars are the end point and taken of after counting, combine fourth instars and exuviae and make their numbers cumulative over time. 
 ```{r total fourth instars}
 flies_LA <- flies_LA %>%
-  mutate(fourth_exuviae = `5_late_fourth_instar` + `6_exuviea`) %>%
-  group_by(id) %>%
-  mutate(`5_completed_lifecycle` = cumsum(fourth_exuviae)) %>%
-  mutate(`4_fourth_instar` = `4_early_fourth_instar` + `5_completed_lifecycle`) %>%
-  ungroup()
+  dplyr::mutate(fourth_exuviae = `5_late_fourth_instar` + `6_exuviea`) %>%
+  dplyr::group_by(id) %>%
+  dplyr::mutate(`5_completed_lifecycle` = cumsum(fourth_exuviae)) %>%
+  dplyr::mutate(`4_fourth_instar` = `4_early_fourth_instar` + `5_completed_lifecycle`) %>%
+  dplyr::ungroup()
 ```
 
 Remove separate and non-cumulative late fourth instar and exuviae columns.
@@ -475,33 +486,30 @@ cumulative_flies_LA <- cumulative_flies_LA %>%
   mutate(third_instars = as.numeric(as.character(third_instars)))  
 
 cumulative_flies_LA <- cumulative_flies_LA %>%
-  group_by(id) %>%
-  mutate(eggs_start = as.numeric(as.character(max(`0_egg`, na.rm = TRUE)))) %>%
-  ungroup()
+  dplyr::group_by(id) %>%
+  dplyr::mutate(eggs_start = as.numeric(as.character(max(`0_egg`, na.rm = TRUE)))) %>%
+  dplyr::ungroup()
 
 
 cumulative_flies_LA <- cumulative_flies_LA %>%
-  dplyr::select(-`0_egg`: -`4_fourth_instar`) 
+  dplyr::select(-`0_egg`: -`4_fourth_instar`)  %>%
+  dplyr::select(-var_new)
 ```
 
 ```{r relative to eggs}
 cumulative_flies_LA <- cumulative_flies_LA %>%
-  group_by(id) %>%
-  mutate(first = (first_instars / eggs_start)*100)%>%
-  mutate(second = (second_instars / eggs_start)*100)%>%
-  mutate(third = (third_instars / eggs_start)*100)%>%
-  mutate(fourth = (fourth_instars / eggs_start)*100) %>%
-  ungroup() 
-
-cumulative_flies_LA <- cumulative_flies_LA %>%
-  dplyr::select(-var_new)
+  dplyr::group_by(id) %>%
+  dplyr::mutate(first = (first_instars / eggs_start)*100)%>%
+  dplyr::mutate(second = (second_instars / eggs_start)*100)%>%
+  dplyr::mutate(third = (third_instars / eggs_start)*100)%>%
+  dplyr::mutate(fourth = (fourth_instars / eggs_start)*100) %>%
+  dplyr::ungroup() 
 
 cumulative_flies_LA <- cumulative_flies_LA %>%
   pivot_longer(cols = fourth_instars:fourth, 
                names_to = "stage", values_to = "number") %>%
   mutate(treatment = factor(treatment, levels = c("control", "inhibitor"))) %>%
-  mutate(stage = factor(stage, levels = c("eggs_start", "first_instars", "second_instars", "third_instars", "fourth_instars", 
-                                          "first", "second", "third", "fourth"))) 
+  mutate(stage = factor(stage, levels = c("eggs_start", "first_instars", "second_instars", "third_instars", "fourth_instars", "first", "second", "third", "fourth"))) 
 
 auc <- cumulative_flies_LA
 ```
@@ -531,7 +539,8 @@ cumulative_flies_LA %>%
   dplyr::filter(day == 22) %>%
   dplyr::filter(stage == "eggs_start") %>%
   group_by(treatment) %>%
-  summarise(median = median(number))
+  dplyr::summarise(mean = mean(number), SD = sd(number), 
+            SE = sd(number)/sqrt(n()))
 ```
 
 ```{r calculate median 3rd}
@@ -539,7 +548,8 @@ cumulative_flies_LA %>%
   dplyr::filter(day == 22) %>%
   dplyr::filter(stage == "third_instars") %>%
   group_by(treatment) %>%
-  summarise(median = median(number))
+  dplyr::summarise(mean = mean(number), SD = sd(number), 
+            SE = sd(number)/sqrt(n()))
 ```
 
 ```{r calculate median eggs to 3rd (%)}
@@ -547,7 +557,8 @@ cumulative_flies_LA %>%
   dplyr::filter(day == 22) %>%
   dplyr::filter(stage == "third") %>%
   group_by(treatment) %>%
-  summarise(median = median(number))
+  dplyr::summarise(mean = mean(number), SD = sd(number), 
+            SE = sd(number)/sqrt(n()))
 ```
 
 ##LA1840 and combined plots
