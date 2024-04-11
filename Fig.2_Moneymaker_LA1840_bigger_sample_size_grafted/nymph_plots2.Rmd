@@ -276,6 +276,15 @@ relative_cummulative %>%
   levene_test(number~genotype)
 ```
 
+```{r calculate mean and SD}
+relative_cummulative %>% 
+  dplyr::filter(day == 29) %>%
+  dplyr::filter(stage=="first_instars") %>%
+  group_by(genotype) %>%
+  dplyr::summarise(mean = mean(number), SD = sd(number), 
+            SE = sd(number)/sqrt(n()))
+```
+
 ### Hatching rate stats
 Shapiro-Wilk test:
 ```{r warning = FALSE}
