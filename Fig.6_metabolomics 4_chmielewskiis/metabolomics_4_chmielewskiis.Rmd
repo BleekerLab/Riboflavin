@@ -52,13 +52,13 @@ knitr::kable(flies[1:10,1:4])
 ```{r wide}
 flies <- flies %>%
   mutate(tissue = as.factor(tissue)) %>%
-  pivot_wider(names_from = tissue, values_from = riboflavin_nM) 
+  pivot_wider(names_from = tissue, values_from = riboflavin) 
 ```
 
 ```{r alter the units} 
-flies <- flies %>%
-  dplyr::mutate(leaf = leaf/1000) %>% # set as nmol/mL leaf extract
-  dplyr::mutate(phloem = phloem*2) # set as pmol/mL phloem exudate
+#flies <- flies %>%
+#  dplyr::mutate(leaf = leaf/1000) %>% # set as nmol/mL leaf extract
+#  dplyr::mutate(phloem = phloem*2) # set as pmol/mL phloem exudate
 
 ```
 
@@ -119,17 +119,17 @@ flies %>%
 ```{r combined plot, fig.width = 16, fig.height = 10}
 p1 <- flies %>% 
   ggplot(aes(x=genotype, y=leaf)) + 
-  labs(y = "Riboflavin in leaf extract (nmol/mL)") +
+  labs(y = "Riboflavin in leaf material (pmol/mg fresh weight)") +
   geom_boxplot(aes(fill = genotype)) +   
   geom_point(aes(fill = genotype), size = 2, shape = 21,
              position = position_jitterdodge(jitter.width = 0.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette)  +  
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 1.4))  +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 7.5))  +
   geom_signif(comparison = list(c("LA1330","LA1840")), 
               map_signif_level = TRUE, 
               annotations = c("."),
-              y_position = 1.325,
+              y_position = 7,
               vjust = -0.5)
 
 p2 <- flies %>% 
@@ -140,11 +140,11 @@ p2 <- flies %>%
              position = position_jitterdodge(jitter.width = 0.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette)   +  
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 50))  +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 7.5))  +
   geom_signif(comparison = list(c("LA1840", "LA2663")), 
               map_signif_level = TRUE, 
               annotations = c("."),
-              y_position = 47,
+              y_position = 7,
               vjust = -0.5)
 
  
