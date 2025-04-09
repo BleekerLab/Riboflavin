@@ -260,6 +260,39 @@ cumulative_flies_cv <- cumulative_flies_cv %>%
 
 
 # statistics
+
+```{r glm}
+df_glm_eggs <- cumulative_flies_cv %>%
+                dplyr::filter(day == 17) %>%
+                dplyr::filter(stage == "eggs_start")
+
+df_glm_3rd <- cumulative_flies_cv %>%
+                dplyr::filter(day == 17) %>%
+                dplyr::filter(stage == "third_instars")
+
+
+
+glm_eggs <- glm(formula = number ~ treatment,
+            family = poisson(),
+            data = df_glm_eggs)
+
+glm_third_instars <- glm(formula = number ~ treatment,
+                      family = poisson(),
+                      data = df_glm_3rd)
+
+summary(glm_eggs)
+summary(glm_third_instars)
+```
+
+```{r t-test}
+df_ttest_third <- cumulative_flies_cv %>%
+  dplyr::filter(day == 17) %>%
+  dplyr::filter(stage == "third")
+
+t.test(formula = number ~ treatment, 
+       data = df_ttest_third)
+```
+
 ```{r wilcoxon}
 cumulative_flies_cv %>%
   dplyr::filter(day == 17) %>%
@@ -338,7 +371,7 @@ p_third <- cumulative_flies_cv %>%
   scale_fill_manual(values = cv_palette)  +
   geom_signif(comparison = list(c("control","riboflavin")), 
               map_signif_level = TRUE, 
-              annotations = c("*"),
+              annotations = c("***"),
               y_position = 83.57,
               vjust = 0.1)
 
@@ -356,9 +389,9 @@ p_3 <- cumulative_flies_cv %>%
   scale_fill_manual(values = cv_palette)  +
   geom_signif(comparison = list(c("control","riboflavin")), 
               map_signif_level = TRUE, 
-              annotations = c("."),
+              annotations = c("**"),
               y_position = 65,
-              vjust = -0.5)
+              vjust = 0.1)
 
 
 collected <- (p_eggs | p_third | p_3)  / guide_area() +
@@ -517,6 +550,39 @@ auc <- cumulative_flies_LA
 
 
 # statistics
+
+```{r glm}
+df_glm_eggs <- cumulative_flies_LA %>%
+                dplyr::filter(day == 22) %>%
+                dplyr::filter(stage == "eggs_start")
+
+df_glm_3rd <- cumulative_flies_LA %>%
+                dplyr::filter(day == 22) %>%
+                dplyr::filter(stage == "third_instars")
+
+
+
+glm_eggs <- glm(formula = number ~ treatment,
+            family = poisson(),
+            data = df_glm_eggs)
+
+glm_third_instars <- glm(formula = number ~ treatment,
+                      family = poisson(),
+                      data = df_glm_3rd)
+
+summary(glm_eggs)
+summary(glm_third_instars)
+```
+
+```{r t-test}
+df_ttest_third <- cumulative_flies_LA %>%
+  dplyr::filter(day == 22) %>%
+  dplyr::filter(stage == "third")
+
+t.test(formula = number ~ treatment, 
+       data = df_ttest_third)
+```
+
 ```{r wilcoxon}
 cumulative_flies_LA %>%
   dplyr::filter(day == 22) %>%
@@ -593,7 +659,7 @@ p_third_i <- cumulative_flies_LA %>%
   scale_fill_manual(values = LA_palette)  +
   geom_signif(comparison = list(c("control","inhibitor")), 
               map_signif_level = TRUE, 
-              annotations = c("ns"),
+              annotations = c("*"),
               y_position = 83.57)
 
 p_3_i <- cumulative_flies_LA %>% 
@@ -615,7 +681,7 @@ p_3_i <- cumulative_flies_LA %>%
 
 collected <- ((p_eggs | p_third| p_3) / (p_eggs_i | p_third_i | p_3_i))  /  guide_area() +
   plot_layout(guides = 'collect') +
-  plot_annotation(tag_levels = 'A')
+  plot_annotation(tag_levels = 'a')
 
 collected
 

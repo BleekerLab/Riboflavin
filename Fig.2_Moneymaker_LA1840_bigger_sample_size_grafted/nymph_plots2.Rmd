@@ -235,6 +235,20 @@ relative_cummulative %>%
   levene_test(number~genotype)
 ```
 
+```{r glm eggs}
+df_glm_eggs <- relative_cummulative %>% 
+                dplyr::filter(day == 29) %>%
+                dplyr::filter(stage=="eggs_start")
+
+
+glm_eggs <- glm(formula = number ~ genotype,
+            family = poisson(),
+            data = df_glm_eggs)
+
+
+summary(glm_eggs)
+```
+
 ```{r t-test}
 relative_cummulative %>% 
   dplyr::filter(day == 29) %>%
@@ -259,6 +273,21 @@ relative_cummulative %>%
 ```
 
 ### Hatched stats
+
+```{r glm first}
+df_glm_first <- relative_cummulative %>% 
+                dplyr::filter(day == 29) %>%
+                dplyr::filter(stage=="first_instars")
+
+
+glm_first <- glm(formula = number ~ genotype,
+            family = poisson(),
+            data = df_glm_first)
+
+
+summary(glm_first)
+```
+
 Shapiro-Wilk test:
 ```{r warning = FALSE}
 relative_cummulative %>% 
@@ -286,6 +315,16 @@ relative_cummulative %>%
 ```
 
 ### Hatching rate stats
+
+```{r t-test}
+df_ttest_hatch <- relative_cummulative %>% 
+  dplyr::filter(day == 29) %>%
+  dplyr::filter(stage=="first")
+
+t.test(formula = number ~ genotype, 
+       data = df_ttest_hatch)
+```
+
 Shapiro-Wilk test:
 ```{r warning = FALSE}
 relative_cummulative %>% 
@@ -367,7 +406,7 @@ p_eggs <- relative_cummulative %>%
   theme_simple() + 
   scale_fill_manual(values = palette)  +
   geom_signif(comparison = list(c("cv","LA1840")), 
-              map_signif_level = TRUE, annotations = c("*"),
+              map_signif_level = TRUE, annotations = c("**"),
               y_position = 92)
 
 p_first <- relative_cummulative %>% 
@@ -383,8 +422,8 @@ p_first <- relative_cummulative %>%
   theme_simple() + 
   scale_fill_manual(values = palette)  +
   geom_signif(comparison = list(c("cv","LA1840")), 
-              map_signif_level = TRUE, annotations = c("."),
-              vjust = -0.5, y_position = 92)
+              map_signif_level = TRUE, annotations = c("***"),
+              y_position = 92)
   
 
 p1 <- relative_cummulative %>% 
@@ -422,13 +461,13 @@ p4 <- relative_cummulative %>%
 
 collected_eggs <- (p_eggs | p_first | p1) / guide_area() +
   plot_layout(guides = 'collect') +
-  plot_annotation(tag_levels = 'A')
+  plot_annotation(tag_levels = 'a')
 
 collected_eggs
 
-ggsave(filename = "supplemental_graft_eggs.svg", plot = collected_eggs, width = 10, height = 12)
+ggsave(filename = "supplemental_graft_eggs.svg", plot = collected_eggs, width = 10, height = 6)
 
-ggsave(filename = "supplemental_graft_eggs.png", plot = collected_eggs, width = 10, height = 12)
+ggsave(filename = "supplemental_graft_eggs.png", plot = collected_eggs, width = 10, height = 6)
 ```
 
 

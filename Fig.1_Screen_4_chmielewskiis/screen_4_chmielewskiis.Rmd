@@ -95,6 +95,16 @@ print(flies)
 
 
 # Statistics
+
+```{r glm eggs}
+glm1 <- glm(formula = egg ~ genotype,
+            family = poisson(),
+            data = flies)
+
+summary(glm1)
+anova(glm1)
+```
+
 ```{r anova eggs}
 anova1 <- flies %>%
           anova_test(formula = egg ~ genotype)
@@ -174,7 +184,9 @@ p1 <- flies %>%
   theme_simple() + 
   scale_fill_manual(values = palette)  +  
   scale_y_continuous(expand = c(0, 0), limits = c(0, 100))  +
-  annotate("text", x = 3, y = 97, label = "ns")
+  geom_signif(comparison = list(c("cv","LA1028"), c("cv", "LA1840")), 
+              map_signif_level = TRUE, annotations = c("***", "***"),
+              y_position = c(83, 90))
 
 
 p3 <- flies %>% 
@@ -192,10 +204,10 @@ p3 <- flies %>%
 
 collected <- (p1 + p3) / guide_area() +
   plot_layout(guides = 'collect') +
-  plot_annotation(tag_levels = 'A')
+  plot_annotation(tag_levels = 'a')
 
 collected
 
-ggsave(filename = "IL_bioassay.png", plot = collected, width = 10, height = 10)
-ggsave(filename = "IL_bioassay.svg", plot = collected, width = 10, height = 10)
+ggsave(filename = "4_chmielewskii_bioassay.png", plot = collected, width = 10, height = 10)
+ggsave(filename = "4_chmielewskii_bioassay.svg", plot = collected, width = 10, height = 10)
 ```

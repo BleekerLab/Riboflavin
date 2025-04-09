@@ -60,11 +60,16 @@ These statistics are added to the plots:
 flies_wide <- flies %>%
   pivot_wider(names_from = "stage", values_from = "number") %>%
   dplyr::mutate(percentage = fourth_instar / egg * 100)
-  test1 <- DunnettTest(x=flies_wide$egg, g=flies_wide$genotype)
-  test2 <- DunnettTest(x=flies_wide$fourth_instar, g=flies_wide$genotype)
+
+  test1 <- glm(formula = egg ~ genotype,
+            family = poisson(),
+            data = flies_wide)
+  test2 <- glm(formula = fourth_instar ~ genotype,
+            family = poisson(),
+            data = flies_wide)
   test3 <- DunnettTest(x=flies_wide$percentage, g=flies_wide$genotype)
-  test1
-  test2
+  summary(test1)
+  summary(test2)
   test3
 ```
 
@@ -106,7 +111,7 @@ p1 <- flies %>%
   scale_fill_manual(values = palette)  +  
   scale_y_continuous(expand = c(0, 0), limits = c(0, 150))  +
   geom_signif(comparison = list(c("cv","IL28"), c("cv", "IL27")), 
-              map_signif_level = TRUE, annotations = c("ns", "ns"),
+              map_signif_level = TRUE, annotations = c("**", "***"),
               y_position = c(126, 140))
 
 p2 <- flies %>% 
@@ -120,7 +125,7 @@ p2 <- flies %>%
   scale_fill_manual(values = palette)  +
   scale_y_continuous(expand = c(0, 0), limits = c(0, 25)) +
   geom_signif(comparison = list(c("cv","IL28"), c("cv", "IL27")), 
-              map_signif_level = TRUE, annotations = c("ns", "**"),
+              map_signif_level = TRUE, annotations = c("ns", "***"),
               y_position = c(21, 23))
 
 p3 <- flies %>% 
@@ -143,7 +148,7 @@ p3 <- flies %>%
 
 collected <- (p1 + p2 + p3) / guide_area() +
   plot_layout(guides = 'collect') +
-  plot_annotation(tag_levels = 'A')
+  plot_annotation(tag_levels = 'a')
 
 collected
 

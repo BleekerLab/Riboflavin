@@ -852,6 +852,8 @@ There is a global difference between the curves of the two rootstock genotypes (
 flies_fourth <- flies %>%
   dplyr::filter(stage=="6_total_fourth_instars") %>%
   dplyr::select(-eggs_start, -hatched, -percentage_from_eggs)
+flies_fourth$genotype <- factor(flies_fourth$genotype, 
+                          levels= c("MM", "LA1840"))
 ```
 
 I want to use the right model, so that it the first step. The drc package has a function for selection the best fitting model, but needs an initial model to start with.
