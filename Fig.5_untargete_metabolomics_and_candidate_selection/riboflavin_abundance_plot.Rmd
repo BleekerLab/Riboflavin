@@ -1,0 +1,159 @@
+---
+title: "plot_riboflavin_abundance"
+author: "Lissy Denkers"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = FALSE, 
+                      warning = FALSE, 
+                      message = FALSE, 
+                      fig.width = 8, 
+                      fig.height = 5, 
+                      fig.align = "center")
+suppressPackageStartupMessages(library("ggplot2"))
+suppressPackageStartupMessages(library("ggrepel"))
+suppressPackageStartupMessages(library("ggpubr"))
+suppressPackageStartupMessages(library("ggpubfigs"))
+suppressPackageStartupMessages(library("ggsignif"))
+suppressPackageStartupMessages(library("multcompView"))
+suppressPackageStartupMessages(library("patchwork"))
+suppressPackageStartupMessages(library("lemon"))
+suppressPackageStartupMessages(library("plyr"))
+suppressPackageStartupMessages(library("dplyr"))
+suppressPackageStartupMessages(library("skimr"))
+suppressPackageStartupMessages(library("Hmisc"))
+suppressPackageStartupMessages(library("tidyr"))
+suppressPackageStartupMessages(library("car"))
+suppressPackageStartupMessages(library("rstatix"))
+suppressPackageStartupMessages(library("tidyverse"))
+```
+
+```{r palette}
+palette <- c("#E69F00", "#D55E00", "#0072B2", "#56B4E9")
+```
+
+# The data
+```{r raw data}
+abundance <- read.csv("normalised_data.csv", 
+                         header = T, 
+                         sep = ",", 
+                         dec = ".", 
+                      row.names = 1,
+                         check.names = FALSE) %>%
+  mutate_if(is.character, str_replace_all, 
+            pattern = "MB", replacement = "cv")
+# The first 10 rows of the data
+knitr::kable(abundance[1:10,1:8])
+```
+# preposing for plot
+```{r remove peak info columns}
+abundance <- abundance %>%
+  dplyr::select(-1: -9) 
+```
+
+```{r filter on metabolite number for riboflavin}
+riboflavin <- abundance %>%
+  tibble::rownames_to_column() %>%
+  dplyr::filter(rowname == "metabolite_153")
+```
+
+```{r make the data long}
+riboflavin <- riboflavin %>%
+  pivot_longer(cols = IL27_1:LA1840_6, 
+               names_to = "sample", values_to = "abundance") %>%
+  dplyr::select(-rowname)  %>%
+  mutate_if(is.character, str_replace_all, 
+            pattern = "MB", replacement = "cv")
+```
+
+```{r add genotypes}
+riboflavin <- riboflavin %>%
+  dplyr::mutate(genotype = sample)
+riboflavin$genotype <- gsub("_[0-9]*", "", riboflavin$genotype)
+# The first 10 rows of the data
+knitr::kable(riboflavin[1:10,1:3])
+```
+
+```{r remove outliers}
+riboflavin <- riboflavin %>%
+  dplyr::filter(sample != "IL27_6") %>%
+  dplyr::filter(sample != "LA1840_1")
+```
+
+```{r genotypes in right order}
+riboflavin <- riboflavin %>%
+  mutate(genotype = factor(genotype, 
+                           levels = c("cv", "IL28", "IL27", "LA1840")))
+```
+
+```{r anova}
+anova_ribo <- aov(abundance ~ genotype, data = riboflavin)
+summary(anova_ribo)
+```
+
+```{r tukey}
+post_ribo <- TukeyHSD(anova_ribo)
+post_ribo
+```
+
+```{r calculate median and SD}
+medians <- riboflavin %>%
+#  dplyr::filter(genotype == "IL27") %>%
+              dplyr::group_by(genotype) %>%
+              dplyr::summarise(median = median(abundance), SD = sd(abundance))
+medians
+```
+
+# The boxplot
+```{r egg plots, fig.width = 16, fig.height = 10}
+
+#riboflavin abundance
+p_ribo <- riboflavin %>% 
+  ggplot(aes(x=genotype, y=abundance, fill=genotype)) + 
+  labs(y = "relative abundance of riboflavin",
+       x = "genotype") +
+  geom_boxplot() +    
+  geom_point(aes(fill = genotype), size = 2, shape = 21,
+             position = position_jitterdodge(jitter.width = 0.4)) +  
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 0.00115),
+                     labels=function(n){format(n, scientific = TRUE)}) +
+  theme_simple() + 
+  scale_fill_manual(values = palette)  +
+  geom_signif(comparison = list(c("cv","IL27"), c("IL27","LA1840"), 
+                                c("IL28","LA1840"), c("cv", "LA1840")), 
+              map_signif_level = TRUE, 
+              annotations = c("*", "***", "***", "***"),
+              y_position = c(0.00075, 0.00097, 0.00102, 0.00107),
+              vjust = 0.5)  +
+  geom_signif(comparison = list(c("IL28","IL27")), 
+              map_signif_level = TRUE, 
+              annotations = c("."),
+              y_position = 0.00070,
+              vjust = -0.5)
+p_ribo
+```
+
+```{r pca and abundance}
+layout <- c(
+  patchwork::area(t = 1, l = 1, b = 1, r = 2),    #pca
+  patchwork::area(t = 1, l = 3, b = 1, r = 3),    #p_ribo
+  patchwork::area(t = 2, l = 1, b = 3, r = 3)   #guide_area
+)
+plot(layout)
+
+collected <- (pc1_vs_pc2 | p_ribo)  /  guide_area() +
+  plot_layout(guides = 'collect') +
+  plot_annotation(tag_levels = 'A')
+
+collected
+```
+
+
+```{r save plot}
+ggsave(filename = "pca+riboflavin_abundance.svg", plot = collected, width = 10, height = 10)
+
+ggsave(filename = "pca+riboflavin_abundance.png", plot = collected, width = 10, height = 10)
+```
+
