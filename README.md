@@ -46,3 +46,5 @@ This work highlights the importance of phloem composition in the plant-phloem fe
 2. Means and standard errors corresponding to Fig. 4
 3. Means and standard errors corresponding to Fig. 6
 4. Means and standard errors corresponding to Fig. 7
+
+![](./Fig.1_whitefly_nymphs/first_instar_walking.mov)
