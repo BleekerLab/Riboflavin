@@ -120,14 +120,6 @@ flies %>%
             SE = sd(egg)/sqrt(n()))
 ```
 
-```{r anova fourth}
-
-anova2 <- flies %>%
-          anova_test(formula = fourth_instar ~ genotype)
-
-anova2
-
-```
 
 ```{r calculate median and SD eggs}
 flies %>%
@@ -136,21 +128,22 @@ flies %>%
             SE = sd(fourth_instar)/sqrt(n()))
 ```
 
-```{r anova percentage to fourth}
+```{r kruskal-wallis percentage to fourth}
 
-anova3 <- flies %>%
-          anova_test(formula = fourth_per_eggs ~ genotype)
+kruskal_fourth <- kruskal.test(formula = fourth_per_eggs ~ genotype, data = flies)
 
-anova3
+kruskal_fourth
 ```
 
-```{r dunnett}
-  test1 <- DunnettTest(x=flies$egg, g=flies$genotype)
-  test2 <- DunnettTest(x=flies$fourth_instar, g=flies$genotype)
-  test3 <- DunnettTest(x=flies$fourth_per_eggs, g=flies$genotype)
-  test1
-  test2
-  test3
+```{r}
+library(nparcomp)
+
+comp_fourth <- mctp(fourth_per_eggs ~ genotype, data=flies, asy.method = "fisher",
+            type = "Dunnett", control = "cv",
+            alternative = "two.sided", info = FALSE)
+
+summary(comp_fourth)
+plot(comp_fourth)
 ```
 
 ```{r calculate median and SD % eggs to 4th}
@@ -173,6 +166,8 @@ library(colorblindcheck)
 palette_check(palette, plot=TRUE)
 ```
 
+
+
 ## The actual plots
 ```{r combined plot, fig.width = 16, fig.height = 10}
 p1 <- flies %>% 
@@ -180,13 +175,13 @@ p1 <- flies %>%
   labs(y = "eggs (count)") +
   geom_boxplot(aes(fill = genotype)) +   
   geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
+             position = position_jitterdodge(jitter.width = 1.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette)  +  
   scale_y_continuous(expand = c(0, 0), limits = c(0, 100))  +
   geom_signif(comparison = list(c("cv","LA1028"), c("cv", "LA1840")), 
               map_signif_level = TRUE, annotations = c("***", "***"),
-              y_position = c(83, 90))
+              y_position = c(83, 90), textsize = 7)
 
 
 p3 <- flies %>% 
@@ -194,13 +189,13 @@ p3 <- flies %>%
   labs(y = "development to 4th instar (%)") +
   geom_boxplot(aes(fill=genotype)) +   
   geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
+             position = position_jitterdodge(jitter.width = 1.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette)   +  
   scale_y_continuous(expand = c(0, 0), limits = c(0, 100))  +
   geom_signif(comparison = list(c("cv","LA1028"), c("cv", "LA1840")), 
               map_signif_level = TRUE, annotations = c("**", "*"),
-              y_position = c(80, 90))
+              y_position = c(80, 90), textsize = 7)
 
 collected <- (p1 + p3) / guide_area() +
   plot_layout(guides = 'collect') +
