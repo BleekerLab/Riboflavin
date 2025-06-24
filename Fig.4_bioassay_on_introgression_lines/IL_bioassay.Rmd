@@ -56,21 +56,41 @@ palette <- c("#E69F00", "#D55E00", "#0072B2")
 ```
 
 These statistics are added to the plots:
-```{r dunnett}
+```{r make wide and calculate percentage}
 flies_wide <- flies %>%
   pivot_wider(names_from = "stage", values_from = "number") %>%
   dplyr::mutate(percentage = fourth_instar / egg * 100)
+```
 
+```{r glm for count data}
   test1 <- glm(formula = egg ~ genotype,
             family = poisson(),
             data = flies_wide)
   test2 <- glm(formula = fourth_instar ~ genotype,
             family = poisson(),
             data = flies_wide)
-  test3 <- DunnettTest(x=flies_wide$percentage, g=flies_wide$genotype)
+  
   summary(test1)
   summary(test2)
-  test3
+```
+
+
+```{r kruskal-wallis percentage to fourth}
+
+kruskal_fourth <- kruskal.test(formula = percentage ~ genotype, data = flies_wide)
+
+kruskal_fourth
+```
+
+```{r}
+library(nparcomp)
+
+comp_fourth <- mctp(percentage ~ genotype, data=flies_wide, asy.method = "fisher",
+            type = "Dunnett", control = "cv",
+            alternative = "two.sided", info = FALSE)
+
+summary(comp_fourth)
+plot(comp_fourth)
 ```
 
 ```{r}
@@ -106,13 +126,13 @@ p1 <- flies %>%
   labs(y = "eggs (count)") +
   geom_boxplot(aes(fill = genotype)) +   
   geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
+             position = position_jitterdodge(jitter.width = 1.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette)  +  
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 150))  +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 156))  +
   geom_signif(comparison = list(c("cv","IL28"), c("cv", "IL27")), 
               map_signif_level = TRUE, annotations = c("**", "***"),
-              y_position = c(126, 140))
+              y_position = c(126, 140), textsize = 7)
 
 p2 <- flies %>% 
   dplyr::filter(stage == "fourth_instar") %>%
@@ -120,13 +140,13 @@ p2 <- flies %>%
   labs(y = "4th instar nymphs (count)") +
   geom_boxplot(aes(fill=genotype)) +   
   geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
+             position = position_jitterdodge(jitter.width = 1.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette)  +
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 25)) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 26)) +
   geom_signif(comparison = list(c("cv","IL28"), c("cv", "IL27")), 
               map_signif_level = TRUE, annotations = c("ns", "***"),
-              y_position = c(21, 23))
+              y_position = c(21, 23), textsize = 7)
 
 p3 <- flies %>% 
   pivot_wider(names_from = stage, values_from = number) %>%
@@ -138,13 +158,13 @@ p3 <- flies %>%
   labs(y = "development to 4th instar (%)") +
   geom_boxplot(aes(fill=genotype)) +   
   geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
+             position = position_jitterdodge(jitter.width = 1.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette)   +  
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 50)) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 52)) +
   geom_signif(comparison = list(c("cv","IL28"), c("cv", "IL27")), 
               map_signif_level = TRUE, annotations = c("ns", "**"),
-              y_position = c(42, 46))
+              y_position = c(42, 46), textsize = 7)
 
 collected <- (p1 + p2 + p3) / guide_area() +
   plot_layout(guides = 'collect') +
