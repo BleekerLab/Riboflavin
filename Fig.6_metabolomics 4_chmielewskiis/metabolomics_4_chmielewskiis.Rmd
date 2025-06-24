@@ -122,7 +122,7 @@ p1 <- flies %>%
   labs(y = "Riboflavin in leaf material (pmol/mg fresh weight)") +
   geom_boxplot(aes(fill = genotype)) +   
   geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
+             position = position_jitterdodge(jitter.width = 1.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette)  +  
   scale_y_continuous(expand = c(0, 0), limits = c(0, 7.5))  +
@@ -130,14 +130,15 @@ p1 <- flies %>%
               map_signif_level = TRUE, 
               annotations = c("."),
               y_position = 7,
-              vjust = -0.5)
+              vjust = -0.5,
+              textsize = 7)
 
 p2 <- flies %>% 
   ggplot(aes(x=genotype, y=phloem)) + 
   labs(y = "Riboflavin in phloem exudates (pmol/mL)") +
   geom_boxplot(aes(fill=genotype)) +   
   geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
+             position = position_jitterdodge(jitter.width = 1.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette)   +  
   scale_y_continuous(expand = c(0, 0), limits = c(0, 7.5))  +
@@ -145,17 +146,18 @@ p2 <- flies %>%
               map_signif_level = TRUE, 
               annotations = c("."),
               y_position = 7,
-              vjust = -0.5)
+              vjust = -0.1,
+              textsize = 10)
 
  
 
-collected <- (p1 + p2) / guide_area() +
-  plot_layout(guides = 'collect') +
-  plot_annotation(tag_levels = 'A')
+collected <- (p2) / guide_area() +
+  plot_layout(guides = 'collect') 
+#  plot_annotation(tag_levels = 'A')
 
 collected
 
-ggsave(filename = "4_chmielewskii_only_riboflavin.png", plot = collected, width = 10, height = 10)
-ggsave(filename = "4_chmielewskii_ony_riboflavin.svg", plot = collected, width = 10, height = 10)
+ggsave(filename = "4_chmielewskii_only_riboflavin.png", plot = collected, width = 5, height = 10)
+ggsave(filename = "4_chmielewskii_ony_riboflavin.svg", plot = collected, width = 5, height = 10)
 ```
 
