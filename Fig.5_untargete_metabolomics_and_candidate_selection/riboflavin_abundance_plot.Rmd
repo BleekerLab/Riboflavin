@@ -116,8 +116,8 @@ p_ribo <- riboflavin %>%
        x = "genotype") +
   geom_boxplot() +    
   geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) +  
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 0.00115),
+             position = position_jitterdodge(jitter.width = 1.4)) +  
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 0.00120),
                      labels=function(n){format(n, scientific = TRUE)}) +
   theme_simple() + 
   scale_fill_manual(values = palette)  +
@@ -126,12 +126,12 @@ p_ribo <- riboflavin %>%
               map_signif_level = TRUE, 
               annotations = c("*", "***", "***", "***"),
               y_position = c(0.00075, 0.00097, 0.00102, 0.00107),
-              vjust = 0.5)  +
+              vjust = 0.5, textsize = 7)  +
   geom_signif(comparison = list(c("IL28","IL27")), 
               map_signif_level = TRUE, 
               annotations = c("."),
               y_position = 0.00070,
-              vjust = -0.5)
+              vjust = -0.1, textsize = 10)
 p_ribo
 ```
 
@@ -145,7 +145,7 @@ plot(layout)
 
 collected <- (pc1_vs_pc2 | p_ribo)  /  guide_area() +
   plot_layout(guides = 'collect') +
-  plot_annotation(tag_levels = 'A')
+  plot_annotation(tag_levels = 'a')
 
 collected
 ```
