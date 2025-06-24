@@ -37,6 +37,7 @@ suppressPackageStartupMessages(library("tidydrc"))
 suppressPackageStartupMessages(library("aomisc"))
 suppressPackageStartupMessages(library("devtools"))
 suppressPackageStartupMessages(library("svglite"))
+suppressPackageStartupMessages(library("lme4"))
 ```
 
 
@@ -321,7 +322,7 @@ df_ttest_hatch <- relative_cummulative %>%
   dplyr::filter(day == 29) %>%
   dplyr::filter(stage=="first")
 
-t.test(formula = number ~ genotype, 
+wilcox.test(formula = number ~ genotype, 
        data = df_ttest_hatch)
 ```
 
@@ -380,11 +381,14 @@ relative_cummulative %>%
 ```
 
 
+
+
 ```{r t-test}
-relative_cummulative %>% 
-  dplyr::filter(day == 25) %>%
-  dplyr::filter(stage=="fourth") %>%
-  t_test(number ~ genotype)
+df_for_wilcoxon <- relative_cummulative %>% 
+  dplyr::filter(day == 29) %>%
+  dplyr::filter(stage=="fourth_instars") 
+
+wilcox.test(number ~ genotype, data = df_for_wilcoxon)
 ```
 
 
@@ -401,13 +405,13 @@ p_eggs <- relative_cummulative %>%
        x = "rootstock genotype") +
   geom_boxplot() +    
   geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) +  
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) +
+             position = position_jitterdodge(jitter.width = 1.4)) +  
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 110)) +
   theme_simple() + 
   scale_fill_manual(values = palette)  +
   geom_signif(comparison = list(c("cv","LA1840")), 
               map_signif_level = TRUE, annotations = c("**"),
-              y_position = 92)
+              y_position = 92, textsize = 7)
 
 p_first <- relative_cummulative %>% 
   dplyr::filter(day == 29) %>%
@@ -417,13 +421,13 @@ p_first <- relative_cummulative %>%
        x = "rootstock genotype") +
   geom_boxplot() +    
   geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) +  
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) +
+             position = position_jitterdodge(jitter.width = 1.4)) +  
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 110)) +
   theme_simple() + 
   scale_fill_manual(values = palette)  +
   geom_signif(comparison = list(c("cv","LA1840")), 
               map_signif_level = TRUE, annotations = c("***"),
-              y_position = 92)
+              y_position = 92, textsize = 7)
   
 
 p1 <- relative_cummulative %>% 
@@ -434,13 +438,13 @@ p1 <- relative_cummulative %>%
        x = "rootstock genotype") +
   geom_boxplot() +     
   geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) +  
+             position = position_jitterdodge(jitter.width = 1.4)) +  
   scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) +
   theme_simple() + 
   scale_fill_manual(values = palette)  +
   geom_signif(comparison = list(c("cv","LA1840")), 
               map_signif_level = TRUE, annotations = c("ns"),
-              y_position = 92)
+              y_position = 83.6, textsize = 7)
 
   
 p4 <- relative_cummulative %>% 
@@ -504,6 +508,9 @@ model_stats <- drm(number ~ day,
                                ~genotype,
                                ~genotype))
 coeftest(model_stats)
+compParm(model_stats, "Slope")
+compParm(model_stats, "Upper Limit")
+compParm(model_stats, "ED50")
 ```
 
 ```{r calculate EmT50 cv}
@@ -541,16 +548,19 @@ ed_values <- tibble::tribble(
   ~genotype, ~ed,   ~stat,   ~value,
     "cv",   "upper limit  ", "mean (±SE)",  "91.18 (±2.29)",
     "cv",   "slope", "mean (±SE)",  "11.06 (±0.93)",
-    "cv",   "EmT50", "mean (±SE)",  "20.67 (±0.21)",
+    "cv",   "EmT50", "mean (±SE)",  "20.31 (±0.19)",
     "LA1840",   "upper limit  ", "mean (±SE)",  "83.98 (±2.06)",
     "LA1840",   "slope", "mean (±SE)",  "13.71 (±1.30)",
-    "LA1840",   "EmT50", "mean (±SE)",  "21.54 (±0.20)",
+    "LA1840",   "EmT50", "mean (±SE)",  "20.94 (±0.17)",
     "cv",   "upper limit  ", "x",  " ",
     "cv",   "slope", "x",  " ",
     "cv",   "EmT50", "x",  " ",
-    "LA1840",   "upper limit  ", "x",  " ",
+    "LA1840",   "upper limit  ", "x",  "*",
     "LA1840",   "slope", "x",  " ",
-    "LA1840",   "EmT50", "x",  " "
+    "LA1840",   "EmT50", "x",  "*",
+    "Wald test",   "upper limit  ", "W xxx p",  "-2.34 x 0.02",
+    "Wald test",   "slope", "W xxx p",  "-1.65 x 0.10",
+    "Wald test",   "EmT50", "W xxx p",  " 2.50 x 0.01"
   )
 ```
 
@@ -570,12 +580,12 @@ suppressPackageStartupMessages(library("htmlwidgets"))
 ```{r layout EmT table}
 ed_table <- ed_values %>%
   dplyr::mutate(genotype = factor(genotype, 
-                                  levels = c("cv", "LA1840"))) %>%
+                                  levels = c("cv", "LA1840", "Wald test"))) %>%
   dplyr::mutate(ed = factor(ed,
                             levels = c(
                               "slope", "upper limit  ", "EmT50"))) %>%
   dplyr::mutate(stat = factor(stat,
-                            levels = c("mean (±SE)", "x"))) %>%
+                            levels = c("mean (±SE)", "x", "W xxx p"))) %>%
   mmtable(cells = value) +
   header_left(ed) +
   header_top(stat) +
@@ -673,7 +683,8 @@ p_cumulative <- relative_cummulative %>%
                 width = 0,
                 size = 0.5) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) +
-  xlim(13,NA)
+  xlim(10,NA) +
+  coord_cartesian(xlim = c(10, NA), expand = FALSE)
 
 p_cumulative <- p_cumulative +
   stat_smooth(data = ED %>%
@@ -719,13 +730,13 @@ auc_plot <- auc_fourth %>%
          x= "rootstock genotype") +
     geom_boxplot() + 
   geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) +
+             position = position_jitterdodge(jitter.width = 1.4)) +
     theme_simple() + 
     scale_fill_manual(values = palette) + 
   scale_fill_manual(values = palette)  +
   geom_signif(comparison = list(c("cv","LA1840")), 
               map_signif_level = TRUE, annotations = c("*"),
-              y_position = 9.2) + 
+              y_position = 9.2, textsize = 7) + 
   scale_y_continuous(expand = c(0, 0), limits = c(0, 10)) 
 
 auc_plot
@@ -750,6 +761,16 @@ auc_fourth %>%
 
 # The complete figure
 ```{r complete plot}
+
+layout3 <- c(
+  patchwork::area(t = 1, l = 1, b = 18, r = 7),   #p_cumulative
+  patchwork::area(t = 19, l = 1, b = 33, r = 3),    #auc_plot
+  patchwork::area(t = 19, l = 4, b = 30, r = 7),  #ed_tableplot
+  patchwork::area(t = 34, l = 4, b = 36, r = 7)   #guide_area
+)
+plot(layout3)
+
+
 layout2 <- c(
   patchwork::area(t = 1, l = 1, b = 14, r = 3),    #p4
   patchwork::area(t = 15, l = 1, b = 32, r = 4),   #p_cumulative
@@ -771,17 +792,24 @@ layout <- c(
 )
 plot(layout)
 
-### old plot ###
+### old plots ###
 #development_plot <- (p_eggs + p_first + p1 + p_cumulative + ed_tableplot + auc_plot) + guide_area() +
 #  plot_layout(guides = 'collect',
 #              design = layout) +
 #  plot_annotation(tag_levels = 'A')
 # 
+#
+#development_plot <- (p4 + p_cumulative + auc_plot + ed_tableplot) + guide_area() +
+#  plot_layout(guides = 'collect',
+#              design = layout2) +
+#  plot_annotation(tag_levels = 'A')
+#
 
-development_plot <- (p4 + p_cumulative + auc_plot + ed_tableplot) + guide_area() +
+
+development_plot <- (p_cumulative + auc_plot + ed_tableplot) + guide_area() +
   plot_layout(guides = 'collect',
-              design = layout2) +
-  plot_annotation(tag_levels = 'A')
+              design = layout3) +
+  plot_annotation(tag_levels = 'a')
 
 development_plot
 
