@@ -73,7 +73,7 @@ pinene <- terpenes %>%
   labs(y = "alpha-pinene") +
   geom_boxplot(aes(fill = genotype)) +   
   geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
+             position = position_jitterdodge(jitter.width = 1.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette) + 
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))  
@@ -84,7 +84,7 @@ a_phellandrene <- terpenes %>%
   labs(y = "alpha-phellandrene") +
   geom_boxplot(aes(fill = genotype)) +   
   geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
+             position = position_jitterdodge(jitter.width = 1.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette) + 
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))  
@@ -95,7 +95,7 @@ terpinene <- terpenes %>%
   labs(y = "alpha-terpinene") +
   geom_boxplot(aes(fill = genotype)) +   
   geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
+             position = position_jitterdodge(jitter.width = 1.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette) + 
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))   
@@ -117,7 +117,7 @@ b_phellandrene <- terpenes %>%
   labs(y = "beta-phellandrene") +
   geom_boxplot(aes(fill = genotype)) +   
   geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
+             position = position_jitterdodge(jitter.width = 1.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette) + 
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))   
@@ -128,7 +128,7 @@ ocimene <- terpenes %>%
   labs(y = "trans-beta-ocimene") +
   geom_boxplot(aes(fill = genotype)) +   
   geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
+             position = position_jitterdodge(jitter.width = 1.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette) + 
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))   
@@ -139,7 +139,7 @@ linalool <- terpenes %>%
   labs(y = "linalool") +
   geom_boxplot(aes(fill = genotype)) +   
   geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
+             position = position_jitterdodge(jitter.width = 1.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette) + 
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))   
@@ -150,7 +150,7 @@ terpinolene <- terpenes %>%
   labs(y = "terpinolene") +
   geom_boxplot(aes(fill = genotype)) +   
   geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
+             position = position_jitterdodge(jitter.width = 1.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette) + 
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))   
@@ -161,7 +161,7 @@ geraniol <- terpenes %>%
   labs(y = "geraniol") +
   geom_boxplot(aes(fill = genotype)) +   
   geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
+             position = position_jitterdodge(jitter.width = 1.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette) + 
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))   
@@ -172,7 +172,7 @@ caryophyllene <- terpenes %>%
   labs(y = "beta-caryophyllene") +
   geom_boxplot(aes(fill = genotype)) +   
   geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
+             position = position_jitterdodge(jitter.width = 1.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette) + 
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))   
@@ -183,7 +183,7 @@ humulene <- terpenes %>%
   labs(y = "alpha-humulene") +
   geom_boxplot(aes(fill = genotype)) +   
   geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
+             position = position_jitterdodge(jitter.width = 1.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette) + 
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))   
@@ -194,7 +194,7 @@ cuparene <- terpenes %>%
   labs(y = "cuparene") +
   geom_boxplot(aes(fill = genotype)) +   
   geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
+             position = position_jitterdodge(jitter.width = 1.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette) + 
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))   
@@ -205,7 +205,7 @@ neridol <- terpenes %>%
   labs(y = "neridol") +
   geom_boxplot(aes(fill = genotype)) +   
   geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
+             position = position_jitterdodge(jitter.width = 1.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette) + 
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))   
@@ -214,7 +214,7 @@ neridol <- terpenes %>%
 
 collected <- (pinene + a_phellandrene + terpinene + limonene + b_phellandrene + ocimene + linalool + terpinolene + geraniol + caryophyllene + humulene + cuparene + neridol) / guide_area() +
   plot_layout(guides = 'collect') +
-  plot_annotation(tag_levels = 'A')
+  plot_annotation(tag_levels = '1')
 
 collected
 ```
@@ -243,10 +243,12 @@ normalised_terpenes <- normalised_dataset %>%
   dplyr::select(-sample_id) %>%
   pivot_longer(cols = alpha_pinene : neridol, 
                names_to = "compound", values_to = "value")  %>%
-  pivot_wider(names_from = tec_replicate, values_from = value, names_prefix = "tec_rep_") %>%
-  dplyr::mutate(concentration = rowMeans(select(normalised_terpenes, 
-                                              tec_rep_1:tec_rep_2), na.rm = TRUE)) %>%
+  pivot_wider(names_from = tec_replicate, values_from = value, names_prefix = "tec_rep_") 
+
+normalised_terpenes <- normalised_terpenes %>%
+  dplyr::mutate(concentration = rowMeans(subset(normalised_terpenes, select = c(tec_rep_1, tec_rep_2)), na.rm = TRUE)) %>%
   dplyr::select(-tec_rep_1:-tec_rep_2)
+
 ```
 
 ```{r wide and order}
@@ -272,159 +274,159 @@ pinene <- normalised_terpenes %>%
   labs(y = "alpha-pinene") +
   geom_boxplot(aes(fill = genotype)) +   
   geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
+             position = position_jitterdodge(jitter.width = 1.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette) + 
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
-  stat_compare_means(method = "anova", label.x.npc = "centre")
-  #scale_y_continuous(expand = c(0, 0), limits = c(0, 18000))  
+  stat_compare_means(method = "anova", label.x.npc = "centre", label.y = 0.5, label = "p.format", size = 5) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 0.55))  
   
 a_phellandrene <- normalised_terpenes %>% 
   ggplot(aes(x=genotype, y=alpha_phellandrene)) + 
   labs(y = "alpha-phellandrene") +
   geom_boxplot(aes(fill = genotype)) +   
   geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
+             position = position_jitterdodge(jitter.width = 1.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette) + 
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
-  stat_compare_means(method = "anova", label.x.npc = "centre") 
-  #scale_y_continuous(expand = c(0, 0), limits = c(0, 18000))  
+  stat_compare_means(method = "anova", label.x.npc = "centre", label.y = 0.82, label = "p.format", size = 5) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 0.9))  
   
 terpinene <- normalised_terpenes %>% 
   ggplot(aes(x=genotype, y=alpha_terpinene)) + 
   labs(y = "alpha-terpinene") +
   geom_boxplot(aes(fill = genotype)) +   
   geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
+             position = position_jitterdodge(jitter.width = 1.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette) + 
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
-  stat_compare_means(method = "anova", label.x.npc = "centre")   
-  #scale_y_continuous(expand = c(0, 0), limits = c(0, 18000))  
+  stat_compare_means(method = "anova", label.x.npc = "centre", label.y = 1.27, label = "p.format", size = 5) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 1.4))    
   
 limonene <- normalised_terpenes %>% 
   ggplot(aes(x=genotype, y=d_limonene)) + 
   labs(y = "D-limonene") +
   geom_boxplot(aes(fill = genotype)) +   
   geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
+             position = position_jitterdodge(jitter.width = 1.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette) + 
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
-  stat_compare_means(method = "anova", label.x.npc = "centre")   
-  #scale_y_continuous(expand = c(0, 0), limits = c(0, 18000))  
+  stat_compare_means(method = "anova", label.x.npc = "centre", label.y = 3.64, label = "p.format", size = 5) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 4))  
   
 b_phellandrene <- normalised_terpenes %>% 
   ggplot(aes(x=genotype, y=b_phellandrene)) + 
   labs(y = "beta-phellandrene") +
   geom_boxplot(aes(fill = genotype)) +   
   geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
+             position = position_jitterdodge(jitter.width = 1.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette) + 
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
-  stat_compare_means(method = "anova", label.x.npc = "centre")   
-  #scale_y_continuous(expand = c(0, 0), limits = c(0, 18000)) 
+  stat_compare_means(method = "anova", label.x.npc = "centre", label.y = 3.64, label = "p.format", size = 5) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 4))  
   
 ocimene <- normalised_terpenes %>% 
   ggplot(aes(x=genotype, y=trans_b_ocimene)) + 
   labs(y = "trans-beta-ocimene") +
   geom_boxplot(aes(fill = genotype)) +   
   geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
+             position = position_jitterdodge(jitter.width = 1.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette) + 
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
-  stat_compare_means(method = "anova", label.x.npc = "centre")   
-  #scale_y_continuous(expand = c(0, 0), limits = c(0, 18000))  
+  stat_compare_means(method = "anova", label.x.npc = "centre", label.y = 0.364, label = "p.format", size = 5) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 0.4))  
   
 linalool <- normalised_terpenes %>% 
   ggplot(aes(x=genotype, y=linalool)) + 
   labs(y = "linalool") +
   geom_boxplot(aes(fill = genotype)) +   
   geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
+             position = position_jitterdodge(jitter.width = 1.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette) + 
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
-  stat_compare_means(method = "anova", label.x.npc = "centre")   
-  #scale_y_continuous(expand = c(0, 0), limits = c(0, 18000)) 
+  stat_compare_means(method = "anova", label.x.npc = "centre", label.y = 0.118, label = "p.format", size = 5) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 0.13))  
   
 terpinolene <- normalised_terpenes %>% 
   ggplot(aes(x=genotype, y=terpinolene)) + 
   labs(y = "terpinolene") +
   geom_boxplot(aes(fill = genotype)) +   
   geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
+             position = position_jitterdodge(jitter.width = 1.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette) + 
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
-  stat_compare_means(method = "anova", label.x.npc = "centre")   
-  #scale_y_continuous(expand = c(0, 0), limits = c(0, 18000)) 
+  stat_compare_means(method = "anova", label.x.npc = "centre", label.y = 0.0636, label = "p.format", size = 5) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 0.07))  
   
 geraniol <- normalised_terpenes %>% 
   ggplot(aes(x=genotype, y=geraniol)) + 
   labs(y = "geraniol") +
   geom_boxplot(aes(fill = genotype)) +   
   geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
+             position = position_jitterdodge(jitter.width = 1.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette) + 
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
-  stat_compare_means(method = "anova", label.x.npc = "centre")   
-  #scale_y_continuous(expand = c(0, 0), limits = c(0, 18000)) 
+  stat_compare_means(method = "anova", label.x.npc = "centre", label.y = 1.45, label = "p.format", size = 5) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 1.6))  
   
 caryophyllene <- normalised_terpenes %>% 
   ggplot(aes(x=genotype, y=beta_caryophyllene)) + 
   labs(y = "beta-caryophyllene") +
   geom_boxplot(aes(fill = genotype)) +   
   geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
+             position = position_jitterdodge(jitter.width = 1.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette) + 
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
-  stat_compare_means(method = "anova", label.x.npc = "centre")   
-  #scale_y_continuous(expand = c(0, 0), limits = c(0, 18000)) 
+  stat_compare_means(method = "anova", label.x.npc = "centre", label.y = 0.727, label = "p.format", size = 5) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 0.8))  
   
 humulene <- normalised_terpenes %>% 
   ggplot(aes(x=genotype, y=alpha_humulene)) + 
   labs(y = "alpha-humulene") +
   geom_boxplot(aes(fill = genotype)) +   
   geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
+             position = position_jitterdodge(jitter.width = 1.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette) + 
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
-  stat_compare_means(method = "anova", label.x.npc = "centre")   
-  #scale_y_continuous(expand = c(0, 0), limits = c(0, 18000)) 
+  stat_compare_means(method = "anova", label.x.npc = "centre", label.y = 4.09, label = "p.format", size = 5) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 4.5))  
   
 cuparene <- normalised_terpenes %>% 
   ggplot(aes(x=genotype, y=cuparene)) + 
   labs(y = "cuparene") +
   geom_boxplot(aes(fill = genotype)) +   
   geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
+             position = position_jitterdodge(jitter.width = 1.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette) + 
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
-  stat_compare_means(method = "anova", label.x.npc = "centre")   
-  #scale_y_continuous(expand = c(0, 0), limits = c(0, 18000)) 
+  stat_compare_means(method = "anova", label.x.npc = "centre", label.y = 0.182, label = "p.format", size = 5) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 0.2))  
   
 neridol <- normalised_terpenes %>% 
   ggplot(aes(x=genotype, y=neridol)) + 
   labs(y = "neridol") +
   geom_boxplot(aes(fill = genotype)) +   
   geom_point(aes(fill = genotype), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
+             position = position_jitterdodge(jitter.width = 1.4)) + 
   theme_simple() + 
   scale_fill_manual(values = palette) + 
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
-  stat_compare_means(method = "anova", label.x.npc = "centre")   
-  #scale_y_continuous(expand = c(0, 0), limits = c(0, 18000)) 
+  stat_compare_means(method = "anova", label.x.npc = "centre", label.y = 8.18, label = "p.format", size = 5) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 9))   
 
 
-collected <- (pinene + a_phellandrene + terpinene + limonene + b_phellandrene + ocimene + linalool + terpinolene + geraniol + caryophyllene + humulene + cuparene + neridol) / guide_area() +
+collected <- (pinene + a_phellandrene + terpinene + limonene + b_phellandrene + ocimene + linalool + terpinolene + geraniol + caryophyllene + humulene + cuparene + neridol + plot_layout(ncol = 3)) / guide_area() +
   plot_layout(guides = 'collect') +
   plot_annotation(tag_levels = 'a')
 
@@ -432,5 +434,5 @@ collected
 ```
 
 ```{r save plot}
-ggsave(filename = "terpene_boxplots_normalised.png", plot = collected, width = 15, height = 25)
+ggsave(filename = "terpene_boxplots_normalised.png", plot = collected, width = 10, height = 30)
 ```
