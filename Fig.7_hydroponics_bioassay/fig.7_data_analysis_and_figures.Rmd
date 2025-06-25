@@ -284,22 +284,15 @@ summary(glm_eggs)
 summary(glm_third_instars)
 ```
 
-```{r t-test}
+```{r wilcoxon}
 df_ttest_third <- cumulative_flies_cv %>%
   dplyr::filter(day == 17) %>%
   dplyr::filter(stage == "third")
 
-t.test(formula = number ~ treatment, 
+wilcox.test(formula = number ~ treatment, 
        data = df_ttest_third)
 ```
 
-```{r wilcoxon}
-cumulative_flies_cv %>%
-  dplyr::filter(day == 17) %>%
-  dplyr::filter(stage == "eggs_start" | stage == "third_instars" | stage == "third") %>%
-  group_by(stage) %>%
-  wilcox_test(formula = number ~ treatment)
-```
 
 ```{r wilcoxon effectsize}
 cumulative_flies_cv %>%
@@ -348,14 +341,15 @@ p_eggs <- cumulative_flies_cv %>%
   labs(y = "eggs (count)") +
   geom_boxplot() + 
   geom_point(aes(fill = treatment), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
+             position = position_jitterdodge(jitter.width = 1.4)) + 
   scale_y_continuous(expand = c(0, 0), limits = c(0, 160)) +
   theme_simple() + 
   scale_fill_manual(values = cv_palette)  +
   geom_signif(comparison = list(c("control","riboflavin")), 
               map_signif_level = TRUE, 
               annotations = c("ns"),
-              y_position = 148.57)
+              y_position = 148.57,
+              textsize = 5)
 
 
 p_third <- cumulative_flies_cv %>% 
@@ -365,15 +359,16 @@ p_third <- cumulative_flies_cv %>%
   labs(y = "3rd instar nymphs (count)") +
   geom_boxplot() +  
   geom_point(aes(fill = treatment), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 90)) +
+             position = position_jitterdodge(jitter.width = 1.4)) + 
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 93)) +
   theme_simple() + 
   scale_fill_manual(values = cv_palette)  +
   geom_signif(comparison = list(c("control","riboflavin")), 
               map_signif_level = TRUE, 
               annotations = c("***"),
-              y_position = 83.57,
-              vjust = 0.1)
+              y_position = 86.36,
+              vjust = 0.5,
+              textsize = 7)
 
 
 p_3 <- cumulative_flies_cv %>% 
@@ -383,20 +378,21 @@ p_3 <- cumulative_flies_cv %>%
   labs(y = "development to 3rd instar (%)") +
   geom_boxplot() + 
   geom_point(aes(fill = treatment), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 70)) +
+             position = position_jitterdodge(jitter.width = 1.4)) + 
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) +
   theme_simple() + 
   scale_fill_manual(values = cv_palette)  +
   geom_signif(comparison = list(c("control","riboflavin")), 
               map_signif_level = TRUE, 
-              annotations = c("**"),
-              y_position = 65,
-              vjust = 0.1)
+              annotations = c("."),
+              y_position = 92.86,
+              vjust = -0.1,
+              textsize = 10)
 
 
 collected <- (p_eggs | p_third | p_3)  / guide_area() +
   plot_layout(guides = 'collect') +
-  plot_annotation(tag_levels = 'A')
+  plot_annotation(tag_levels = 'a')
 
 collected
 
@@ -574,21 +570,13 @@ summary(glm_eggs)
 summary(glm_third_instars)
 ```
 
-```{r t-test}
+```{r wilcoxon}
 df_ttest_third <- cumulative_flies_LA %>%
   dplyr::filter(day == 22) %>%
   dplyr::filter(stage == "third")
 
-t.test(formula = number ~ treatment, 
+wilcox.test(formula = number ~ treatment, 
        data = df_ttest_third)
-```
-
-```{r wilcoxon}
-cumulative_flies_LA %>%
-  dplyr::filter(day == 22) %>%
-  dplyr::filter(stage == "eggs_start" | stage == "third_instars" | stage == "third") %>%
-  group_by(stage) %>%
-  wilcox_test(formula = number ~ treatment)
 ```
 
 ```{r wilcoxon effectsize}
@@ -637,14 +625,15 @@ p_eggs_i <- cumulative_flies_LA %>%
   labs(y = "eggs (count)") +
   geom_boxplot() + 
   geom_point(aes(fill = treatment), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
+             position = position_jitterdodge(jitter.width = 1.4)) + 
   scale_y_continuous(expand = c(0, 0), limits = c(0, 160)) +
   theme_simple() + 
   scale_fill_manual(values = LA_palette)  +
   geom_signif(comparison = list(c("control","inhibitor")), 
               map_signif_level = TRUE, 
               annotations = c("ns"),
-              y_position = 148.57) 
+              y_position = 148.57,
+              textsize = 5) 
 
 p_third_i <- cumulative_flies_LA %>% 
   dplyr::filter(day == 22) %>%
@@ -653,14 +642,16 @@ p_third_i <- cumulative_flies_LA %>%
   labs(y = "3rd instar nymphs (count)") +
   geom_boxplot() + 
   geom_point(aes(fill = treatment), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 90)) +
+             position = position_jitterdodge(jitter.width = 1.4)) + 
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 93)) +
   theme_simple() + 
   scale_fill_manual(values = LA_palette)  +
   geom_signif(comparison = list(c("control","inhibitor")), 
               map_signif_level = TRUE, 
               annotations = c("*"),
-              y_position = 83.57)
+              y_position = 86.36,
+              vjust = 0.5,
+              textsize = 7)
 
 p_3_i <- cumulative_flies_LA %>% 
   dplyr::filter(day == 22) %>%
@@ -669,14 +660,16 @@ p_3_i <- cumulative_flies_LA %>%
   labs(y = "development to 3rd instar (%)") +
   geom_boxplot() + 
   geom_point(aes(fill = treatment), size = 2, shape = 21,
-             position = position_jitterdodge(jitter.width = 0.4)) + 
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 70)) +
+             position = position_jitterdodge(jitter.width = 1.4)) + 
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) +
   theme_simple() + 
   scale_fill_manual(values = LA_palette)  +
   geom_signif(comparison = list(c("control","inhibitor")), 
               map_signif_level = TRUE, 
               annotations = c("*"),
-              y_position = 65)
+              y_position = 92.86,
+              vjust = 0.5,
+              textsize = 7)
 
 
 collected <- ((p_eggs | p_third| p_3) / (p_eggs_i | p_third_i | p_3_i))  /  guide_area() +
