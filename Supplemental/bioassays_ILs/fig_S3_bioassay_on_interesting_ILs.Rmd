@@ -1,0 +1,141 @@
+---
+title: "fig.S3_bioassay_screen_ILs"
+author: "Lissy Denkers"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = FALSE, 
+                      warning = FALSE, 
+                      message = FALSE, 
+                      fig.width = 8, 
+                      fig.height = 5, 
+                      fig.align = "center")
+suppressPackageStartupMessages(library("ggplot2"))
+suppressPackageStartupMessages(library("ggpubr"))
+suppressPackageStartupMessages(library("ggpubfigs"))
+suppressPackageStartupMessages(library("ggsignif"))
+suppressPackageStartupMessages(library("patchwork"))
+suppressPackageStartupMessages(library("multcomp"))
+suppressPackageStartupMessages(library("car"))
+suppressPackageStartupMessages(library("tidyverse"))
+suppressPackageStartupMessages(library("rstatix"))
+suppressPackageStartupMessages(library("broom"))
+```
+
+# Data import 
+
+## Background information
+
+This is the whitefly development bioassay on the ILs selected after the innitial visual screen, both performed by Arjen van Doorn. Based on this bioassay, the IL for follow-up experiments was chosen.
+
+## The raw data
+```{r flies}
+flies <- read.csv("bioassay_screen_on_interesting_ILs.csv", 
+                         header = T, 
+                         sep = ",", 
+                         dec = ".", 
+                         check.names = FALSE)  %>%
+  rename(egg = eggs_bottom) %>%
+  rename(fourth_instar = nymphs) %>%
+  rename(fourth = eggs_to_nymphs) %>%
+  mutate(genotype = factor(genotype, levels = c("cv", "IL27", "IL32", "IL39", "IL45", "LA1840"))) 
+#  mutate(fourth_instar = ifelse(fourth_instar==0, 1, fourth_instar))
+# The first 10 rows of the data
+knitr::kable(flies[1:10,1:5])
+```
+
+# statistics
+
+```{r glm for count data}
+  test1 <- glm(formula = egg ~ genotype,
+            family = poisson(),
+            data = flies)
+  test2 <- glm(formula = fourth_instar ~ genotype,
+            family = poisson(),
+            data = flies)
+  
+  summary(test1)
+  summary(test2)
+```
+
+```{r kruskal-wallis percentage to fourth}
+
+kruskal_fourth <- kruskal.test(formula = fourth ~ genotype, data = flies)
+
+kruskal_fourth
+```
+
+```{r}
+library(nparcomp)
+
+comp_fourth <- mctp(fourth ~ genotype, data=flies, asy.method = "fisher",
+            type = "Dunnett", control = "cv",
+            alternative = "two.sided", info = FALSE)
+
+summary(comp_fourth)
+plot(comp_fourth)
+```
+
+
+# plot
+
+```{r color palette}
+palette <- c("#E69F00", "#0072B2", "grey", "grey", "grey", "#56B4E9")
+```
+
+```{r combined plot, fig.width = 16, fig.height = 10}
+p1 <- flies %>% 
+  ggplot(aes(x=genotype, y=egg)) + 
+  labs(y = "eggs (count)") +
+  geom_boxplot(aes(fill = genotype)) +   
+  geom_point(aes(fill = genotype), size = 2, shape = 21,
+             position = position_jitterdodge(jitter.width = 1.4)) + 
+  theme_simple() + 
+  scale_fill_manual(values = palette)  +  
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 160))  +
+  geom_signif(comparison = list(c("cv","IL27"), c("cv", "IL39"), c("cv", "LA1840")), 
+              map_signif_level = TRUE, annotations = c("***", "***", "**"),
+              y_position = c(90, 138, 145), textsize = 7, vjust = 0.5)
+
+p2 <- flies %>% 
+  ggplot(aes(x=genotype, y=fourth_instar)) + 
+  labs(y = "4th instar nymphs (count)") +
+  geom_boxplot(aes(fill=genotype)) +   
+  geom_point(aes(fill = genotype), size = 2, shape = 21,
+             position = position_jitterdodge(jitter.width = 1.4)) + 
+  theme_simple() + 
+  scale_fill_manual(values = palette)  +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 102)) +
+  geom_signif(comparison = list(c("cv","IL27"), c("cv", "IL39"), c("cv", "IL45"), c("cv", "LA1840")), 
+              map_signif_level = TRUE, annotations = c("***", "***", "***", "***"),
+              y_position = c(40, 85, 90, 95), textsize = 7, vjust = 0.5)
+
+p3 <- flies %>% 
+  ggplot(aes(x=genotype, y=fourth)) + 
+  labs(y = "development to 4th instar (%)") +
+  geom_boxplot(aes(fill=genotype)) +   
+  geom_point(aes(fill = genotype), size = 2, shape = 21,
+             position = position_jitterdodge(jitter.width = 1.4)) + 
+  theme_simple() + 
+  scale_fill_manual(values = palette)   +  
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) +
+  geom_signif(comparison = list(c("cv","IL27"), c("cv", "LA1840")), 
+              map_signif_level = TRUE, annotations = c("*", "**"),
+              y_position = c(80, 90), textsize = 7, vjust = 0.5)
+
+collected <- (p1 + p2 + p3) / guide_area() +
+  plot_layout(guides = 'collect') +
+  plot_annotation(tag_levels = 'a')
+
+collected
+
+p_3 <- p3 / guide_area()
+
+ggsave(filename = "IL_bioassay_screen.png", plot = p_3, width = 5, height = 10)
+ggsave(filename = "IL_bioassay_screen.svg", plot = p_3, width = 5, height = 10)
+```
+
+
+
